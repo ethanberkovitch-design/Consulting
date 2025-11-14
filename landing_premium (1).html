@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>איתן ברקוביץ' — ליווי וייעוץ לסטארטאפים</title>
+  <style>
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --muted:#9aa4b2;
+      --accent:#0ea5a4;
+      --glass: rgba(255,255,255,0.04);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:linear-gradient(180deg,#f7fafc 0%, #eef2f7 100%);color:#0b1220;line-height:1.6}
+    .container{max-width:1100px;margin:32px auto;padding:28px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .brand{display:flex;align-items:center;gap:16px}
+    .logo{
+      width:62px;height:62px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#0369a1);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:20px;box-shadow:0 6px 18px rgba(2,6,23,0.25)
+    }
+    .title{font-size:18px;font-weight:700}
+    .subtitle{font-size:13px;color:var(--muted)}
+    nav a{margin-left:18px;text-decoration:none;color:#0b1220;font-weight:600}
+    .hero{display:grid;grid-template-columns:1fr 420px;gap:36px;align-items:center;margin-top:28px}
+    .hero-card{background:white;border-radius:14px;padding:32px;box-shadow:0 10px 30px rgba(2,6,23,0.08)}
+    .hero h1{margin:0;font-size:30px}
+    .hero p{color:var(--muted);margin-top:12px}
+    .cta-row{display:flex;gap:12px;margin-top:20px}
+    .btn{padding:12px 20px;border-radius:12px;font-weight:700;border:0;cursor:pointer}
+    .btn-primary{background:var(--accent);color:white;box-shadow:0 8px 20px rgba(14,165,164,0.18)}
+    .btn-ghost{background:transparent;border:1px solid rgba(11,18,32,0.06);color:#0b1220}
+    .badge{display:inline-block;background:linear-gradient(90deg,#ecfccb,#bbf7d0);padding:6px 10px;border-radius:999px;font-weight:700;color:#065f46;font-size:13px}
+    .card-aside{background:linear-gradient(180deg,#0b1220,#111827);color:white;padding:28px;border-radius:14px;box-shadow:0 10px 30px rgba(2,6,23,0.18)}
+    .profile{display:flex;gap:16px;align-items:center}
+    .profile img{width:84px;height:84px;border-radius:999px;object-fit:cover;box-shadow:0 6px 18px rgba(2,6,23,0.25)}
+    .profile h3{margin:0}
+    .features{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:28px}
+    .feature{background:var(--glass);border-radius:10px;padding:18px}
+    .pricing{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:26px}
+    .price-card{background:white;border-radius:12px;padding:20px;box-shadow:0 6px 20px rgba(2,6,23,0.06);text-align:center}
+    footer{margin-top:36px;padding:22px;border-radius:12px;background:white;box-shadow:0 6px 18px rgba(2,6,23,0.04);display:flex;justify-content:space-between;align-items:center}
+    .contact{display:flex;flex-direction:column;gap:6px}
+    .lead-form{display:flex;flex-direction:column;gap:12px;margin-top:18px}
+    input,textarea{padding:12px;border-radius:10px;border:1px solid rgba(11,18,32,0.06);font-size:15px}
+    textarea{min-height:120px;resize:vertical}
+    .muted{color:var(--muted);font-size:14px}
+    @media(max-width:900px){
+      .hero{grid-template-columns:1fr; padding-bottom:10px}
+      .features{grid-template-columns:1fr}
+      .pricing{grid-template-columns:1fr}
+      header{flex-direction:column;align-items:flex-start;gap:12px}
+      nav{order:2}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">EB</div>
+        <div>
+          <div class="title">איתן ברקוביץ' • Innovation&More</div>
+          <div class="subtitle">ליווי וייעוץ ליזמים וסטארטאפים בתחילת הדרך</div>
+        </div>
+      </div>
+      <nav>
+        <a href="#services">שירותים</a>
+        <a href="#pricing">תמחור</a>
+        <a href="#about">מי אני</a>
+        <a href="#contact">צור קשר</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="hero-card">
+        <span class="badge">ייעוץ פרימיום • כמות מוגבלת</span>
+        <h1 style="margin-top:12px">הפוך את הרעיון שלך למיזם מנצח</h1>
+        <p>ליווי מקצועי מושקע מרעיון ועד מציאת משקיעים — תכנית ברורה, מצגות משכנעות, בחירת שותפים ודרך פעולה ל-12 החודשים הקרובים.</p>
+
+        <div class="cta-row">
+          <button onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})" class="btn btn-primary">קבע שיחת היכרות</button>
+          <a href="#pricing" class="btn btn-ghost">לראות חבילות</a>
+        </div>
+
+        <div class="features" style="margin-top:22px">
+          <div class="feature">
+            <strong>סיעור מוחות ממוקד</strong>
+            <div class="muted">חידוד הבעיה והפתרון, אפיון קהל יעד.</div>
+          </div>
+          <div class="feature">
+            <strong>מצגות משקיעים</strong>
+            <div class="muted">תוכן, עיצוב, סיפור: כל מה שצריך כדי למשוך משקיע.</div>
+          </div>
+          <div class="feature">
+            <strong>אסטרטגיית צמיחה</strong>
+            <div class="muted">מפת דרך ל-12 חודשים: KPI, מיילסטונס ותקציב.</div>
+          </div>
+        </div>
+
+        <div style="margin-top:22px" class="muted">כולל ליווי בהתאמה אישית לתחומי הבנייה, קיימות ו-ConTech — ניסיון מעשי מחברות כמו EconSonic.</div>
+      </div>
+
+      <aside class="card-aside">
+        <div class="profile">
+          <div style="width:84px;height:84px;border-radius:999px;background:#334155;display:flex;align-items:center;justify-content:center;color:white;font-weight:700">EB</div>
+          <div>
+            <h3>איתן ברקוביץ'</h3>
+            <div class="muted">מנכ"ל סטארטאפ, יועץ לחדשנות וקיימות</div>
+          </div>
+        </div>
+
+        <div style="margin-top:18px">
+          <strong>מה מקבלים בתוכנית פרימיום?</strong>
+          <ul style="margin:10px 0 0 0;padding:8px 20px;color:#dbeafe">
+            <li>מפגשים עומק על המודל העסקי</li>
+            <li>בניית מצגת משקיעים פרקטית</li>
+            <li>תוכנית עבודה ותקציב מפורט</li>
+            <li>ליווי בהקמת חברה ושיתוף פעולה</li>
+          </ul>
+        </div>
+
+        <div style="margin-top:18px">
+          <strong>תוצא פעולה מהירה</strong>
+          <div class="muted">בין תוצרי הפרויקט: חוברת pitch, מצגת משקיעים, תקציב 12 חודשי, מפת דרך.</div>
+        </div>
+      </aside>
+    </section>
+
+    <section id="services" class="hero-card" style="margin-top:30px">
+      <h2>שירותים עיקריים</h2>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:18px">
+        <div style="background:linear-gradient(180deg,#ffffff,#f8fafc);padding:16px;border-radius:10px">
+          <h4 style="margin:0">גיבוש רעיון</h4>
+          <p class="muted">זיהוי בעיה, אפיון משתמש, הערכת שוק.</p>
+        </div>
+        <div style="background:linear-gradient(180deg,#ffffff,#f8fafc);padding:16px;border-radius:10px">
+          <h4 style="margin:0">בניית מצגות</h4>
+          <p class="muted">Storytelling, מבנה, עיצוב מקצועי.</p>
+        </div>
+        <div style="background:linear-gradient(180deg,#ffffff,#f8fafc);padding:16px;border-radius:10px">
+          <h4 style="margin:0">הקמת חברה</h4>
+          <p class="muted">בחירת שותפים, מבנה מניות, מסמכי יסוד.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing" style="margin-top:26px">
+      <h2>תמחור</h2>
+      <div class="pricing">
+        <div class="price-card">
+          <h3>חבילת בסיס</h3>
+          <div class="muted">4 מפגשים • גיבוש רעיון</div>
+          <div style="margin-top:12px;font-size:22px;font-weight:800">4,500 ₪</div>
+        </div>
+        <div class="price-card">
+          <h3>חבילת פרימיום</h3>
+          <div class="muted">8–10 מפגשים • עד למצגת משקיעים</div>
+          <div style="margin-top:12px;font-size:22px;font-weight:800">9,500 ₪</div>
+        </div>
+        <div class="price-card">
+          <h3>ליווי חודשי</h3>
+          <div class="muted">4 שיחות + זמינות שבועית</div>
+          <div style="margin-top:12px;font-size:22px;font-weight:800">2,200 ₪/חודש</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="about" style="margin-top:28px" class="hero-card">
+      <h2>מי אני</h2>
+      <p class="muted">איתן ברקוביץ' — מנכ"ל חברת סטארטאפ בתחום ניקוי ערבלי בטון (EconSonic), יועץ לחברות טכנולוגיה בענף הבנייה ומומחה לחדשנות וקיימות. מעל 20 שנות ניסיון בניהול פרויקטים, פיתוח מוצר ויצירת שותפויות אסטרטגיות.</p>
+      <div style="margin-top:12px">
+        <strong>גישה:</strong> שילוב של חשיבה מבוססת נתונים ואינטואיציה יזמית; יכולת לזקק רעיונות מורכבים למסרים ברורים ולהוביל עד לתוצאות.
+      </div>
+    </section>
+
+    <section id="contact" style="margin-top:28px" class="hero-card">
+      <h2>צור קשר</h2>
+      <div style="display:grid;grid-template-columns:1fr 360px;gap:24px">
+        <div>
+          <p class="muted">מלא את הטופס לשיחת היכרות חינמית (20 דקות) ונחזור אליך עם הצעה ממוקדת.</p>
+          <form class="lead-form" onsubmit="event.preventDefault(); alert('תודה! פניתך נשלחה — אצור קשר בקרוב.');">
+            <input required placeholder="שם מלא" />
+            <input required placeholder="מייל" type="email" />
+            <input placeholder="טלפון" />
+            <textarea placeholder="תיאור קצר של הרעיון / מה תרצה שנעבוד עליו"></textarea>
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-primary" type="submit">שלח פנייה</button>
+              <a href="mailto:eitan.berkovitch@econsonic.com" class="btn btn-ghost" style="display:inline-flex;align-items:center;padding:12px 16px;">שלח במייל</a>
+            </div>
+          </form>
+        </div>
+        <aside style="background:#f8fafc;padding:18px;border-radius:12px;height:100%">
+          <h4 style="margin-top:0">מפת דרך קצרה</h4>
+          <ol style="padding-left:18px">
+            <li>מפגש היכרות וסריקת מצב</li>
+            <li>גיבוש הצעה ערכית ומודל הכנסות</li>
+            <li>בניית מצגת משקיעים ותקציב</li>
+            <li>הכנה לפגישות משקיעים והשקה</li>
+          </ol>
+          <div style="margin-top:12px" class="muted">או שלח/י הודעה ל־<strong>eitan.berkovitch@econsonic.com</strong></div>
+        </aside>
+      </div>
+    </section>
+
+    <footer>
+      <div>
+        © <strong>איתן ברקוביץ' - Innovation&More</strong>
+        <div class="muted" style="margin-top:6px">ייעוץ לייזמים וסטארטאפים • חדשנות • קיימות • ConTech</div>
+      </div>
+      <div class="contact">
+        <div class="muted">לקביעת פגישה</div>
+        <div style="font-weight:700">eitan.berkovitch@econsonic.com</div>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
