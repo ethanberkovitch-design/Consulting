@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SiteBrain</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f5f5f5; color: #111; min-height: 100vh; }
+
+    .page-center { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .card { background: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); width: 100%; max-width: 420px; }
+    .container { padding: 24px 20px; max-width: 860px; margin: 0 auto; }
+
+    h1 { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+    h2 { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+    .subtitle { color: #666; margin-bottom: 24px; font-size: 14px; }
+
+    input, textarea {
+      display: block; width: 100%; padding: 10px 12px; margin-bottom: 12px;
+      border: 1px solid #ccc; border-radius: 4px; font-size: 14px; outline: none;
+      font-family: inherit;
+    }
+    textarea { resize: vertical; }
+
+    .btn { padding: 10px 20px; background: #111; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600; width: 100%; }
+    .btn:hover { background: #333; }
+    .btn:disabled { background: #888; cursor: not-allowed; }
+    .btn-outline { padding: 8px 16px; background: transparent; color: #111; border: 1px solid #111; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600; }
+
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 8px; }
+    .user-badge { font-size: 13px; color: #555; background: #eee; padding: 4px 10px; border-radius: 20px; }
+
+    .section { margin-bottom: 32px; }
+    .muted { color: #888; font-size: 14px; }
+    .error { color: #c0392b; font-size: 13px; margin-bottom: 10px; }
+
+    .toggle-row { display: flex; gap: 8px; margin-bottom: 14px; }
+    .toggle-btn { padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .toggle-active { background: #111; color: #fff; border: none; }
+    .toggle-inactive { background: #fff; color: #111; border: 1px solid #ccc; }
+
+    .risk-card { padding: 12px 14px; background: #fff; border-left: 4px solid #e74c3c; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .risk-card.medium { border-left-color: #e67e22; }
+    .rec-card { display: flex; align-items: flex-start; gap: 8px; padding: 12px 14px; background: #fff; border: 1px solid #e0e0e0; border-radius: 4px; margin-bottom: 10px; }
+
+    .badge { color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+    .badge.HIGH { background: #c0392b; }
+    .badge.MEDIUM { background: #e67e22; }
+
+    .risk-row { display: flex; justify-content: space-between; align-items: center; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { text-align: left; padding: 8px 10px; background: #f0f0f0; border-bottom: 2px solid #ddd; font-weight: 600; }
+    td { padding: 8px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    .overflow-x { overflow-x: auto; }
+
+    .progress-wrap { display: flex; align-items: center; gap: 6px; }
+    .progress-bar { height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; width: 70px; }
+    .progress-fill { height: 100%; background: #2ecc71; border-radius: 3px; }
+    .progress-label { font-size: 12px; color: #555; min-width: 30px; }
+
+    .example-box { background: #f8f8f8; border: 1px solid #ddd; border-radius: 4px; padding: 10px 12px; margin-bottom: 12px; font-size: 12px; font-family: monospace; white-space: pre; overflow-x: auto; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState } = React;
+
+/* ── Risk Engine ── */
+function analyzeRisks(tasks) {
+  const map = {};
+  tasks.forEach(t => (map[t.id] = t));
+  const risks = [];
+  tasks.forEach(task => {
+    let score = 0;
+    if (task.progress < 0.5 && task.critical) score += 0.6;
+    (task.dependencies || []).forEach(dep => {
+      if (map[dep] && map[dep].progress < 1) score += 0.3;
+    });
+    if (score > 0.5) {
+      risks.push({ task_id: task.id, name: task.name, score: +score.toFixed(2), severity: score > 0.7 ? "HIGH" : "MEDIUM" });
+    }
+  });
+  return risks;
+}
+
+function generateRecs(risks) {
+  return risks.map(r => ({
+    task_id: r.task_id,
+    action: r.severity === "HIGH" ? "Re-sequence + allocate extra crew immediately" : "Monitor closely and adjust schedule",
+    impact: "Reduce delay probability"
+  }));
+}
+
+/* ── Login ── */
+function LoginPage({ onLogin }) {
+  const [email, setEmail] = useState("");
+  return (
+    <div className="page-center">
+      <div className="card">
+        <h1>SiteBrain</h1>
+        <p className="subtitle">Outcome Engine for Construction Projects</p>
+        <input type="email" placeholder="Enter email" value={email} onChange={e => setEmail(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && email.trim() && onLogin(email.trim())} />
+        <button className="btn" onClick={() => email.trim() && onLogin(email.trim())}>Login</button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Dashboard ── */
+const EXAMPLE = JSON.stringify([
+  { id: "1", name: "Foundation", progress: 0.8, critical: true, dependencies: [] },
+  { id: "2", name: "Structure", progress: 0.3, critical: true, dependencies: ["1"] },
+  { id: "3", name: "MEP Installation", progress: 0.2, critical: false, dependencies: ["2"] }
+], null, 2);
+
+function DashboardPage({ user, onAnalyzed }) {
+  const [name, setName] = useState("");
+  const [json, setJson] = useState("");
+  const [error, setError] = useState("");
+
+  const handleAnalyze = () => {
+    setError("");
+    let tasks;
+    try { tasks = JSON.parse(json); } catch { setError("JSON לא תקין — בדוק את הפורמט"); return; }
+    if (!Array.isArray(tasks)) { setError("הקלט חייב להיות מערך JSON"); return; }
+    const risks = analyzeRisks(tasks);
+    const recs = generateRecs(risks);
+    onAnalyzed({ name: name.trim() || "Demo Project", tasks, risks, recommendations: recs });
+  };
+
+  return (
+    <div className="container">
+      <div className="header">
+        <h1>SiteBrain</h1>
+        <span className="user-badge">{user}</span>
+      </div>
+
+      <div className="section">
+        <h2>פרויקט חדש</h2>
+        <input placeholder="שם הפרויקט" value={name} onChange={e => setName(e.target.value)} />
+
+        <label style={{fontSize:13, color:"#555", marginBottom:6, display:"block"}}>הדבק JSON של המשימות:</label>
+        <textarea placeholder={"הדבק JSON כאן..."} value={json} onChange={e => setJson(e.target.value)}
+          style={{height:180, fontFamily:"monospace", fontSize:12}} />
+
+        <details style={{marginBottom:12}}>
+          <summary style={{fontSize:13, color:"#555", cursor:"pointer", marginBottom:6}}>הצג דוגמת JSON</summary>
+          <div className="example-box">{EXAMPLE}</div>
+          <button className="btn-outline" style={{fontSize:12, padding:"6px 12px", width:"auto"}}
+            onClick={() => setJson(EXAMPLE)}>השתמש בדוגמה</button>
+        </details>
+
+        {error && <p className="error">⚠️ {error}</p>}
+        <button className="btn" onClick={handleAnalyze}>נתח פרויקט</button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Project View ── */
+function ProjectPage({ project, onBack }) {
+  const { name, tasks = [], risks = [], recommendations = [] } = project;
+  return (
+    <div className="container">
+      <div className="header">
+        <h1>פרויקט: {name}</h1>
+        <button className="btn-outline" onClick={onBack}>← חזרה</button>
+      </div>
+
+      {/* Tasks */}
+      <div className="section">
+        <h2>משימות ({tasks.length})</h2>
+        <div className="overflow-x">
+          <table>
+            <thead>
+              <tr><th>שם</th><th>התקדמות</th><th>קריטי</th><th>תלויות</th></tr>
+            </thead>
+            <tbody>
+              {tasks.map(t => (
+                <tr key={t.id}>
+                  <td>{t.name}</td>
+                  <td>
+                    <div className="progress-wrap">
+                      <div className="progress-bar"><div className="progress-fill" style={{width:`${Math.round(t.progress*100)}%`}} /></div>
+                      <span className="progress-label">{Math.round(t.progress*100)}%</span>
+                    </div>
+                  </td>
+                  <td>{t.critical ? "✓" : "—"}</td>
+                  <td>{t.dependencies?.length ? t.dependencies.join(", ") : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Risks */}
+      <div className="section">
+        <h2>⚠️ סיכונים</h2>
+        {risks.length === 0 && <p className="muted">לא זוהו סיכונים.</p>}
+        {risks.map((r, i) => (
+          <div key={i} className={`risk-card ${r.severity === "MEDIUM" ? "medium" : ""}`}>
+            <div className="risk-row">
+              <b>{r.name}</b>
+              <span className={`badge ${r.severity}`}>{r.severity}</span>
+            </div>
+            <div style={{marginTop:4, color:"#555", fontSize:14}}>ציון סיכון: {r.score}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Recommendations */}
+      <div className="section">
+        <h2>🧠 המלצות</h2>
+        {recommendations.length === 0 && <p className="muted">אין המלצות.</p>}
+        {recommendations.map((r, i) => (
+          <div key={i} className="rec-card">
+            <span>👉</span>
+            <div>
+              <div style={{fontWeight:600}}>{r.action}</div>
+              <div style={{fontSize:13, color:"#555", marginTop:2}}>השפעה: {r.impact}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── App ── */
+function App() {
+  const [user, setUser] = useState(null);
+  const [project, setProject] = useState(null);
+
+  if (!user) return <LoginPage onLogin={setUser} />;
+  if (!project) return <DashboardPage user={user} onAnalyzed={setProject} />;
+  return <ProjectPage project={project} onBack={() => setProject(null)} />;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
