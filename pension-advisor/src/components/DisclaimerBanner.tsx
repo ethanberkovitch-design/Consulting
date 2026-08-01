@@ -1,0 +1,20 @@
+export function DisclaimerBanner() {
+  return (
+    <div
+      role="note"
+      className="flex gap-3 rounded-lg border px-4 py-3 text-sm leading-relaxed"
+      style={{
+        borderColor: 'var(--status-warning)',
+        background: 'color-mix(in srgb, var(--status-warning) 12%, var(--surface-1))',
+        color: 'var(--text-primary)',
+      }}
+    >
+      <span aria-hidden="true" className="text-lg leading-none">⚠️</span>
+      <p>
+        <strong>כלי הדגמה וניתוח בלבד — אינו ייעוץ פנסיוני.</strong> החישובים כאן מבוססים על נתונים ותשואות
+        לדוגמה, ואינם מהווים המלצה לביצוע פעולה במוצר פנסיוני כלשהו, ייעוץ פנסיוני, שיווק פנסיוני או תחליף
+        לייעוץ אצל בעל רישיון כדין. תשואות עבר אינן מבטיחות תשואה עתידית.
+      </p>
+    </div>
+  );
+}
