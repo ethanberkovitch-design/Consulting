@@ -6,6 +6,7 @@ import { ComparisonTable } from './components/ComparisonTable';
 import { FeeImpactCallout } from './components/FeeImpactCallout';
 import { MarketInsights } from './components/MarketInsights';
 import { AuthPanel } from './components/AuthPanel';
+import { DocumentUpload } from './components/DocumentUpload';
 import { investmentTracks } from './data/investmentTracks';
 import { buildTrackProjection } from './lib/calculations';
 import { formatCurrency } from './lib/format';
@@ -49,6 +50,19 @@ function App() {
 
   const yearsToRetirement = Math.max(0, inputs.retirementAge - inputs.currentAge);
   const headlineBalance = medianProjections[0]?.finalBalance ?? inputs.currentBalance;
+
+  const applyPatch = (patch: Partial<PlannerInputs>) => {
+    setInputs((prev) => {
+      const next = { ...prev };
+      (Object.keys(patch) as (keyof PlannerInputs)[]).forEach((key) => {
+        const value = patch[key];
+        if (value !== undefined) {
+          (next as Record<string, unknown>)[key] = value;
+        }
+      });
+      return next;
+    });
+  };
 
   return (
     <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-7 px-4 py-8 sm:px-6" style={{ color: 'var(--text-primary)' }}>
@@ -101,6 +115,8 @@ function App() {
       </header>
 
       <AuthPanel user={user} onSignedIn={() => load().then((saved) => saved && setInputs(saved))} onSave={() => save(inputs)} saving={saving} savedAt={savedAt} />
+
+      <DocumentUpload user={user} onApply={applyPatch} />
 
       <DisclaimerBanner />
 
