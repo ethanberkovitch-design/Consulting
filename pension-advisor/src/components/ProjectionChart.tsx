@@ -25,7 +25,7 @@ function CustomTooltip({ active, payload, label, projections }: any) {
 
   return (
     <div
-      className="rounded-md border px-3 py-2 text-sm shadow-lg"
+      className="rounded-xl border px-3 py-2 text-sm shadow-lg"
       style={{ background: 'var(--surface-1)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
     >
       <div className="mb-1 font-medium" style={{ color: 'var(--text-secondary)' }}>
@@ -56,8 +56,8 @@ export function ProjectionChart({ projections }: ProjectionChartProps) {
   if (projections.length === 0) {
     return (
       <div
-        className="rounded-xl border p-8 text-center text-sm"
-        style={{ borderColor: 'var(--border)', background: 'var(--surface-1)', color: 'var(--text-muted)' }}
+        className="rounded-3xl border p-8 text-center text-sm"
+        style={{ borderColor: 'var(--border)', background: 'var(--surface-1)', color: 'var(--text-muted)', boxShadow: 'var(--shadow-card)' }}
       >
         בחר/י לפחות מסלול השקעה אחד כדי לראות תחזית צבירה.
       </div>
@@ -67,8 +67,13 @@ export function ProjectionChart({ projections }: ProjectionChartProps) {
   const data = mergeByAge(projections);
 
   return (
-    <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border)', background: 'var(--surface-1)' }}>
-      <h2 className="mb-1 text-lg font-semibold">תחזית צבירה עד גיל הפרישה</h2>
+    <div
+      className="rounded-3xl border p-5"
+      style={{ borderColor: 'var(--border)', background: 'var(--surface-1)', boxShadow: 'var(--shadow-card)' }}
+    >
+      <h2 className="mb-1 flex items-center gap-2 text-lg font-bold">
+        <span aria-hidden="true">📊</span> תחזית צבירה עד גיל הפרישה
+      </h2>
       <p className="mb-4 text-sm" style={{ color: 'var(--text-muted)' }}>
         תרחיש תשואה בינוני, לפי המסלולים שנבחרו
       </p>
