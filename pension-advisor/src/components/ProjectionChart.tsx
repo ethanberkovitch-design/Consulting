@@ -1,3 +1,4 @@
+import { BarChart3 } from 'lucide-react';
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { TrackProjection } from '../types';
 import { formatCurrency } from '../lib/format';
@@ -72,7 +73,8 @@ export function ProjectionChart({ projections }: ProjectionChartProps) {
       style={{ borderColor: 'var(--border)', background: 'var(--surface-1)', boxShadow: 'var(--shadow-card)' }}
     >
       <h2 className="mb-1 flex items-center gap-2 text-lg font-bold">
-        <span aria-hidden="true">📊</span> תחזית צבירה עד גיל הפרישה
+        <BarChart3 className="h-5 w-5" style={{ color: 'var(--brand-1)' }} aria-hidden="true" /> תחזית צבירה עד גיל
+        הפרישה
       </h2>
       <p className="mb-4 text-sm" style={{ color: 'var(--text-muted)' }}>
         תרחיש תשואה בינוני, לפי המסלולים שנבחרו

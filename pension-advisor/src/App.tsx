@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Sprout } from 'lucide-react';
 import { DisclaimerBanner } from './components/DisclaimerBanner';
 import { InputForm } from './components/InputForm';
 import { ProjectionChart } from './components/ProjectionChart';
@@ -69,11 +70,11 @@ function App() {
       <header className="flex flex-col gap-4">
         <div className="flex items-center gap-3">
           <span
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl shadow-lg"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-lg"
             style={{ background: 'var(--brand-gradient)', boxShadow: 'var(--shadow-pop)' }}
             aria-hidden="true"
           >
-            🌱
+            <Sprout className="h-6 w-6 text-white" />
           </span>
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">

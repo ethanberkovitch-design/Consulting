@@ -1,7 +1,9 @@
+import { AlertCircle, AlertTriangle, CheckCircle2, MinusCircle, Satellite, type LucideIcon } from 'lucide-react';
 import type { InvestmentTrack, MarketBenchmark, PlannerInputs } from '../types';
 import { useMarketData } from '../hooks/useMarketData';
 import { formatReportPeriod } from '../lib/marketData';
 import { formatPercent } from '../lib/format';
+import { TrackIcon } from '../lib/trackIcons';
 
 interface MarketInsightsProps {
   inputs: PlannerInputs;
@@ -31,7 +33,8 @@ function FeeFlag({ label, userValue, marketValue }: { label: string; userValue: 
         : tone === 'good'
           ? 'var(--status-good)'
           : 'var(--text-muted)';
-  const toneIcon = tone === 'critical' ? '🔴' : tone === 'warning' ? '🟡' : tone === 'good' ? '🟢' : '⚪';
+  const ToneIcon: LucideIcon =
+    tone === 'critical' ? AlertTriangle : tone === 'warning' ? AlertCircle : tone === 'good' ? CheckCircle2 : MinusCircle;
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl px-3 py-2.5" style={{ background: 'var(--surface-2)' }}>
@@ -45,7 +48,7 @@ function FeeFlag({ label, userValue, marketValue }: { label: string; userValue: 
           className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold"
           style={{ color: toneColor, background: `color-mix(in srgb, ${toneColor} 14%, transparent)` }}
         >
-          <span aria-hidden="true">{toneIcon}</span>
+          <ToneIcon className="h-3.5 w-3.5" aria-hidden="true" />
           {flagLabel}
         </span>
       </span>
@@ -60,7 +63,7 @@ function BenchmarkRow({ track, benchmark }: { track: InvestmentTrack; benchmark:
       style={{ background: 'var(--surface-2)' }}
     >
       <span className="flex items-center gap-2 text-sm font-bold">
-        <span aria-hidden="true">{track.icon}</span>
+        <TrackIcon trackId={track.id} className="h-4 w-4" style={{ color: track.color }} />
         {track.name}
       </span>
       <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
@@ -80,7 +83,8 @@ export function MarketInsights({ inputs, tracks }: MarketInsightsProps) {
       style={{ borderColor: 'var(--border)', background: 'var(--surface-1)', boxShadow: 'var(--shadow-card)' }}
     >
       <h2 className="mb-1 flex items-center gap-2 text-lg font-bold">
-        <span aria-hidden="true">🛰️</span> נתוני שוק אמיתיים — בזמן אמת
+        <Satellite className="h-5 w-5" style={{ color: 'var(--brand-4)' }} aria-hidden="true" /> נתוני שוק אמיתיים —
+        בזמן אמת
       </h2>
       <p className="mb-4 text-sm" style={{ color: 'var(--text-muted)' }}>
         תובנות בלבד, לא המלצה לפעולה. מקור: רשות שוק ההון, ביטוח וחיסכון — data.gov.il

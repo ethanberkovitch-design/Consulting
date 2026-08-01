@@ -1,4 +1,6 @@
+import { Compass, PenLine, Search } from 'lucide-react';
 import type { InvestmentTrack, PlannerInputs } from '../types';
+import { TrackIcon } from '../lib/trackIcons';
 
 interface InputFormProps {
   inputs: PlannerInputs;
@@ -109,7 +111,7 @@ export function InputForm({ inputs, onChange, tracks }: InputFormProps) {
       style={{ borderColor: 'var(--border)', background: 'var(--surface-1)', boxShadow: 'var(--shadow-card)' }}
     >
       <h2 className="flex items-center gap-2 text-lg font-bold">
-        <span aria-hidden="true">✏️</span> הנתונים שלך
+        <PenLine className="h-5 w-5" style={{ color: 'var(--brand-1)' }} aria-hidden="true" /> הנתונים שלך
       </h2>
 
       <div className="grid grid-cols-2 gap-4">
@@ -159,7 +161,7 @@ export function InputForm({ inputs, onChange, tracks }: InputFormProps) {
 
       <div className="flex flex-col gap-2">
         <span className="flex items-center gap-2 text-sm font-bold" style={{ color: 'var(--text-secondary)' }}>
-          <span aria-hidden="true">🧭</span> מסלולי השקעה להשוואה
+          <Compass className="h-4 w-4" aria-hidden="true" /> מסלולי השקעה להשוואה
         </span>
         <div className="flex flex-col gap-2.5">
           {tracks.map((track) => {
@@ -183,11 +185,10 @@ export function InputForm({ inputs, onChange, tracks }: InputFormProps) {
                   className="sr-only"
                 />
                 <span
-                  aria-hidden="true"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg"
-                  style={{ background: `color-mix(in srgb, ${track.color} 18%, var(--surface-1))` }}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                  style={{ background: `color-mix(in srgb, ${track.color} 18%, var(--surface-1))`, color: track.color }}
                 >
-                  {track.icon}
+                  <TrackIcon trackId={track.id} className="h-5 w-5" />
                 </span>
                 <span className="flex flex-col gap-0.5">
                   <span className="flex flex-wrap items-center gap-2 font-bold">
@@ -209,7 +210,7 @@ export function InputForm({ inputs, onChange, tracks }: InputFormProps) {
 
       <div className="flex flex-col gap-3 rounded-2xl p-4" style={{ background: 'var(--surface-2)' }}>
         <span className="flex items-center gap-2 text-sm font-bold" style={{ color: 'var(--text-secondary)' }}>
-          <span aria-hidden="true">🔍</span> המצב הקיים שלך (אופציונלי)
+          <Search className="h-4 w-4" aria-hidden="true" /> המצב הקיים שלך (אופציונלי)
         </span>
         <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
           מלאו את דמי הניהול שאתם משלמים היום כדי להשוות אותם לממוצע האמיתי בשוק

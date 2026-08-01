@@ -2,6 +2,7 @@ import type { InvestmentTrack, PlannerInputs, ReturnScenario } from '../types';
 import { scenarioLabels } from '../data/investmentTracks';
 import { buildTrackProjection } from '../lib/calculations';
 import { formatCurrency, formatPercent } from '../lib/format';
+import { TrackIcon } from '../lib/trackIcons';
 
 interface ComparisonTableProps {
   inputs: PlannerInputs;
@@ -41,11 +42,10 @@ export function ComparisonTable({ inputs, tracks }: ComparisonTableProps) {
               <td className="px-4 py-3.5 font-bold">
                 <span className="flex items-center gap-2">
                   <span
-                    aria-hidden="true"
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm"
-                    style={{ background: `color-mix(in srgb, ${track.color} 18%, var(--surface-1))` }}
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+                    style={{ background: `color-mix(in srgb, ${track.color} 18%, var(--surface-1))`, color: track.color }}
                   >
-                    {track.icon}
+                    <TrackIcon trackId={track.id} className="h-4 w-4" />
                   </span>
                   {track.name}
                 </span>
