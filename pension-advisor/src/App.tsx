@@ -1,13 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DisclaimerBanner } from './components/DisclaimerBanner';
 import { InputForm } from './components/InputForm';
 import { ProjectionChart } from './components/ProjectionChart';
 import { ComparisonTable } from './components/ComparisonTable';
 import { FeeImpactCallout } from './components/FeeImpactCallout';
 import { MarketInsights } from './components/MarketInsights';
+import { AuthPanel } from './components/AuthPanel';
 import { investmentTracks } from './data/investmentTracks';
 import { buildTrackProjection } from './lib/calculations';
 import { formatCurrency } from './lib/format';
+import { useAuth } from './hooks/useAuth';
+import { useProfile } from './hooks/useProfile';
 import type { PlannerInputs } from './types';
 
 const defaultInputs: PlannerInputs = {
@@ -23,6 +26,16 @@ const defaultInputs: PlannerInputs = {
 
 function App() {
   const [inputs, setInputs] = useState<PlannerInputs>(defaultInputs);
+  const { user } = useAuth();
+  const { load, save, saving, savedAt } = useProfile(user?.id ?? null);
+
+  useEffect(() => {
+    if (!user) return;
+    load().then((saved) => {
+      if (saved) setInputs(saved);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const selectedTracks = useMemo(
     () => investmentTracks.filter((t) => inputs.selectedTrackIds.includes(t.id)),
@@ -86,6 +99,8 @@ function App() {
           </div>
         </div>
       </header>
+
+      <AuthPanel user={user} onSignedIn={() => load().then((saved) => saved && setInputs(saved))} onSave={() => save(inputs)} saving={saving} savedAt={savedAt} />
 
       <DisclaimerBanner />
 
