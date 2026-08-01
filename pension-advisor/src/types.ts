@@ -22,6 +22,9 @@ export interface PlannerInputs {
   monthlySalary: number;
   contributionRate: number; // אחוז הפקדה כולל מהשכר, לדוגמה 0.185
   selectedTrackIds: string[];
+  /** דמי הניהול שהמשתמש מדווח שהוא בפועל משלם היום, לצורך השוואה לשוק */
+  actualDepositFee: number | null;
+  actualBalanceFee: number | null;
 }
 
 export interface ProjectionPoint {
@@ -35,4 +38,19 @@ export interface TrackProjection {
   scenario: ReturnScenario;
   points: ProjectionPoint[];
   finalBalance: number;
+}
+
+export interface MarketBenchmark {
+  trackId: string;
+  fundCount: number;
+  avgDepositFee: number;
+  avgBalanceFee: number;
+  avgYield5yr: number;
+  avgStockExposure: number;
+}
+
+export interface MarketDataResult {
+  reportPeriod: string;
+  fetchedAt: string;
+  benchmarks: MarketBenchmark[];
 }

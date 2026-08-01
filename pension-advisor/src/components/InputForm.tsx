@@ -53,6 +53,46 @@ function NumberField({
   );
 }
 
+function OptionalPercentField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: number | null;
+  onChange: (value: number | null) => void;
+  placeholder?: string;
+}) {
+  return (
+    <label className="flex flex-col gap-1.5 text-sm">
+      <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>
+        {label}
+      </span>
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          value={value === null ? '' : Math.round(value * 1000) / 10}
+          placeholder={placeholder}
+          min={0}
+          max={10}
+          step={0.05}
+          onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value) / 100)}
+          className="w-full rounded-xl border-2 px-3 py-2.5 text-base outline-none transition-colors focus:border-[var(--brand-1)]"
+          style={{
+            borderColor: 'var(--border)',
+            background: 'var(--surface-2)',
+            color: 'var(--text-primary)',
+          }}
+        />
+        <span className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
+          %
+        </span>
+      </div>
+    </label>
+  );
+}
+
 export function InputForm({ inputs, onChange, tracks }: InputFormProps) {
   const update = (patch: Partial<PlannerInputs>) => onChange({ ...inputs, ...patch });
 
@@ -164,6 +204,29 @@ export function InputForm({ inputs, onChange, tracks }: InputFormProps) {
               </label>
             );
           })}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-2xl p-4" style={{ background: 'var(--surface-2)' }}>
+        <span className="flex items-center gap-2 text-sm font-bold" style={{ color: 'var(--text-secondary)' }}>
+          <span aria-hidden="true">🔍</span> המצב הקיים שלך (אופציונלי)
+        </span>
+        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+          מלאו את דמי הניהול שאתם משלמים היום כדי להשוות אותם לממוצע האמיתי בשוק
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <OptionalPercentField
+            label="דמי ניהול מהפקדה"
+            value={inputs.actualDepositFee}
+            placeholder="למשל 2.0"
+            onChange={(v) => update({ actualDepositFee: v })}
+          />
+          <OptionalPercentField
+            label="דמי ניהול מצבירה"
+            value={inputs.actualBalanceFee}
+            placeholder="למשל 0.3"
+            onChange={(v) => update({ actualBalanceFee: v })}
+          />
         </div>
       </div>
     </div>

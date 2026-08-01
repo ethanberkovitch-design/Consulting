@@ -4,6 +4,7 @@ import { InputForm } from './components/InputForm';
 import { ProjectionChart } from './components/ProjectionChart';
 import { ComparisonTable } from './components/ComparisonTable';
 import { FeeImpactCallout } from './components/FeeImpactCallout';
+import { MarketInsights } from './components/MarketInsights';
 import { investmentTracks } from './data/investmentTracks';
 import { buildTrackProjection } from './lib/calculations';
 import { formatCurrency } from './lib/format';
@@ -16,6 +17,8 @@ const defaultInputs: PlannerInputs = {
   monthlySalary: 14000,
   contributionRate: 0.185,
   selectedTrackIds: ['general', 'stocks'],
+  actualDepositFee: null,
+  actualBalanceFee: null,
 };
 
 function App() {
@@ -93,6 +96,7 @@ function App() {
           <ProjectionChart projections={medianProjections} />
           <ComparisonTable inputs={inputs} tracks={selectedTracks} />
           <FeeImpactCallout inputs={inputs} tracks={selectedTracks} />
+          <MarketInsights inputs={inputs} tracks={selectedTracks} />
         </div>
       </div>
 
