@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { User } from '@supabase/supabase-js';
+import { CheckCircle2, Lock } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 interface AuthPanelProps {
@@ -49,7 +50,7 @@ export function AuthPanel({ user, onSignedIn, onSave, saving, savedAt }: AuthPan
         style={{ borderColor: 'var(--border)', background: 'var(--surface-1)', boxShadow: 'var(--shadow-card)' }}
       >
         <span className="flex items-center gap-2 text-sm">
-          <span aria-hidden="true">🔐</span>
+          <Lock className="h-4 w-4" style={{ color: 'var(--brand-1)' }} aria-hidden="true" />
           מחובר/ת כ-<strong>{user.email}</strong>
         </span>
         <div className="flex items-center gap-2">
@@ -63,8 +64,8 @@ export function AuthPanel({ user, onSignedIn, onSave, saving, savedAt }: AuthPan
             {saving ? 'שומר...' : 'שמור את הנתונים שלי'}
           </button>
           {savedAt && (
-            <span className="text-xs" style={{ color: 'var(--status-good)' }}>
-              נשמר ✓
+            <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--status-good)' }}>
+              <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> נשמר
             </span>
           )}
           <button
@@ -87,7 +88,8 @@ export function AuthPanel({ user, onSignedIn, onSave, saving, savedAt }: AuthPan
     >
       <div className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-2 text-sm font-bold">
-          <span aria-hidden="true">🔐</span> {mode === 'signIn' ? 'התחברות' : 'הרשמה'}
+          <Lock className="h-4 w-4" style={{ color: 'var(--brand-1)' }} aria-hidden="true" />{' '}
+          {mode === 'signIn' ? 'התחברות' : 'הרשמה'}
         </span>
         <button
           type="button"

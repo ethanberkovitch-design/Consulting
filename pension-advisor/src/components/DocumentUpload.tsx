@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { User } from '@supabase/supabase-js';
+import { FileText, UploadCloud } from 'lucide-react';
 import { useDocuments } from '../hooks/useDocuments';
 import { extractTextFromPdf, parsePensionStatement, type ExtractedStatementData } from '../lib/pdfParser';
 import { formatCurrency, formatPercent } from '../lib/format';
@@ -65,7 +66,8 @@ export function DocumentUpload({ user, onApply }: DocumentUploadProps) {
       style={{ borderColor: 'var(--border)', background: 'var(--surface-1)', boxShadow: 'var(--shadow-card)' }}
     >
       <h2 className="mb-1 flex items-center gap-2 text-lg font-bold">
-        <span aria-hidden="true">📄</span> העלאת תדפיס שנתי (PDF)
+        <FileText className="h-5 w-5" style={{ color: 'var(--brand-2)' }} aria-hidden="true" /> העלאת תדפיס שנתי
+        (PDF)
       </h2>
       <p className="mb-4 text-sm" style={{ color: 'var(--text-muted)' }}>
         נחלץ אוטומטית יתרה, דמי ניהול ומסלול מתוך המסמך שלכם — אבל תמיד תבדקו ותתקנו לפני שמירה. הקובץ
@@ -76,9 +78,7 @@ export function DocumentUpload({ user, onApply }: DocumentUploadProps) {
         className="mb-3 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-6 text-sm"
         style={{ borderColor: 'var(--brand-1)', background: 'var(--surface-2)', color: 'var(--text-secondary)' }}
       >
-        <span aria-hidden="true" className="text-2xl">
-          ⬆️
-        </span>
+        <UploadCloud className="h-7 w-7" style={{ color: 'var(--brand-1)' }} aria-hidden="true" />
         {file ? file.name : 'לחצו לבחירת קובץ PDF'}
         <input type="file" accept="application/pdf" onChange={handleFileChange} className="hidden" />
       </label>

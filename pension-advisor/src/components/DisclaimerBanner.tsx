@@ -1,3 +1,5 @@
+import { AlertTriangle } from 'lucide-react';
+
 export function DisclaimerBanner() {
   return (
     <div
@@ -10,7 +12,11 @@ export function DisclaimerBanner() {
         boxShadow: 'var(--shadow-card)',
       }}
     >
-      <span aria-hidden="true" className="text-lg leading-none">⚠️</span>
+      <AlertTriangle
+        className="h-5 w-5 shrink-0"
+        style={{ color: 'var(--status-warning)' }}
+        aria-hidden="true"
+      />
       <p>
         <strong>כלי הדגמה וניתוח בלבד — אינו ייעוץ פנסיוני.</strong> החישובים כאן מבוססים על נתונים ותשואות
         לדוגמה, ואינם מהווים המלצה לביצוע פעולה במוצר פנסיוני כלשהו, ייעוץ פנסיוני, שיווק פנסיוני או תחליף

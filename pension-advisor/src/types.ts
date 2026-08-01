@@ -6,7 +6,6 @@ export interface InvestmentTrack {
   description: string;
   riskLevel: 'נמוך מאוד' | 'נמוך' | 'בינוני' | 'בינוני-גבוה' | 'גבוה';
   color: string;
-  icon: string;
   /** דמי ניהול מהפקדה, כאחוז מכל הפקדה חודשית (לדוגמה 0.01 = 1%) */
   feeFromDeposit: number;
   /** דמי ניהול מצבירה, כאחוז שנתי מהיתרה (לדוגמה 0.003 = 0.3%) */

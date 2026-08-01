@@ -1,6 +1,8 @@
+import { Wallet } from 'lucide-react';
 import type { InvestmentTrack, PlannerInputs } from '../types';
 import { computeFeeImpact } from '../lib/calculations';
 import { formatCurrency } from '../lib/format';
+import { TrackIcon } from '../lib/trackIcons';
 
 interface FeeImpactCalloutProps {
   inputs: PlannerInputs;
@@ -16,7 +18,8 @@ export function FeeImpactCallout({ inputs, tracks }: FeeImpactCalloutProps) {
       style={{ borderColor: 'var(--border)', background: 'var(--surface-1)', boxShadow: 'var(--shadow-card)' }}
     >
       <h2 className="mb-1 flex items-center gap-2 text-lg font-bold">
-        <span aria-hidden="true">💸</span> כמה דמי הניהול "עולים" לך עד הפרישה?
+        <Wallet className="h-5 w-5" style={{ color: 'var(--status-critical)' }} aria-hidden="true" /> כמה דמי הניהול
+        "עולים" לך עד הפרישה?
       </h2>
       <p className="mb-4 text-sm" style={{ color: 'var(--text-muted)' }}>
         ההפרש בין הצבירה הצפויה בתרחיש התשואה הבינוני, לבין צבירה היפותטית ללא דמי ניהול כלל
@@ -32,11 +35,10 @@ export function FeeImpactCallout({ inputs, tracks }: FeeImpactCalloutProps) {
             >
               <span className="flex items-center gap-2 text-sm font-bold">
                 <span
-                  aria-hidden="true"
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-sm"
-                  style={{ background: `color-mix(in srgb, ${track.color} 18%, var(--surface-1))` }}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"
+                  style={{ background: `color-mix(in srgb, ${track.color} 18%, var(--surface-1))`, color: track.color }}
                 >
-                  {track.icon}
+                  <TrackIcon trackId={track.id} className="h-4 w-4" />
                 </span>
                 {track.name}
               </span>
