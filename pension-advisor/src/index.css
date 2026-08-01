@@ -1,15 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  --surface-1: #fcfcfb;
-  --page: #f9f9f7;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #898781;
-  --gridline: #e1e0d9;
-  --baseline: #c3c2b7;
-  --border: rgba(11, 11, 11, 0.1);
+  --surface-1: #ffffff;
+  --surface-2: #f6f4ff;
+  --page: #faf9ff;
+  --text-primary: #150f2e;
+  --text-secondary: #5b5477;
+  --text-muted: #8b849f;
+  --gridline: #e9e5fb;
+  --baseline: #cdc6ec;
+  --border: rgba(21, 15, 46, 0.08);
 
+  --brand-1: #7c3aed; /* violet */
+  --brand-2: #ec4899; /* pink */
+  --brand-3: #fb923c; /* orange */
+  --brand-4: #06b6d4; /* cyan */
+  --brand-gradient: linear-gradient(120deg, var(--brand-1) 0%, var(--brand-2) 55%, var(--brand-3) 100%);
+  --brand-gradient-soft: linear-gradient(120deg, color-mix(in srgb, var(--brand-1) 12%, transparent), color-mix(in srgb, var(--brand-2) 12%, transparent) 55%, color-mix(in srgb, var(--brand-3) 12%, transparent) 100%);
+  --shadow-card: 0 2px 8px rgba(76, 29, 149, 0.06), 0 12px 32px rgba(76, 29, 149, 0.1);
+  --shadow-pop: 0 8px 24px rgba(236, 72, 153, 0.25);
+
+  /* chart series — validated categorical palette, unrelated to brand chrome */
   --series-1: #2a78d6; /* מנייתי */
   --series-2: #eb6834; /* כללי */
   --series-3: #1baf7a; /* אג"חי */
@@ -21,7 +32,7 @@
   --status-critical: #d03b3b;
 
   color-scheme: light;
-  font: 16px/1.5 system-ui, 'Segoe UI', Roboto, sans-serif;
+  font: 16px/1.5 'Rubik', system-ui, 'Segoe UI', Roboto, sans-serif;
   color: var(--text-primary);
   background: var(--page);
 }
@@ -29,14 +40,21 @@
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme='light'])) {
     color-scheme: dark;
-    --surface-1: #1a1a19;
-    --page: #0d0d0d;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --text-muted: #898781;
-    --gridline: #2c2c2a;
-    --baseline: #383835;
+    --surface-1: #1c1730;
+    --surface-2: #251e3d;
+    --page: #130f24;
+    --text-primary: #f7f5ff;
+    --text-secondary: #c3bcdd;
+    --text-muted: #948dae;
+    --gridline: #322a4d;
+    --baseline: #453b68;
     --border: rgba(255, 255, 255, 0.1);
+
+    --brand-1: #a78bfa;
+    --brand-2: #f472b6;
+    --brand-3: #fb923c;
+    --brand-4: #22d3ee;
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.25), 0 12px 32px rgba(0, 0, 0, 0.35);
 
     --series-1: #3987e5;
     --series-2: #d95926;
@@ -48,14 +66,21 @@
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --surface-1: #1a1a19;
-  --page: #0d0d0d;
-  --text-primary: #ffffff;
-  --text-secondary: #c3c2b7;
-  --text-muted: #898781;
-  --gridline: #2c2c2a;
-  --baseline: #383835;
+  --surface-1: #1c1730;
+  --surface-2: #251e3d;
+  --page: #130f24;
+  --text-primary: #f7f5ff;
+  --text-secondary: #c3bcdd;
+  --text-muted: #948dae;
+  --gridline: #322a4d;
+  --baseline: #453b68;
   --border: rgba(255, 255, 255, 0.1);
+
+  --brand-1: #a78bfa;
+  --brand-2: #f472b6;
+  --brand-3: #fb923c;
+  --brand-4: #22d3ee;
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.25), 0 12px 32px rgba(0, 0, 0, 0.35);
 
   --series-1: #3987e5;
   --series-2: #d95926;
@@ -70,9 +95,21 @@
 
 body {
   margin: 0;
+  background:
+    radial-gradient(1200px 600px at 15% -10%, color-mix(in srgb, var(--brand-1) 16%, transparent), transparent),
+    radial-gradient(1000px 500px at 110% 10%, color-mix(in srgb, var(--brand-3) 14%, transparent), transparent),
+    var(--page);
+  min-height: 100vh;
 }
 
 ::selection {
-  background: var(--series-1);
+  background: var(--brand-2);
   color: white;
+}
+
+.brand-text {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }

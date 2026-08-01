@@ -24,8 +24,10 @@ function NumberField({
   suffix?: string;
 }) {
   return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span style={{ color: 'var(--text-secondary)' }}>{label}</span>
+    <label className="flex flex-col gap-1.5 text-sm">
+      <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>
+        {label}
+      </span>
       <div className="flex items-center gap-2">
         <input
           type="number"
@@ -34,14 +36,18 @@ function NumberField({
           max={max}
           step={step}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full rounded-md border px-3 py-2 text-base outline-none focus:ring-2"
+          className="w-full rounded-xl border-2 px-3 py-2.5 text-base outline-none transition-colors focus:border-[var(--brand-1)]"
           style={{
             borderColor: 'var(--border)',
-            background: 'var(--surface-1)',
+            background: 'var(--surface-2)',
             color: 'var(--text-primary)',
           }}
         />
-        {suffix && <span style={{ color: 'var(--text-muted)' }}>{suffix}</span>}
+        {suffix && (
+          <span className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
+            {suffix}
+          </span>
+        )}
       </div>
     </label>
   );
@@ -59,10 +65,12 @@ export function InputForm({ inputs, onChange, tracks }: InputFormProps) {
 
   return (
     <div
-      className="flex flex-col gap-5 rounded-xl border p-5"
-      style={{ borderColor: 'var(--border)', background: 'var(--surface-1)' }}
+      className="flex flex-col gap-5 rounded-3xl border p-5"
+      style={{ borderColor: 'var(--border)', background: 'var(--surface-1)', boxShadow: 'var(--shadow-card)' }}
     >
-      <h2 className="text-lg font-semibold">הנתונים שלך</h2>
+      <h2 className="flex items-center gap-2 text-lg font-bold">
+        <span aria-hidden="true">✏️</span> הנתונים שלך
+      </h2>
 
       <div className="grid grid-cols-2 gap-4">
         <NumberField
@@ -110,41 +118,52 @@ export function InputForm({ inputs, onChange, tracks }: InputFormProps) {
       />
 
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-          מסלולי השקעה להשוואה
+        <span className="flex items-center gap-2 text-sm font-bold" style={{ color: 'var(--text-secondary)' }}>
+          <span aria-hidden="true">🧭</span> מסלולי השקעה להשוואה
         </span>
-        <div className="flex flex-col gap-2">
-          {tracks.map((track) => (
-            <label
-              key={track.id}
-              className="flex cursor-pointer items-start gap-2 rounded-md border px-3 py-2 text-sm"
-              style={{ borderColor: 'var(--border)' }}
-            >
-              <input
-                type="checkbox"
-                checked={inputs.selectedTrackIds.includes(track.id)}
-                onChange={() => toggleTrack(track.id)}
-                className="mt-1"
-              />
-              <span className="flex flex-col gap-0.5">
-                <span className="flex items-center gap-2 font-medium">
-                  <span
-                    aria-hidden="true"
-                    className="inline-block h-2.5 w-2.5 rounded-full"
-                    style={{ background: track.color }}
-                  />
-                  {track.name}
-                  <span
-                    className="rounded-full px-2 py-0.5 text-xs"
-                    style={{ background: 'var(--page)', color: 'var(--text-muted)' }}
-                  >
-                    סיכון {track.riskLevel}
-                  </span>
+        <div className="flex flex-col gap-2.5">
+          {tracks.map((track) => {
+            const selected = inputs.selectedTrackIds.includes(track.id);
+            return (
+              <label
+                key={track.id}
+                className="flex cursor-pointer items-start gap-3 rounded-2xl border-2 px-3.5 py-3 text-sm transition-all"
+                style={{
+                  borderColor: selected ? track.color : 'var(--border)',
+                  background: selected
+                    ? `color-mix(in srgb, ${track.color} 10%, var(--surface-1))`
+                    : 'var(--surface-2)',
+                  boxShadow: selected ? `0 4px 14px color-mix(in srgb, ${track.color} 25%, transparent)` : 'none',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={selected}
+                  onChange={() => toggleTrack(track.id)}
+                  className="sr-only"
+                />
+                <span
+                  aria-hidden="true"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg"
+                  style={{ background: `color-mix(in srgb, ${track.color} 18%, var(--surface-1))` }}
+                >
+                  {track.icon}
                 </span>
-                <span style={{ color: 'var(--text-muted)' }}>{track.description}</span>
-              </span>
-            </label>
-          ))}
+                <span className="flex flex-col gap-0.5">
+                  <span className="flex flex-wrap items-center gap-2 font-bold">
+                    {track.name}
+                    <span
+                      className="rounded-full px-2 py-0.5 text-xs font-medium"
+                      style={{ background: 'var(--page)', color: 'var(--text-muted)' }}
+                    >
+                      סיכון {track.riskLevel}
+                    </span>
+                  </span>
+                  <span style={{ color: 'var(--text-muted)' }}>{track.description}</span>
+                </span>
+              </label>
+            );
+          })}
         </div>
       </div>
     </div>

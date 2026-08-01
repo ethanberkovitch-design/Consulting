@@ -2,11 +2,12 @@ export function DisclaimerBanner() {
   return (
     <div
       role="note"
-      className="flex gap-3 rounded-lg border px-4 py-3 text-sm leading-relaxed"
+      className="flex gap-3 rounded-2xl border px-4 py-3 text-sm leading-relaxed"
       style={{
-        borderColor: 'var(--status-warning)',
-        background: 'color-mix(in srgb, var(--status-warning) 12%, var(--surface-1))',
+        borderColor: 'color-mix(in srgb, var(--status-warning) 55%, transparent)',
+        background: 'color-mix(in srgb, var(--status-warning) 14%, var(--surface-1))',
         color: 'var(--text-primary)',
+        boxShadow: 'var(--shadow-card)',
       }}
     >
       <span aria-hidden="true" className="text-lg leading-none">⚠️</span>
