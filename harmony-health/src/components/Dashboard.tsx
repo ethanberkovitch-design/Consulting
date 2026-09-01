@@ -6,7 +6,7 @@ import { FOODS } from '../data/foods.ts'
 import { todayIso } from '../lib/storage.ts'
 import { PILLARS } from '../lib/methodology.ts'
 import { projectedWeeksToGoal, tdee } from '../lib/calculations.ts'
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts'
+import { MiniChart } from './MiniChart.tsx'
 
 interface Props {
   data: ReturnType<typeof useAppData>
@@ -46,7 +46,7 @@ export function Dashboard({ data, onNavigate }: Props) {
     return [...data.weights].sort((a, b) => a.date.localeCompare(b.date)).slice(-14)
   }, [data.weights])
 
-  const chartData = recentWeights.map(w => ({ date: w.date.slice(5), weight: w.weightKg }))
+  const chartData = recentWeights.map(w => ({ label: w.date.slice(5), value: w.weightKg }))
 
   const totalLost = profile.startWeightKg - profile.currentWeightKg
   const goalDistance = profile.currentWeightKg - profile.goalWeightKg
@@ -143,32 +143,7 @@ export function Dashboard({ data, onNavigate }: Props) {
             </button>
           </div>
           {chartData.length > 1 ? (
-            <div style={{ height: 200 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 10, left: 0, right: 0, bottom: 0 }}>
-                  <XAxis dataKey="date" tick={{ fill: '#8B95A5', fontSize: 12 }} tickLine={false} axisLine={false} />
-                  <YAxis
-                    domain={['dataMin - 0.5', 'dataMax + 0.5']}
-                    tick={{ fill: '#8B95A5', fontSize: 12 }}
-                    tickLine={false}
-                    axisLine={false}
-                    width={35}
-                  />
-                  <Tooltip
-                    contentStyle={{ background: '#FFF', border: '1px solid rgba(11,31,58,0.1)', borderRadius: 12 }}
-                    labelStyle={{ color: '#0B1F3A' }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="weight"
-                    stroke="#C9A961"
-                    strokeWidth={3}
-                    dot={{ r: 4, fill: '#C9A961', strokeWidth: 0 }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            <MiniChart data={chartData} height={200} color="#C9A961" />
           ) : (
             <div className="p-6 text-center rounded-xl" style={{ background: 'var(--surface-2)' }}>
               <div className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>

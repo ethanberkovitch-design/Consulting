@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { Plus, TrendingDown, TrendingUp, Minus, Ruler } from 'lucide-react'
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine } from 'recharts'
 import type { useAppData } from '../hooks/useAppData.ts'
 import { todayIso } from '../lib/storage.ts'
 import { bmi, bmiCategory } from '../lib/calculations.ts'
+import { MiniChart } from './MiniChart.tsx'
 
 interface Props { data: ReturnType<typeof useAppData> }
 
@@ -19,7 +19,11 @@ export function WeightTracker({ data }: Props) {
     () => [...data.weights].sort((a, b) => a.date.localeCompare(b.date)),
     [data.weights],
   )
-  const chartData = sorted.map(w => ({ date: w.date.slice(5), weight: w.weightKg, waist: w.waistCm }))
+  const chartData = sorted.map(w => ({
+    label: w.date.slice(5),
+    value: w.weightKg,
+    secondary: w.waistCm,
+  }))
 
   const weeklyAvg = useMemo(() => {
     if (sorted.length < 2) return null
@@ -123,46 +127,15 @@ export function WeightTracker({ data }: Props) {
           <h2>ההתקדמות שלך</h2>
         </div>
         {chartData.length > 1 ? (
-          <div style={{ height: 300 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid stroke="rgba(11,31,58,0.06)" strokeDasharray="3 3" />
-                <XAxis dataKey="date" tick={{ fill: '#8B95A5', fontSize: 12 }} tickLine={false} axisLine={false} />
-                <YAxis
-                  domain={['dataMin - 1', 'dataMax + 1']}
-                  tick={{ fill: '#8B95A5', fontSize: 12 }}
-                  tickLine={false}
-                  axisLine={false}
-                  width={40}
-                />
-                <Tooltip
-                  contentStyle={{ background: '#FFF', border: '1px solid rgba(11,31,58,0.1)', borderRadius: 12 }}
-                  labelStyle={{ color: '#0B1F3A' }}
-                />
-                <ReferenceLine y={profile.goalWeightKg} stroke="#C9A961" strokeDasharray="4 4" label={{ value: `יעד ${profile.goalWeightKg}`, fill: '#A88A45', fontSize: 11, position: 'insideLeft' }} />
-                <Line
-                  type="monotone"
-                  dataKey="weight"
-                  stroke="#0B1F3A"
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: '#C9A961', strokeWidth: 0 }}
-                  activeDot={{ r: 6 }}
-                  name="משקל"
-                />
-                {chartData.some(d => d.waist !== undefined) && (
-                  <Line
-                    type="monotone"
-                    dataKey="waist"
-                    stroke="#7B9E89"
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    dot={false}
-                    name="מותן (ס״מ)"
-                  />
-                )}
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          <MiniChart
+            data={chartData}
+            height={300}
+            color="#0B1F3A"
+            secondaryColor="#7B9E89"
+            showGrid
+            showAxis
+            referenceLine={{ value: profile.goalWeightKg, label: `יעד ${profile.goalWeightKg}`, color: '#C9A961' }}
+          />
         ) : (
           <div className="text-center py-10">
             <div className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
