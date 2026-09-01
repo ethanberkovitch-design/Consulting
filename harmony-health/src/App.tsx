@@ -10,6 +10,8 @@ import {
   User as UserIcon,
   Menu,
   X,
+  Wind,
+  Lightbulb,
 } from 'lucide-react'
 import { useAppData } from './hooks/useAppData.ts'
 import type { ScreenKey } from './types.ts'
@@ -20,6 +22,8 @@ import { MealPlan } from './components/MealPlan.tsx'
 import { WeightTracker } from './components/WeightTracker.tsx'
 import { Workouts } from './components/Workouts.tsx'
 import { Habits } from './components/Habits.tsx'
+import { Mindfulness } from './components/Mindfulness.tsx'
+import { Tips } from './components/Tips.tsx'
 import { MethodPage } from './components/MethodPage.tsx'
 import { ProfilePage } from './components/ProfilePage.tsx'
 
@@ -27,6 +31,7 @@ interface NavEntry {
   key: ScreenKey
   label: string
   Icon: typeof Home
+  hiddenIfNoExercise?: boolean
 }
 
 const NAV: NavEntry[] = [
@@ -34,8 +39,10 @@ const NAV: NavEntry[] = [
   { key: 'diary', label: 'יומן אכילה', Icon: UtensilsCrossed },
   { key: 'plan', label: 'תפריט שבועי', Icon: Calendar },
   { key: 'weight', label: 'משקל ומדדים', Icon: TrendingUp },
-  { key: 'workouts', label: 'אימונים', Icon: Dumbbell },
+  { key: 'workouts', label: 'אימונים', Icon: Dumbbell, hiddenIfNoExercise: true },
+  { key: 'mindfulness', label: 'מיינדפולנס', Icon: Wind },
   { key: 'habits', label: 'הרגלים ורווחה', Icon: Heart },
+  { key: 'tips', label: 'טיפים והגיגים', Icon: Lightbulb },
   { key: 'method', label: 'השיטה', Icon: Sparkles },
   { key: 'profile', label: 'פרופיל', Icon: UserIcon },
 ]
@@ -49,14 +56,16 @@ export default function App() {
     return <Onboarding onComplete={data.setProfile} />
   }
 
+  const showWorkouts = data.profile.exercise !== 'no'
+  const nav = NAV.filter(n => !(n.hiddenIfNoExercise && !showWorkouts))
+
   return (
     <div className="min-h-screen flex" dir="rtl">
-      {/* Sidebar */}
       <aside
-        className={`${mobileOpen ? 'block' : 'hidden'} md:block fixed md:sticky top-0 right-0 h-screen w-72 border-l bg-white z-40`}
+        className={`${mobileOpen ? 'block' : 'hidden'} md:block fixed md:sticky top-0 right-0 h-screen w-72 border-l bg-white z-40 overflow-y-auto`}
         style={{ borderColor: 'var(--border)' }}
       >
-        <div className="p-6 flex flex-col h-full">
+        <div className="p-6 flex flex-col min-h-full">
           <div className="flex items-center justify-between mb-8">
             <div>
               <div className="text-xs tracking-widest font-bold uppercase" style={{ color: 'var(--gold-deep)', letterSpacing: '0.2em' }}>
@@ -78,7 +87,7 @@ export default function App() {
           </div>
 
           <nav className="flex flex-col gap-1 flex-1">
-            {NAV.map(({ key, label, Icon }) => (
+            {nav.map(({ key, label, Icon }) => (
               <button
                 key={key}
                 type="button"
@@ -113,9 +122,7 @@ export default function App() {
         />
       )}
 
-      {/* Main area */}
       <main className="flex-1 min-w-0">
-        {/* Mobile header */}
         <div className="md:hidden flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--border)', background: 'var(--surface-1)' }}>
           <div>
             <div className="text-xs tracking-widest font-bold" style={{ color: 'var(--gold-deep)', letterSpacing: '0.2em' }}>Harmony</div>
@@ -136,12 +143,27 @@ export default function App() {
           {screen === 'diary' && <FoodDiary data={data} />}
           {screen === 'plan' && <MealPlan data={data} />}
           {screen === 'weight' && <WeightTracker data={data} />}
-          {screen === 'workouts' && <Workouts data={data} />}
+          {screen === 'workouts' && showWorkouts && <Workouts data={data} />}
+          {screen === 'workouts' && !showWorkouts && <NoExerciseNotice />}
+          {screen === 'mindfulness' && <Mindfulness data={data} />}
           {screen === 'habits' && <Habits data={data} />}
+          {screen === 'tips' && <Tips data={data} />}
           {screen === 'method' && <MethodPage />}
           {screen === 'profile' && <ProfilePage data={data} />}
         </div>
       </main>
+    </div>
+  )
+}
+
+function NoExerciseNotice() {
+  return (
+    <div className="card text-center py-10">
+      <div className="text-4xl mb-3">🌿</div>
+      <h2 className="text-2xl mb-2">בחרת בשקט מהאימונים</h2>
+      <p className="text-sm max-w-md mx-auto" style={{ color: 'var(--text-secondary)' }}>
+        אין בעיה — התוכנית שלך עדיין תעבוד. אם תרצה להוסיף פעילות בעתיד, שנה את ההעדפה בפרופיל.
+      </p>
     </div>
   )
 }

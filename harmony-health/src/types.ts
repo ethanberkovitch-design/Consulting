@@ -19,6 +19,10 @@ export type DietStyle =
 
 export type FastingWindow = 'none' | '12_12' | '14_10' | '16_8'
 
+// Whether the user actually wants a workout program at all. Some users can't
+// or don't want to exercise; the app should still support them (NEAT-first).
+export type ExerciseParticipation = 'yes' | 'limited' | 'no'
+
 export interface UserProfile {
   name: string
   age: number
@@ -31,6 +35,8 @@ export interface UserProfile {
   goal: Goal
   dietStyle: DietStyle
   fasting: FastingWindow
+  exercise: ExerciseParticipation
+  waterTracking: boolean
   allergies: string[]
   dislikes: string[]
   medicalNotes?: string
@@ -101,6 +107,20 @@ export interface HabitLog {
   note?: string
 }
 
+export interface MindfulnessSession {
+  id: string
+  date: string
+  type: 'meditation' | 'breathing' | 'gratitude' | 'body_scan' | 'sounds'
+  minutes: number
+  note?: string
+}
+
+export interface GratitudeEntry {
+  id: string
+  date: string
+  items: string[]
+}
+
 export interface Exercise {
   id: string
   name: string
@@ -130,6 +150,14 @@ export interface DailyTargets extends MacroTargets {
   date: string
 }
 
+export interface AppSettings {
+  notifications: {
+    enabled: boolean
+    times: string[] // HH:MM strings for daily reminder times
+  }
+  lastCheckInDate?: string
+}
+
 export type ScreenKey =
   | 'dashboard'
   | 'diary'
@@ -137,5 +165,7 @@ export type ScreenKey =
   | 'weight'
   | 'workouts'
   | 'habits'
+  | 'mindfulness'
+  | 'tips'
   | 'method'
   | 'profile'

@@ -26,6 +26,8 @@ export default defineConfig({
           if (id.includes('/src/components/Habits')) return 'chunk-habits'
           if (id.includes('/src/components/MethodPage')) return 'chunk-method'
           if (id.includes('/src/components/ProfilePage')) return 'chunk-profile'
+          if (id.includes('/src/components/Mindfulness')) return 'chunk-mindful'
+          if (id.includes('/src/components/Tips')) return 'chunk-tips'
           if (id.includes('/src/data/')) return 'chunk-data'
           return undefined
         },

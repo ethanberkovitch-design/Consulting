@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { User, Target, Salad, Clock, AlertTriangle, LogOut, Save } from 'lucide-react'
 import type { useAppData } from '../hooks/useAppData.ts'
-import type { ActivityLevel, DietStyle, FastingWindow, Goal, UserProfile } from '../types.ts'
+import type { ActivityLevel, DietStyle, ExerciseParticipation, FastingWindow, Goal, UserProfile } from '../types.ts'
 import { bmi, macros, tdee } from '../lib/calculations.ts'
 
 interface Props { data: ReturnType<typeof useAppData> }
@@ -136,6 +136,23 @@ export function ProfilePage({ data }: Props) {
               </select>
             ) : activityLabel(form.activity)}
           </Row>
+          <Row label="ספורט">
+            {editing ? (
+              <select className="select" value={form.exercise} onChange={e => setForm({ ...form, exercise: e.target.value as ExerciseParticipation })}>
+                <option value="yes">כן — תוכנית מלאה</option>
+                <option value="limited">תנועה מוגבלת בלבד</option>
+                <option value="no">בלי אימונים</option>
+              </select>
+            ) : exerciseLabel(form.exercise)}
+          </Row>
+          <Row label="מעקב מים">
+            {editing ? (
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => setForm({ ...form, waterTracking: true })} className={`btn btn-sm ${form.waterTracking ? 'btn-primary' : 'btn-ghost'}`}>פעיל</button>
+                <button type="button" onClick={() => setForm({ ...form, waterTracking: false })} className={`btn btn-sm ${!form.waterTracking ? 'btn-primary' : 'btn-ghost'}`}>כבוי</button>
+              </div>
+            ) : (form.waterTracking ? 'פעיל' : 'כבוי')}
+          </Row>
         </Section>
 
         <Section icon={<AlertTriangle size={16} />} title="רגישויות והעדפות">
@@ -212,4 +229,7 @@ function fastingLabel(f: FastingWindow) {
 }
 function activityLabel(a: ActivityLevel) {
   return a === 'sedentary' ? 'יושבנית' : a === 'light' ? 'קלה' : a === 'moderate' ? 'בינונית' : a === 'active' ? 'פעילה' : 'פעילה מאוד'
+}
+function exerciseLabel(e: ExerciseParticipation) {
+  return e === 'yes' ? 'תוכנית מלאה' : e === 'limited' ? 'תנועה מוגבלת' : 'ללא אימונים'
 }

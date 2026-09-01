@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Sparkles, Check } from 'lucide-react'
 import type {
   ActivityLevel,
   DietStyle,
+  ExerciseParticipation,
   FastingWindow,
   Goal,
   Sex,
@@ -21,8 +22,10 @@ const STEPS = [
   'עליך',
   'משקל ומטרה',
   'רמת פעילות',
+  'ספורט',
   'סגנון תזונה',
   'חלון אכילה',
+  'העדפות',
   'התאמות אישיות',
   'התוכנית שלך',
 ] as const
@@ -35,6 +38,8 @@ export function Onboarding({ onComplete }: Props) {
     goal: 'lose_moderate',
     dietStyle: 'balanced',
     fasting: 'none',
+    exercise: 'yes',
+    waterTracking: true,
     allergies: [],
     dislikes: [],
   })
@@ -51,10 +56,12 @@ export function Onboarding({ onComplete }: Props) {
       case 1: return !!form.name && !!form.age && !!form.sex && !!form.heightCm
       case 2: return !!form.startWeightKg && !!form.goalWeightKg
       case 3: return !!form.activity
-      case 4: return !!form.dietStyle
-      case 5: return !!form.fasting
-      case 6: return true
+      case 4: return !!form.exercise
+      case 5: return !!form.dietStyle
+      case 6: return !!form.fasting
       case 7: return true
+      case 8: return true
+      case 9: return true
       default: return false
     }
   }, [step, form])
@@ -72,6 +79,8 @@ export function Onboarding({ onComplete }: Props) {
       goal: form.goal as Goal,
       dietStyle: form.dietStyle as DietStyle,
       fasting: form.fasting as FastingWindow,
+      exercise: (form.exercise ?? 'yes') as ExerciseParticipation,
+      waterTracking: form.waterTracking ?? true,
       allergies: form.allergies ?? [],
       dislikes: form.dislikes ?? [],
       medicalNotes: form.medicalNotes,
@@ -118,10 +127,12 @@ export function Onboarding({ onComplete }: Props) {
           {step === 1 && <StepAbout form={form} update={update} />}
           {step === 2 && <StepWeight form={form} update={update} />}
           {step === 3 && <StepActivity form={form} update={update} />}
-          {step === 4 && <StepDietStyle form={form} update={update} />}
-          {step === 5 && <StepFasting form={form} update={update} />}
-          {step === 6 && <StepPreferences form={form} update={update} />}
-          {step === 7 && <StepPlan form={form} />}
+          {step === 4 && <StepExercise form={form} update={update} />}
+          {step === 5 && <StepDietStyle form={form} update={update} />}
+          {step === 6 && <StepFasting form={form} update={update} />}
+          {step === 7 && <StepAppOptions form={form} update={update} />}
+          {step === 8 && <StepPreferences form={form} update={update} />}
+          {step === 9 && <StepPlan form={form} />}
 
           {step > 0 && (
             <div className="flex justify-between items-center mt-8 pt-6 border-t" style={{ borderColor: 'var(--border)' }}>
@@ -352,6 +363,98 @@ function StepActivity({ form, update }: { form: FormState; update: <K extends ke
   )
 }
 
+function StepExercise({ form, update }: { form: FormState; update: <K extends keyof UserProfile>(k: K, v: UserProfile[K]) => void }) {
+  const OPTS: { key: ExerciseParticipation; title: string; desc: string; emoji: string }[] = [
+    { key: 'yes', title: 'כן, אני רוצה תוכנית אימונים', desc: 'אימוני כוח, קרדיו, גמישות — הכל כלול', emoji: '💪' },
+    { key: 'limited', title: 'תנועה מוגבלת בלבד', desc: 'הליכה, מתיחות ותנועה קלה — בלי אימונים אינטנסיביים (מגבלה גופנית, גיל, אחרי לידה, אחרי ניתוח)', emoji: '🚶' },
+    { key: 'no', title: 'לא מעוניין/ת באימונים כרגע', desc: 'נתמקד בתזונה, שינה, מיינדפולנס והוספת צעדים ליום — הירידה במשקל תגיע בלי חדר כושר', emoji: '🌿' },
+  ]
+  return (
+    <div>
+      <div className="section-title">
+        <span className="kicker">שלב 4</span>
+        <h2>ספורט — איך זה מתחבר לחיים שלך?</h2>
+      </div>
+      <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+        אין תשובה נכונה. אימונים עוזרים לתהליך — אבל לא הכרחיים. גם בלי חדר כושר אפשר לרדת במשקל.
+      </p>
+      <div className="grid gap-3">
+        {OPTS.map(opt => (
+          <button
+            key={opt.key}
+            type="button"
+            onClick={() => update('exercise', opt.key)}
+            className="p-4 rounded-2xl text-right border flex items-center justify-between transition-all gap-3"
+            style={{
+              background: form.exercise === opt.key ? 'var(--navy)' : 'var(--surface-1)',
+              color: form.exercise === opt.key ? 'var(--text-inverse)' : 'var(--navy)',
+              borderColor: form.exercise === opt.key ? 'var(--navy)' : 'var(--border-strong)',
+            }}
+          >
+            <div className="flex gap-3 items-start">
+              <span className="text-2xl">{opt.emoji}</span>
+              <div>
+                <div className="font-semibold mb-1">{opt.title}</div>
+                <div className="text-xs opacity-80">{opt.desc}</div>
+              </div>
+            </div>
+            {form.exercise === opt.key && <Check size={20} style={{ color: 'var(--gold)' }} />}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function StepAppOptions({ form, update }: { form: FormState; update: <K extends keyof UserProfile>(k: K, v: UserProfile[K]) => void }) {
+  return (
+    <div>
+      <div className="section-title">
+        <span className="kicker">שלב 7</span>
+        <h2>העדפות אפליקציה</h2>
+      </div>
+
+      <div className="space-y-4">
+        <div className="p-4 rounded-2xl border" style={{ borderColor: 'var(--border-strong)' }}>
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div>
+              <div className="font-semibold mb-1">מעקב מים</div>
+              <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                מים לא חובה — אבל הידרציה טובה מפחיתה תחושת רעב מזויפת (הצמא בערך חופף לרעב) ומאפשרת ריכוז טוב יותר. תוכל להפעיל או לכבות בכל שלב.
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => update('waterTracking', true)}
+              className={`btn ${form.waterTracking ? 'btn-primary' : 'btn-ghost'}`}
+            >
+              עוקב אחרי מים
+            </button>
+            <button
+              type="button"
+              onClick={() => update('waterTracking', false)}
+              className={`btn ${!form.waterTracking ? 'btn-primary' : 'btn-ghost'}`}
+            >
+              בלי מעקב מים
+            </button>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-2xl border" style={{ borderColor: 'var(--border-strong)', background: 'var(--surface-2)' }}>
+          <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--gold-deep)' }}>
+            שאלה חכמה
+          </div>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            אחרי שנעבור את זה — האפליקציה תשאל אותך לאישור לשלוח לך תזכורות קצרות (בוקר, צהריים, ערב) לצ׳ק-אין. תמיד אפשר לכבות.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function StepDietStyle({ form, update }: { form: FormState; update: <K extends keyof UserProfile>(k: K, v: UserProfile[K]) => void }) {
   const OPTS: { key: DietStyle; title: string; desc: string; emoji: string }[] = [
     { key: 'balanced', title: 'מאוזן', desc: 'מכל האבות, ללא הגבלות מיוחדות', emoji: '⚖️' },
@@ -364,7 +467,7 @@ function StepDietStyle({ form, update }: { form: FormState; update: <K extends k
   return (
     <div>
       <div className="section-title">
-        <span className="kicker">שלב 4</span>
+        <span className="kicker">שלב 5</span>
         <h2>איזה סגנון תזונה מתאים לך?</h2>
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -400,7 +503,7 @@ function StepFasting({ form, update }: { form: FormState; update: <K extends key
   return (
     <div>
       <div className="section-title">
-        <span className="kicker">שלב 5</span>
+        <span className="kicker">שלב 6</span>
         <h2>חלון אכילה — צום לסירוגין?</h2>
       </div>
       <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
@@ -451,7 +554,7 @@ function StepPreferences({ form, update }: { form: FormState; update: <K extends
   return (
     <div>
       <div className="section-title">
-        <span className="kicker">שלב 6</span>
+        <span className="kicker">שלב 8</span>
         <h2>מה חשוב לדעת עליך?</h2>
       </div>
 
@@ -541,6 +644,8 @@ function StepPlan({ form }: { form: FormState }) {
     goal: form.goal as Goal,
     dietStyle: form.dietStyle as DietStyle,
     fasting: form.fasting as FastingWindow,
+    exercise: (form.exercise ?? 'yes') as ExerciseParticipation,
+    waterTracking: form.waterTracking ?? true,
     allergies: form.allergies ?? [],
     dislikes: form.dislikes ?? [],
     createdAt: new Date().toISOString(),

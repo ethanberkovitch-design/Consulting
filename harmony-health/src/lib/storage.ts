@@ -49,3 +49,13 @@ export function isoDaysAgo(n: number): string {
 export function uid(): string {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
 }
+
+// ISO 8601 week number — used to auto-rotate the weekly meal plan without any
+// user action. Menu changes every Monday.
+export function isoWeekNumber(date = new Date()): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  const dayNum = d.getUTCDay() || 7
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
+}

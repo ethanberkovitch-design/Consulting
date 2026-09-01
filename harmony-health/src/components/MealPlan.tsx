@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Clock, ChefHat, Utensils, Sparkles, RefreshCw } from 'lucide-react'
+import { Clock, ChefHat, Utensils, Sparkles, RefreshCw, Calendar } from 'lucide-react'
 import type { useAppData } from '../hooks/useAppData.ts'
 import { planWeek, type DayPlan } from '../lib/mealPlanner.ts'
+import { isoWeekNumber } from '../lib/storage.ts'
 
 interface Props { data: ReturnType<typeof useAppData> }
 
@@ -10,12 +11,15 @@ const DAY_NAMES = ['יום ראשון', 'יום שני', 'יום שלישי', '�
 export function MealPlan({ data }: Props) {
   const profile = data.profile!
   const targets = data.targets!
-  const [refreshKey, setRefreshKey] = useState(0)
+  const weekNum = isoWeekNumber()
+  // Auto-rotate every ISO week; the manual "new plan" button offsets from
+  // that so it still gives a fresh variation for people who want more variety.
+  const [manualOffset, setManualOffset] = useState(0)
   const [selectedDay, setSelectedDay] = useState(0)
 
   const week = useMemo(
-    () => planWeek(targets, profile.dietStyle, profile.dislikes, refreshKey),
-    [targets, profile.dietStyle, profile.dislikes, refreshKey],
+    () => planWeek(targets, profile.dietStyle, profile.dislikes, weekNum + manualOffset),
+    [targets, profile.dietStyle, profile.dislikes, weekNum, manualOffset],
   )
 
   const day = week[selectedDay]
@@ -28,12 +32,15 @@ export function MealPlan({ data }: Props) {
             תפריט מותאם אישית
           </div>
           <h1 className="text-3xl md:text-4xl">התוכנית של השבוע</h1>
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
+            <span className="pill pill-gold"><Calendar size={12} /> שבוע {weekNum} · מתחלף אוטומטית כל שני</span>
+          </div>
           <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>
             מבוסס על סגנון <strong>{styleLabel(profile.dietStyle)}</strong> ויעד של {targets.calories} קק"ל ליום
           </p>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={() => setRefreshKey(k => k + 1)}>
-          <RefreshCw size={14} /> תפריט חדש
+        <button className="btn btn-ghost btn-sm" onClick={() => setManualOffset(o => o + 1)}>
+          <RefreshCw size={14} /> וריאציה חדשה
         </button>
       </div>
 

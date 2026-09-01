@@ -4,9 +4,10 @@ import type { ScreenKey } from '../types.ts'
 import type { useAppData } from '../hooks/useAppData.ts'
 import { FOODS } from '../data/foods.ts'
 import { todayIso } from '../lib/storage.ts'
-import { PILLARS } from '../lib/methodology.ts'
 import { projectedWeeksToGoal, tdee } from '../lib/calculations.ts'
 import { MiniChart } from './MiniChart.tsx'
+import { DailyCheckIn } from './DailyCheckIn.tsx'
+import { tipOfTheDay, CATEGORY_LABEL } from '../data/tips.ts'
 
 interface Props {
   data: ReturnType<typeof useAppData>
@@ -64,6 +65,8 @@ export function Dashboard({ data, onNavigate }: Props) {
         </p>
       </div>
 
+      <DailyCheckIn data={data} onNavigate={onNavigate} />
+
       {/* Hero: today's energy budget */}
       <div className="card-navy mb-6">
         <div className="grid md:grid-cols-3 gap-6 items-center">
@@ -91,7 +94,7 @@ export function Dashboard({ data, onNavigate }: Props) {
       </div>
 
       {/* Progress grid */}
-      <div className="grid md:grid-cols-3 gap-4 mb-6">
+      <div className={`grid ${profile.waterTracking ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4 mb-6`}>
         <div className="card">
           <div className="flex items-center gap-2 mb-2">
             <Flame size={18} style={{ color: 'var(--gold)' }} />
@@ -101,19 +104,21 @@ export function Dashboard({ data, onNavigate }: Props) {
           <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>קק"ל נצרכו · TDEE משוער {totalTdee.toLocaleString()}</div>
         </div>
 
-        <div className="card">
-          <div className="flex items-center gap-2 mb-2">
-            <Droplet size={18} style={{ color: 'var(--accent-cool)' }} />
-            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>הידרציה</span>
+        {profile.waterTracking && (
+          <div className="card">
+            <div className="flex items-center gap-2 mb-2">
+              <Droplet size={18} style={{ color: 'var(--accent-cool)' }} />
+              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>הידרציה</span>
+            </div>
+            <div className="serif text-2xl font-bold" style={{ color: 'var(--navy)' }}>
+              {((todayHabit?.waterMl ?? 0) / 1000).toFixed(1)}
+            </div>
+            <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>מתוך {(targets.waterMl / 1000).toFixed(1)} ליטר (עוזר לשובע — לא חובה)</div>
+            <div className="progress-track mt-3" style={{ height: 6 }}>
+              <div className="progress-fill cool" style={{ width: `${Math.min(100, ((todayHabit?.waterMl ?? 0) / targets.waterMl) * 100)}%` }} />
+            </div>
           </div>
-          <div className="serif text-2xl font-bold" style={{ color: 'var(--navy)' }}>
-            {((todayHabit?.waterMl ?? 0) / 1000).toFixed(1)}
-          </div>
-          <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>מתוך {(targets.waterMl / 1000).toFixed(1)} ליטר</div>
-          <div className="progress-track mt-3" style={{ height: 6 }}>
-            <div className="progress-fill cool" style={{ width: `${Math.min(100, ((todayHabit?.waterMl ?? 0) / targets.waterMl) * 100)}%` }} />
-          </div>
-        </div>
+        )}
 
         <div className="card">
           <div className="flex items-center gap-2 mb-2">
@@ -183,28 +188,46 @@ export function Dashboard({ data, onNavigate }: Props) {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <PillarStatus pillar="nutrition" icon={<Utensils size={18} />} progress={Math.min(100, (consumed.kcal / targets.calories) * 100)} label="תזונה" onClick={() => onNavigate('diary')} />
-          <PillarStatus pillar="movement" icon={<Activity size={18} />} progress={Math.min(100, (todayWorkouts.reduce((s, w) => s + w.minutes, 0) / 30) * 100)} label="תנועה" onClick={() => onNavigate('workouts')} />
+          <PillarStatus
+            pillar="movement"
+            icon={<Activity size={18} />}
+            progress={profile.exercise === 'no'
+              ? Math.min(100, ((todayHabit?.steps ?? 0) / targets.stepsGoal) * 100)
+              : Math.min(100, (todayWorkouts.reduce((s, w) => s + w.minutes, 0) / 30) * 100)}
+            label="תנועה"
+            onClick={() => onNavigate(profile.exercise === 'no' ? 'habits' : 'workouts')}
+          />
           <PillarStatus pillar="sleep" icon={<Moon size={18} />} progress={Math.min(100, ((todayHabit?.sleepHours ?? 0) / 8) * 100)} label="שינה" onClick={() => onNavigate('habits')} />
-          <PillarStatus pillar="mind" icon={<Brain size={18} />} progress={Math.min(100, ((todayHabit?.mindfulnessMinutes ?? 0) / 10) * 100)} label="ראש" onClick={() => onNavigate('habits')} />
+          <PillarStatus pillar="mind" icon={<Brain size={18} />} progress={Math.min(100, ((todayHabit?.mindfulnessMinutes ?? 0) / 10) * 100)} label="ראש" onClick={() => onNavigate('mindfulness')} />
           <PillarStatus pillar="measure" icon={<Sparkles size={18} />} progress={data.weights.some(w => w.date === today) ? 100 : 0} label="מדידה" onClick={() => onNavigate('weight')} />
         </div>
       </div>
 
-      {/* Method blurb */}
-      <div className="card" style={{ background: 'var(--surface-2)', border: '1px dashed var(--gold)' }}>
-        <div className="flex items-start gap-4">
-          <div className="p-3 rounded-2xl" style={{ background: 'var(--navy)', color: 'var(--gold)' }}>
-            <Sparkles size={24} />
+      {/* Tip of the day */}
+      <DailyTipCard onNavigate={onNavigate} />
+    </div>
+  )
+}
+
+function DailyTipCard({ onNavigate }: { onNavigate: (s: ScreenKey) => void }) {
+  const tip = tipOfTheDay()
+  return (
+    <div className="card" style={{ background: 'var(--surface-2)', border: '1px dashed var(--gold)' }}>
+      <div className="flex items-start gap-4">
+        <div className="p-3 rounded-2xl" style={{ background: 'var(--navy)', color: 'var(--gold)' }}>
+          <Sparkles size={24} />
+        </div>
+        <div className="flex-1">
+          <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--gold-deep)' }}>
+            טיפ היום · {CATEGORY_LABEL[tip.category]}
           </div>
-          <div className="flex-1">
-            <h3 className="text-lg mb-1">טיפ יומי · {PILLARS[new Date().getDate() % 5].title}</h3>
-            <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
-              {PILLARS[new Date().getDate() % 5].principles[new Date().getDate() % 3]}
-            </p>
-            <button className="btn btn-ghost btn-xs" onClick={() => onNavigate('method')}>
-              קרא/י יותר על השיטה <ChevronLeft size={12} />
-            </button>
-          </div>
+          <h3 className="text-lg mb-1">{tip.title}</h3>
+          <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
+            {tip.body}
+          </p>
+          <button className="btn btn-ghost btn-xs" onClick={() => onNavigate('tips')}>
+            עוד טיפים <ChevronLeft size={12} />
+          </button>
         </div>
       </div>
     </div>
