@@ -1,0 +1,613 @@
+import { useMemo, useState } from 'react'
+import { ChevronLeft, ChevronRight, Sparkles, Check } from 'lucide-react'
+import type {
+  ActivityLevel,
+  DietStyle,
+  FastingWindow,
+  Goal,
+  Sex,
+  UserProfile,
+} from '../types.ts'
+import { bmi, bmiCategory, macros, projectedWeeksToGoal, targetCalories, tdee } from '../lib/calculations.ts'
+
+interface Props {
+  onComplete: (profile: UserProfile) => void
+}
+
+type FormState = Partial<UserProfile>
+
+const STEPS = [
+  'ברוכים הבאים',
+  'עליך',
+  'משקל ומטרה',
+  'רמת פעילות',
+  'סגנון תזונה',
+  'חלון אכילה',
+  'התאמות אישיות',
+  'התוכנית שלך',
+] as const
+
+export function Onboarding({ onComplete }: Props) {
+  const [step, setStep] = useState(0)
+  const [form, setForm] = useState<FormState>({
+    sex: 'female',
+    activity: 'moderate',
+    goal: 'lose_moderate',
+    dietStyle: 'balanced',
+    fasting: 'none',
+    allergies: [],
+    dislikes: [],
+  })
+
+  const stepLabel = STEPS[step]
+
+  function update<K extends keyof UserProfile>(key: K, value: UserProfile[K]) {
+    setForm(prev => ({ ...prev, [key]: value }))
+  }
+
+  const canNext = useMemo(() => {
+    switch (step) {
+      case 0: return true
+      case 1: return !!form.name && !!form.age && !!form.sex && !!form.heightCm
+      case 2: return !!form.startWeightKg && !!form.goalWeightKg
+      case 3: return !!form.activity
+      case 4: return !!form.dietStyle
+      case 5: return !!form.fasting
+      case 6: return true
+      case 7: return true
+      default: return false
+    }
+  }, [step, form])
+
+  function finish() {
+    const profile: UserProfile = {
+      name: form.name!.trim(),
+      age: Number(form.age),
+      sex: form.sex as Sex,
+      heightCm: Number(form.heightCm),
+      startWeightKg: Number(form.startWeightKg),
+      currentWeightKg: Number(form.startWeightKg),
+      goalWeightKg: Number(form.goalWeightKg),
+      activity: form.activity as ActivityLevel,
+      goal: form.goal as Goal,
+      dietStyle: form.dietStyle as DietStyle,
+      fasting: form.fasting as FastingWindow,
+      allergies: form.allergies ?? [],
+      dislikes: form.dislikes ?? [],
+      medicalNotes: form.medicalNotes,
+      createdAt: new Date().toISOString(),
+    }
+    onComplete(profile)
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4" dir="rtl" style={{
+      background: 'radial-gradient(1200px 700px at 100% -10%, rgba(201, 169, 97, 0.14), transparent 60%), radial-gradient(1000px 500px at 0% 100%, rgba(11, 31, 58, 0.06), transparent 60%), var(--page)',
+    }}>
+      <div className="w-full max-w-2xl">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center gap-2 mb-3">
+            <Sparkles size={16} style={{ color: 'var(--gold)' }} />
+            <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--gold-deep)', letterSpacing: '0.2em' }}>
+              Harmony · שיטת 5 העמודים
+            </span>
+          </div>
+          <h1 className="serif text-4xl md:text-5xl mb-2">
+            <span className="gold-underline">הרמוניה</span>
+          </h1>
+          <p className="text-sm md:text-base" style={{ color: 'var(--text-secondary)' }}>
+            מסע חכם ובר-קיימא לחיים בריאים — מותאם אישית בדיוק אליך
+          </p>
+        </div>
+
+        {/* Progress */}
+        <div className="mb-4">
+          <div className="flex justify-between mb-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+            <span>שלב {step + 1} מתוך {STEPS.length}</span>
+            <span>{stepLabel}</span>
+          </div>
+          <div className="progress-track">
+            <div className="progress-fill" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
+          </div>
+        </div>
+
+        {/* Card */}
+        <div className="card-elevated p-6 md:p-10 fade-up" key={step}>
+          {step === 0 && <StepWelcome onNext={() => setStep(1)} />}
+          {step === 1 && <StepAbout form={form} update={update} />}
+          {step === 2 && <StepWeight form={form} update={update} />}
+          {step === 3 && <StepActivity form={form} update={update} />}
+          {step === 4 && <StepDietStyle form={form} update={update} />}
+          {step === 5 && <StepFasting form={form} update={update} />}
+          {step === 6 && <StepPreferences form={form} update={update} />}
+          {step === 7 && <StepPlan form={form} />}
+
+          {step > 0 && (
+            <div className="flex justify-between items-center mt-8 pt-6 border-t" style={{ borderColor: 'var(--border)' }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => setStep(step - 1)}>
+                <ChevronRight size={16} /> חזרה
+              </button>
+              {step < STEPS.length - 1 && (
+                <button className="btn btn-primary" disabled={!canNext} onClick={() => setStep(step + 1)}>
+                  המשך <ChevronLeft size={16} />
+                </button>
+              )}
+              {step === STEPS.length - 1 && (
+                <button className="btn btn-gold" onClick={finish}>
+                  יאללה, מתחילים <Sparkles size={16} />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function StepWelcome({ onNext }: { onNext: () => void }) {
+  return (
+    <div className="text-center py-6">
+      <h2 className="text-3xl md:text-4xl mb-4">ברוכים הבאים לבית שלכם החדש</h2>
+      <p className="text-base md:text-lg mb-6" style={{ color: 'var(--text-secondary)' }}>
+        רוב הדיאטות נכשלות. לא בגלל חוסר משמעת — אלא בגלל שהן מטפלות רק בחלק אחד מהתמונה.
+        הרמוניה נבנתה על 5 עמודים שעובדים יחד: תזונה, תנועה, שינה, הראש, ומדידה.
+      </p>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
+        {['🥗', '🏃', '😴', '🧠', '📈'].map((emoji, i) => (
+          <div key={i} className="p-4 rounded-2xl text-center" style={{ background: 'var(--surface-2)' }}>
+            <div className="text-3xl mb-2">{emoji}</div>
+            <div className="text-xs font-semibold" style={{ color: 'var(--navy)' }}>
+              {['תזונה', 'תנועה', 'שינה', 'ראש', 'מדידה'][i]}
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="text-sm mb-8" style={{ color: 'var(--text-muted)' }}>
+        השאלות הבאות ייקחו כדקה. הן חשובות — בסופן יהיה לך תוכנית מותאמת אישית מבוססת מדע.
+      </p>
+      <button className="btn btn-gold" onClick={onNext}>
+        בואו נתחיל <ChevronLeft size={16} />
+      </button>
+    </div>
+  )
+}
+
+function StepAbout({ form, update }: { form: FormState; update: <K extends keyof UserProfile>(k: K, v: UserProfile[K]) => void }) {
+  return (
+    <div>
+      <div className="section-title">
+        <span className="kicker">שלב 1</span>
+        <h2>ספר/י לנו קצת עליך</h2>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="md:col-span-2">
+          <label className="label">איך לקרוא לך?</label>
+          <input
+            className="input"
+            placeholder="השם שלך"
+            value={form.name ?? ''}
+            onChange={e => update('name', e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label className="label">גיל</label>
+          <input
+            className="input"
+            type="number"
+            placeholder="30"
+            value={form.age ?? ''}
+            onChange={e => update('age', Number(e.target.value))}
+          />
+        </div>
+
+        <div>
+          <label className="label">מין ביולוגי</label>
+          <div className="grid grid-cols-2 gap-2">
+            {(['female', 'male'] as const).map(s => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => update('sex', s)}
+                className={`btn ${form.sex === s ? 'btn-primary' : 'btn-ghost'}`}
+              >
+                {s === 'female' ? 'נקבה' : 'זכר'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="label">גובה (ס"מ)</label>
+          <input
+            className="input"
+            type="number"
+            placeholder="170"
+            value={form.heightCm ?? ''}
+            onChange={e => update('heightCm', Number(e.target.value))}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function StepWeight({ form, update }: { form: FormState; update: <K extends keyof UserProfile>(k: K, v: UserProfile[K]) => void }) {
+  const currentBmi = form.startWeightKg && form.heightCm
+    ? bmi({ heightCm: Number(form.heightCm), currentWeightKg: Number(form.startWeightKg) })
+    : null
+  const bmiInfo = currentBmi ? bmiCategory(currentBmi) : null
+
+  return (
+    <div>
+      <div className="section-title">
+        <span className="kicker">שלב 2</span>
+        <h2>מאיפה אנחנו מתחילים, ולאן</h2>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <label className="label">משקל נוכחי (ק"ג)</label>
+          <input
+            className="input"
+            type="number"
+            step="0.1"
+            placeholder="75"
+            value={form.startWeightKg ?? ''}
+            onChange={e => update('startWeightKg', Number(e.target.value))}
+          />
+        </div>
+
+        <div>
+          <label className="label">משקל יעד (ק"ג)</label>
+          <input
+            className="input"
+            type="number"
+            step="0.1"
+            placeholder="68"
+            value={form.goalWeightKg ?? ''}
+            onChange={e => update('goalWeightKg', Number(e.target.value))}
+          />
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="label">קצב שאיפה</label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            {([
+              { key: 'lose_slow', title: 'אטי ובטוח', desc: 'עד 0.4 ק"ג לשבוע' },
+              { key: 'lose_moderate', title: 'מאוזן', desc: '0.4–0.7 ק"ג לשבוע' },
+              { key: 'lose_fast', title: 'אינטנסיבי', desc: '0.7–1 ק"ג לשבוע' },
+            ] as const).map(opt => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => update('goal', opt.key)}
+                className={`p-4 rounded-2xl text-right border transition-all ${form.goal === opt.key ? 'shadow-md' : ''}`}
+                style={{
+                  background: form.goal === opt.key ? 'var(--navy)' : 'var(--surface-1)',
+                  color: form.goal === opt.key ? 'var(--text-inverse)' : 'var(--navy)',
+                  borderColor: form.goal === opt.key ? 'var(--navy)' : 'var(--border-strong)',
+                }}
+              >
+                <div className="font-semibold mb-1">{opt.title}</div>
+                <div className="text-xs opacity-80">{opt.desc}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {currentBmi && bmiInfo && (
+          <div className="md:col-span-2 p-4 rounded-xl flex items-center justify-between" style={{ background: 'var(--surface-2)' }}>
+            <div>
+              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>BMI נוכחי</div>
+              <div className="font-bold text-xl serif" style={{ color: 'var(--navy)' }}>{currentBmi}</div>
+            </div>
+            <div className="pill" style={{ background: 'var(--surface-3)' }}>{bmiInfo.label}</div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function StepActivity({ form, update }: { form: FormState; update: <K extends keyof UserProfile>(k: K, v: UserProfile[K]) => void }) {
+  const OPTS: { key: ActivityLevel; title: string; desc: string }[] = [
+    { key: 'sedentary', title: 'יושבני', desc: 'עבודה משרדית, מעט הליכה' },
+    { key: 'light', title: 'קל', desc: 'הליכה קלה 1–2 פעמים בשבוע' },
+    { key: 'moderate', title: 'בינוני', desc: 'אימון 3 פעמים בשבוע' },
+    { key: 'active', title: 'פעיל', desc: 'אימון 4–5 פעמים בשבוע' },
+    { key: 'very_active', title: 'פעיל מאוד', desc: 'ספורטאי / עבודה פיזית' },
+  ]
+  return (
+    <div>
+      <div className="section-title">
+        <span className="kicker">שלב 3</span>
+        <h2>עד כמה פעיל/ה השגרה שלך?</h2>
+      </div>
+      <div className="grid gap-3">
+        {OPTS.map(opt => (
+          <button
+            key={opt.key}
+            type="button"
+            onClick={() => update('activity', opt.key)}
+            className="p-4 rounded-2xl text-right border flex items-center justify-between transition-all"
+            style={{
+              background: form.activity === opt.key ? 'var(--navy)' : 'var(--surface-1)',
+              color: form.activity === opt.key ? 'var(--text-inverse)' : 'var(--navy)',
+              borderColor: form.activity === opt.key ? 'var(--navy)' : 'var(--border-strong)',
+            }}
+          >
+            <div>
+              <div className="font-semibold">{opt.title}</div>
+              <div className="text-xs opacity-80">{opt.desc}</div>
+            </div>
+            {form.activity === opt.key && <Check size={20} style={{ color: 'var(--gold)' }} />}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function StepDietStyle({ form, update }: { form: FormState; update: <K extends keyof UserProfile>(k: K, v: UserProfile[K]) => void }) {
+  const OPTS: { key: DietStyle; title: string; desc: string; emoji: string }[] = [
+    { key: 'balanced', title: 'מאוזן', desc: 'מכל האבות, ללא הגבלות מיוחדות', emoji: '⚖️' },
+    { key: 'mediterranean', title: 'ים-תיכוני', desc: 'שמן זית, דגים, קטניות, ירקות', emoji: '🫒' },
+    { key: 'high_protein', title: 'עתיר חלבון', desc: 'לשומרי כושר ומאסטרי שריר', emoji: '🥩' },
+    { key: 'low_carb', title: 'דל פחמימות', desc: 'פחות סוכר וקמח, יותר שומן וחלבון', emoji: '🥑' },
+    { key: 'vegetarian', title: 'צמחוני', desc: 'ללא בשר, כן ביצים ומחלבים', emoji: '🥗' },
+    { key: 'vegan', title: 'טבעוני', desc: 'ללא מוצרים מן החי', emoji: '🌱' },
+  ]
+  return (
+    <div>
+      <div className="section-title">
+        <span className="kicker">שלב 4</span>
+        <h2>איזה סגנון תזונה מתאים לך?</h2>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {OPTS.map(opt => (
+          <button
+            key={opt.key}
+            type="button"
+            onClick={() => update('dietStyle', opt.key)}
+            className="p-4 rounded-2xl text-right border transition-all"
+            style={{
+              background: form.dietStyle === opt.key ? 'var(--navy)' : 'var(--surface-1)',
+              color: form.dietStyle === opt.key ? 'var(--text-inverse)' : 'var(--navy)',
+              borderColor: form.dietStyle === opt.key ? 'var(--navy)' : 'var(--border-strong)',
+            }}
+          >
+            <div className="text-2xl mb-2">{opt.emoji}</div>
+            <div className="font-semibold mb-1">{opt.title}</div>
+            <div className="text-xs opacity-80">{opt.desc}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function StepFasting({ form, update }: { form: FormState; update: <K extends keyof UserProfile>(k: K, v: UserProfile[K]) => void }) {
+  const OPTS: { key: FastingWindow; title: string; desc: string }[] = [
+    { key: 'none', title: 'ללא צום', desc: 'אכילה רגילה לאורך היום' },
+    { key: '12_12', title: '12/12', desc: '12 שעות אכילה, 12 שעות צום (המלצה בסיסית)' },
+    { key: '14_10', title: '14/10', desc: 'חלון אכילה של 10 שעות (למתאמנים)' },
+    { key: '16_8', title: '16/8', desc: 'חלון אכילה של 8 שעות (למתקדמים)' },
+  ]
+  return (
+    <div>
+      <div className="section-title">
+        <span className="kicker">שלב 5</span>
+        <h2>חלון אכילה — צום לסירוגין?</h2>
+      </div>
+      <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+        לא חובה. מחקרים מראים שחלון אכילה מצומצם עוזר לחלק מהאנשים לצמצם קלוריות באופן טבעי,
+        משפר רגישות אינסולין ומקצר את זמן ההחלטה. אם זה לא מתאים לך — פשוט תדלגו.
+      </p>
+      <div className="grid gap-3">
+        {OPTS.map(opt => (
+          <button
+            key={opt.key}
+            type="button"
+            onClick={() => update('fasting', opt.key)}
+            className="p-4 rounded-2xl text-right border flex items-center justify-between"
+            style={{
+              background: form.fasting === opt.key ? 'var(--navy)' : 'var(--surface-1)',
+              color: form.fasting === opt.key ? 'var(--text-inverse)' : 'var(--navy)',
+              borderColor: form.fasting === opt.key ? 'var(--navy)' : 'var(--border-strong)',
+            }}
+          >
+            <div>
+              <div className="font-semibold">{opt.title}</div>
+              <div className="text-xs opacity-80">{opt.desc}</div>
+            </div>
+            {form.fasting === opt.key && <Check size={20} style={{ color: 'var(--gold)' }} />}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function StepPreferences({ form, update }: { form: FormState; update: <K extends keyof UserProfile>(k: K, v: UserProfile[K]) => void }) {
+  const [allergyInput, setAllergyInput] = useState('')
+  const [dislikeInput, setDislikeInput] = useState('')
+
+  function addTag(field: 'allergies' | 'dislikes', value: string) {
+    const trimmed = value.trim()
+    if (!trimmed) return
+    const list = (form[field] ?? []) as string[]
+    if (list.includes(trimmed)) return
+    update(field, [...list, trimmed])
+  }
+  function removeTag(field: 'allergies' | 'dislikes', value: string) {
+    const list = (form[field] ?? []) as string[]
+    update(field, list.filter(v => v !== value))
+  }
+
+  return (
+    <div>
+      <div className="section-title">
+        <span className="kicker">שלב 6</span>
+        <h2>מה חשוב לדעת עליך?</h2>
+      </div>
+
+      <div className="grid gap-6">
+        <div>
+          <label className="label">אלרגיות / רגישויות</label>
+          <div className="flex gap-2 mb-2">
+            <input
+              className="input"
+              placeholder="למשל: בוטנים"
+              value={allergyInput}
+              onChange={e => setAllergyInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  addTag('allergies', allergyInput)
+                  setAllergyInput('')
+                }
+              }}
+            />
+            <button className="btn btn-ghost btn-sm" onClick={() => { addTag('allergies', allergyInput); setAllergyInput('') }}>
+              הוסף
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {(form.allergies ?? []).map(tag => (
+              <span key={tag} className="pill pill-gold cursor-pointer" onClick={() => removeTag('allergies', tag)}>
+                {tag} ✕
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="label">מזונות שאת/ה פחות אוהב/ת</label>
+          <div className="flex gap-2 mb-2">
+            <input
+              className="input"
+              placeholder="למשל: כרובית"
+              value={dislikeInput}
+              onChange={e => setDislikeInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  addTag('dislikes', dislikeInput)
+                  setDislikeInput('')
+                }
+              }}
+            />
+            <button className="btn btn-ghost btn-sm" onClick={() => { addTag('dislikes', dislikeInput); setDislikeInput('') }}>
+              הוסף
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {(form.dislikes ?? []).map(tag => (
+              <span key={tag} className="pill pill-sage cursor-pointer" onClick={() => removeTag('dislikes', tag)}>
+                {tag} ✕
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="label">הערות רפואיות (אופציונלי)</label>
+          <textarea
+            className="textarea"
+            placeholder="למשל: יתר לחץ דם, סוכרת סוג 2, PCOS. המידע נשמר מקומית בלבד."
+            value={form.medicalNotes ?? ''}
+            onChange={e => update('medicalNotes', e.target.value)}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function StepPlan({ form }: { form: FormState }) {
+  const profile: UserProfile = {
+    name: form.name || '',
+    age: Number(form.age) || 30,
+    sex: form.sex as Sex,
+    heightCm: Number(form.heightCm) || 170,
+    startWeightKg: Number(form.startWeightKg) || 75,
+    currentWeightKg: Number(form.startWeightKg) || 75,
+    goalWeightKg: Number(form.goalWeightKg) || 70,
+    activity: form.activity as ActivityLevel,
+    goal: form.goal as Goal,
+    dietStyle: form.dietStyle as DietStyle,
+    fasting: form.fasting as FastingWindow,
+    allergies: form.allergies ?? [],
+    dislikes: form.dislikes ?? [],
+    createdAt: new Date().toISOString(),
+  }
+
+  const t = macros(profile)
+  const totalTdee = tdee(profile)
+  const targetKcal = targetCalories(profile)
+  const weeks = projectedWeeksToGoal(profile)
+
+  return (
+    <div>
+      <div className="text-center mb-6">
+        <div className="pillar-chip mb-3">
+          <Sparkles size={14} /> התוכנית שלך מוכנה
+        </div>
+        <h2 className="text-3xl mb-2">היי {profile.name.split(' ')[0]}, בנינו לך משהו מיוחד</h2>
+        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+          כל המספרים חושבו על בסיס נתוני הגוף והמטרות שלך — לפי משוואת Mifflin-St Jeor, יעדי חלבון קליניים ותקציב אנרגיה יומי.
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 mb-6">
+        <div className="card-navy">
+          <div className="text-xs uppercase tracking-widest opacity-80 mb-2">יעד קלוריות יומי</div>
+          <div className="big-number" style={{ color: 'var(--text-inverse)' }}>{t.calories}</div>
+          <div className="text-sm mt-2 opacity-80">קק"ל · גירעון של {totalTdee - targetKcal} מתוך {totalTdee}</div>
+        </div>
+
+        <div className="card">
+          <div className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--gold-deep)' }}>מטרה ריאלית</div>
+          <div className="big-number">{weeks ?? '—'}</div>
+          <div className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>
+            שבועות עד היעד ({profile.currentWeightKg} → {profile.goalWeightKg} ק"ג)
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        <MacroMini label="חלבון" value={`${t.proteinG}g`} color="var(--sage)" />
+        <MacroMini label="פחמימות" value={`${t.carbsG}g`} color="var(--gold-deep)" />
+        <MacroMini label="שומן" value={`${t.fatG}g`} color="var(--accent-warm)" />
+      </div>
+
+      <div className="p-4 rounded-2xl mb-6" style={{ background: 'var(--surface-2)' }}>
+        <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--gold-deep)' }}>
+          יעדים נוספים
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          <div><div className="text-xs" style={{ color: 'var(--text-muted)' }}>סיבים</div><div className="font-bold">{t.fiberG}g</div></div>
+          <div><div className="text-xs" style={{ color: 'var(--text-muted)' }}>מים</div><div className="font-bold">{(t.waterMl / 1000).toFixed(1)} ל'</div></div>
+          <div><div className="text-xs" style={{ color: 'var(--text-muted)' }}>צעדים</div><div className="font-bold">{t.stepsGoal.toLocaleString()}</div></div>
+        </div>
+      </div>
+
+      <div className="text-center text-xs" style={{ color: 'var(--text-muted)' }}>
+        אל תדאג — כל היעדים מתעדכנים אוטומטית ככל שהמשקל משתנה, ותוכל לשנות כל דבר בפרופיל.
+      </div>
+    </div>
+  )
+}
+
+function MacroMini({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <div className="p-4 rounded-2xl text-center border" style={{ borderColor: 'var(--border)', background: 'var(--surface-1)' }}>
+      <div className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>{label}</div>
+      <div className="serif text-2xl font-bold" style={{ color }}>{value}</div>
+    </div>
+  )
+}
