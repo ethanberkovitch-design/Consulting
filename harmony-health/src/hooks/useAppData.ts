@@ -17,15 +17,21 @@ const DEFAULT_SETTINGS: AppSettings = {
   notifications: { enabled: false, times: ['08:30', '13:00', '20:00'] },
 }
 
-export function useAppData() {
-  const [profile, setProfile] = useLocalState<UserProfile | null>('profile', null)
-  const [diary, setDiary] = useLocalState<DiaryEntry[]>('diary', [])
-  const [weights, setWeights] = useLocalState<WeightLog[]>('weights', [])
-  const [workouts, setWorkouts] = useLocalState<WorkoutLog[]>('workouts', [])
-  const [habits, setHabits] = useLocalState<HabitLog[]>('habits', [])
-  const [mindful, setMindful] = useLocalState<MindfulnessSession[]>('mindful', [])
-  const [gratitude, setGratitude] = useLocalState<GratitudeEntry[]>('gratitude', [])
-  const [settings, setSettings] = useLocalState<AppSettings>('settings', DEFAULT_SETTINGS)
+// Per-account data. When accountId is null all keys resolve to the legacy
+// unscoped names, keeping backwards compatibility for the anonymous mode. On
+// signup or login the key changes and useLocalState reloads.
+export function useAppData(accountId: string | null) {
+  const prefix = accountId ? `acc:${accountId}:` : ''
+  const key = (k: string) => `${prefix}${k}`
+
+  const [profile, setProfile] = useLocalState<UserProfile | null>(key('profile'), null)
+  const [diary, setDiary] = useLocalState<DiaryEntry[]>(key('diary'), [])
+  const [weights, setWeights] = useLocalState<WeightLog[]>(key('weights'), [])
+  const [workouts, setWorkouts] = useLocalState<WorkoutLog[]>(key('workouts'), [])
+  const [habits, setHabits] = useLocalState<HabitLog[]>(key('habits'), [])
+  const [mindful, setMindful] = useLocalState<MindfulnessSession[]>(key('mindful'), [])
+  const [gratitude, setGratitude] = useLocalState<GratitudeEntry[]>(key('gratitude'), [])
+  const [settings, setSettings] = useLocalState<AppSettings>(key('settings'), DEFAULT_SETTINGS)
 
   const targets = useMemo(() => (profile ? macros(profile) : null), [profile])
 
@@ -60,7 +66,6 @@ export function useAppData() {
 
   function addMindfulness(entry: Omit<MindfulnessSession, 'id'>) {
     setMindful(prev => [...prev, { ...entry, id: uid() }])
-    // Also increment today's habit mindfulnessMinutes
     setHabits(prev => {
       const existing = prev.find(h => h.date === entry.date)
       if (existing) {

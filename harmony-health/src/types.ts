@@ -19,11 +19,24 @@ export type DietStyle =
 
 export type FastingWindow = 'none' | '12_12' | '14_10' | '16_8'
 
-// Whether the user actually wants a workout program at all. Some users can't
-// or don't want to exercise; the app should still support them (NEAT-first).
 export type ExerciseParticipation = 'yes' | 'limited' | 'no'
+export type MeditationParticipation = 'yes' | 'curious' | 'no'
+
+// A single lightweight local account. Password is stored in a browser-only
+// hash (not for production security) — the point is to gate the profile and
+// let one browser hold multiple people. Cloud sync (real Supabase Auth) can
+// be layered on top later without changing this shape.
+export interface Account {
+  id: string
+  name: string
+  email: string
+  passwordHash: string
+  createdAt: string
+  lastLoginAt: string
+}
 
 export interface UserProfile {
+  accountId?: string
   name: string
   age: number
   sex: Sex
@@ -31,11 +44,20 @@ export interface UserProfile {
   startWeightKg: number
   currentWeightKg: number
   goalWeightKg: number
+  // How many months the user wants to give the journey. Optional — when set
+  // the app compares the required deficit against the safe floor and warns
+  // if it's unrealistic.
+  deadlineMonths?: number
+  // Free-text reason motivating the change (wedding, medical, birthday…).
+  motivationEvent?: string
+  // Optional target date for that event (yyyy-mm-dd).
+  motivationEventDate?: string
   activity: ActivityLevel
   goal: Goal
   dietStyle: DietStyle
   fasting: FastingWindow
   exercise: ExerciseParticipation
+  meditation: MeditationParticipation
   waterTracking: boolean
   allergies: string[]
   dislikes: string[]
@@ -95,14 +117,27 @@ export interface WorkoutLog {
   caloriesBurned?: number
 }
 
+// Expanded HabitLog — collects the daily signals that most predict weight-loss
+// success in behavioral literature (sleep, energy, hunger, cravings, mood,
+// stress, alcohol, screen/outdoor exposure). Every field is optional-in-practice
+// — the daily form only asks for what the user opts into.
 export interface HabitLog {
   id: string
   date: string
   sleepHours: number
+  sleepQuality?: 1 | 2 | 3 | 4 | 5
   waterMl: number
   steps: number
   mood: 1 | 2 | 3 | 4 | 5
   stress: 1 | 2 | 3 | 4 | 5
+  energyLevel?: 1 | 2 | 3 | 4 | 5
+  hungerLevel?: 1 | 2 | 3 | 4 | 5
+  sweetCravings?: 1 | 2 | 3 | 4 | 5
+  bowelMovements?: number
+  alcoholUnits?: number
+  screenTimeHours?: number
+  outdoorMinutes?: number
+  socialContact?: 1 | 2 | 3 | 4 | 5
   mindfulnessMinutes: number
   note?: string
 }
@@ -153,7 +188,7 @@ export interface DailyTargets extends MacroTargets {
 export interface AppSettings {
   notifications: {
     enabled: boolean
-    times: string[] // HH:MM strings for daily reminder times
+    times: string[]
   }
   lastCheckInDate?: string
 }

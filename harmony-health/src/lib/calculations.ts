@@ -24,7 +24,10 @@ export function tdee(profile: UserProfile): number {
   return Math.round(bmr(profile) * ACTIVITY_MULTIPLIER[profile.activity])
 }
 
-// Adaptive deficit: never below the safe floor (BMR * 1.05 for women, BMR * 1.1 for men).
+// Adaptive deficit: never below the safe floor (BMR * 1.05 for women, BMR * 1.1
+// for men). If the user set a deadline, we compute the deficit that deadline
+// implies and take the deeper of that and the goal pace — but still bounded
+// by the safe floor.
 export function targetCalories(profile: UserProfile): number {
   const totalExpenditure = tdee(profile)
   const goalDelta: Record<Goal, number> = {
@@ -34,9 +37,49 @@ export function targetCalories(profile: UserProfile): number {
     maintain: 0,
     recomposition: -0.1,
   }
-  const raw = Math.round(totalExpenditure * (1 + goalDelta[profile.goal]))
+  const paceKcal = Math.round(totalExpenditure * (1 + goalDelta[profile.goal]))
+
+  let deadlineKcal = paceKcal
+  const toLose = profile.currentWeightKg - profile.goalWeightKg
+  if (profile.deadlineMonths && profile.deadlineMonths > 0 && toLose > 0) {
+    const kcalPerKg = 7700
+    const totalDeficit = toLose * kcalPerKg
+    const days = profile.deadlineMonths * 30
+    const perDay = totalDeficit / days
+    deadlineKcal = Math.round(totalExpenditure - perDay)
+  }
+
+  const raw = Math.min(paceKcal, deadlineKcal)
   const floor = Math.round(bmr(profile) * (profile.sex === 'male' ? 1.1 : 1.05))
   return Math.max(raw, floor)
+}
+
+// Whether the user's deadline is realistic given the safe floor. Used by the
+// onboarding summary to warn — never to block.
+export function deadlineFeasibility(profile: UserProfile):
+  | { feasible: true; requiredWeeklyKg: number }
+  | { feasible: false; requiredWeeklyKg: number; maxWeeklyKg: number }
+  | null
+{
+  if (!profile.deadlineMonths || profile.deadlineMonths <= 0) return null
+  const toLose = profile.currentWeightKg - profile.goalWeightKg
+  if (toLose <= 0) return null
+
+  const weeks = profile.deadlineMonths * 4.33
+  const required = toLose / weeks
+
+  const floor = Math.round(bmr(profile) * (profile.sex === 'male' ? 1.1 : 1.05))
+  const maxDeficit = tdee(profile) - floor
+  const maxWeekly = (maxDeficit * 7) / 7700
+
+  if (required <= maxWeekly && required <= 1) {
+    return { feasible: true, requiredWeeklyKg: Math.round(required * 100) / 100 }
+  }
+  return {
+    feasible: false,
+    requiredWeeklyKg: Math.round(required * 100) / 100,
+    maxWeeklyKg: Math.round(Math.min(maxWeekly, 1) * 100) / 100,
+  }
 }
 
 // Protein prescription per kg body weight — clinical range for fat-loss with muscle preservation.

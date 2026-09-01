@@ -1,12 +1,25 @@
 import { useState } from 'react'
-import { User, Target, Salad, Clock, AlertTriangle, LogOut, Save } from 'lucide-react'
+import { User, Target, Salad, Clock, AlertTriangle, LogOut, Save, Wind, Calendar as CalendarIcon, Mail } from 'lucide-react'
 import type { useAppData } from '../hooks/useAppData.ts'
-import type { ActivityLevel, DietStyle, ExerciseParticipation, FastingWindow, Goal, UserProfile } from '../types.ts'
+import type {
+  Account,
+  ActivityLevel,
+  DietStyle,
+  ExerciseParticipation,
+  FastingWindow,
+  Goal,
+  MeditationParticipation,
+  UserProfile,
+} from '../types.ts'
 import { bmi, macros, tdee } from '../lib/calculations.ts'
 
-interface Props { data: ReturnType<typeof useAppData> }
+interface Props {
+  data: ReturnType<typeof useAppData>
+  account: Account
+  onLogout: () => void
+}
 
-export function ProfilePage({ data }: Props) {
+export function ProfilePage({ data, account, onLogout }: Props) {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState<UserProfile>(data.profile!)
 
@@ -35,6 +48,32 @@ export function ProfilePage({ data }: Props) {
           <h1 className="text-3xl md:text-4xl">{data.profile!.name}</h1>
         </div>
         {!editing && <button className="btn btn-primary" onClick={() => setEditing(true)}>ערוך</button>}
+      </div>
+
+      {/* Account */}
+      <div className="card mb-6">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-12 h-12 rounded-full flex items-center justify-center serif text-xl font-bold"
+              style={{ background: 'var(--navy)', color: 'var(--gold)' }}
+            >
+              {account.name.trim().charAt(0)}
+            </div>
+            <div>
+              <div className="font-semibold" style={{ color: 'var(--navy)' }}>{account.name}</div>
+              <div className="text-xs flex items-center gap-1" style={{ color: 'var(--text-muted)' }} dir="ltr">
+                <Mail size={12} /> {account.email}
+              </div>
+              <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                חשבון נוצר ב-{new Date(account.createdAt).toLocaleDateString('he-IL')}
+              </div>
+            </div>
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={onLogout}>
+            <LogOut size={14} /> התנתק
+          </button>
+        </div>
       </div>
 
       {/* Snapshot */}
@@ -97,6 +136,49 @@ export function ProfilePage({ data }: Props) {
               </select>
             ) : goalLabel(form.goal)}
           </Row>
+          <Row label="לו״ז יעד">
+            {editing ? (
+              <select
+                className="select"
+                value={form.deadlineMonths ?? 0}
+                onChange={e => {
+                  const v = Number(e.target.value)
+                  setForm({ ...form, deadlineMonths: v > 0 ? v : undefined })
+                }}
+              >
+                <option value={0}>ללא דד-ליין</option>
+                <option value={1}>חודש</option>
+                <option value={2}>חודשיים</option>
+                <option value={3}>3 חודשים</option>
+                <option value={6}>6 חודשים</option>
+                <option value={9}>9 חודשים</option>
+                <option value={12}>שנה</option>
+              </select>
+            ) : (form.deadlineMonths ? `${form.deadlineMonths} חודשים` : 'ללא דד-ליין')}
+          </Row>
+        </Section>
+
+        <Section icon={<CalendarIcon size={16} />} title="מוטיבציה">
+          <Row label="אירוע שמניע אותך">
+            {editing ? (
+              <input
+                className="input"
+                placeholder="חתונה, יום הולדת, בדיקה רפואית…"
+                value={form.motivationEvent ?? ''}
+                onChange={e => setForm({ ...form, motivationEvent: e.target.value || undefined })}
+              />
+            ) : (form.motivationEvent || '—')}
+          </Row>
+          <Row label="תאריך האירוע">
+            {editing ? (
+              <input
+                className="input"
+                type="date"
+                value={form.motivationEventDate ?? ''}
+                onChange={e => setForm({ ...form, motivationEventDate: e.target.value || undefined })}
+              />
+            ) : (form.motivationEventDate ? new Date(form.motivationEventDate).toLocaleDateString('he-IL') : '—')}
+          </Row>
         </Section>
 
         <Section icon={<Salad size={16} />} title="תזונה">
@@ -155,6 +237,22 @@ export function ProfilePage({ data }: Props) {
           </Row>
         </Section>
 
+        <Section icon={<Wind size={16} />} title="מיינדפולנס">
+          <Row label="השתתפות">
+            {editing ? (
+              <select
+                className="select"
+                value={form.meditation}
+                onChange={e => setForm({ ...form, meditation: e.target.value as MeditationParticipation })}
+              >
+                <option value="yes">כן — משלב באורח החיים</option>
+                <option value="curious">מסקרן — רוצה להתנסות</option>
+                <option value="no">לא רלוונטי בשבילי</option>
+              </select>
+            ) : meditationLabel(form.meditation)}
+          </Row>
+        </Section>
+
         <Section icon={<AlertTriangle size={16} />} title="רגישויות והעדפות">
           <Row label="אלרגיות">
             <div className="flex flex-wrap gap-1">
@@ -185,7 +283,7 @@ export function ProfilePage({ data }: Props) {
           <div>
             <div className="font-semibold" style={{ color: 'var(--status-critical)' }}>איפוס כל הנתונים</div>
             <div className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-              מוחק את הפרופיל, יומן האכילה, המשקלים, ההרגלים והאימונים. פעולה בלתי-הפיכה.
+              מוחק את הפרופיל, יומן האכילה, המשקלים, ההרגלים והאימונים של החשבון הזה. פעולה בלתי-הפיכה.
             </div>
           </div>
           <button className="btn btn-ghost" style={{ color: 'var(--status-critical)', borderColor: 'rgba(180, 52, 46, 0.3)' }} onClick={reset}>
@@ -232,4 +330,7 @@ function activityLabel(a: ActivityLevel) {
 }
 function exerciseLabel(e: ExerciseParticipation) {
   return e === 'yes' ? 'תוכנית מלאה' : e === 'limited' ? 'תנועה מוגבלת' : 'ללא אימונים'
+}
+function meditationLabel(m: MeditationParticipation) {
+  return m === 'yes' ? 'משלב באורח החיים' : m === 'curious' ? 'רוצה להתנסות' : 'ללא'
 }

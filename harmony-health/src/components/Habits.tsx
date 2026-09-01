@@ -1,5 +1,22 @@
 import { useMemo, useState } from 'react'
-import { Moon, Droplet, Footprints, Smile, Zap, Brain, Save } from 'lucide-react'
+import {
+  Moon,
+  Droplet,
+  Footprints,
+  Smile,
+  Zap,
+  Brain,
+  Save,
+  Wine,
+  Monitor,
+  Sun,
+  Users,
+  Apple,
+  Utensils,
+  ToiletIcon as Toilet,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react'
 import type { useAppData } from '../hooks/useAppData.ts'
 import type { HabitLog } from '../types.ts'
 import { todayIso, isoDaysAgo } from '../lib/storage.ts'
@@ -8,6 +25,13 @@ interface Props { data: ReturnType<typeof useAppData> }
 
 const MOOD_EMOJI = ['😞', '😕', '😐', '🙂', '😄']
 const STRESS_EMOJI = ['😌', '🙂', '😐', '😰', '😫']
+const ENERGY_EMOJI = ['🪫', '🔋', '⚡', '⚡⚡', '⚡⚡⚡']
+const HUNGER_EMOJI = ['😋', '🙂', '😐', '😕', '🥵']
+const CRAVING_EMOJI = ['🚫', '🤏', '🍫', '🍬', '🍭']
+const SOCIAL_EMOJI = ['🙈', '🤝', '👥', '🎉', '💞']
+const QUALITY_EMOJI = ['😴', '💤', '🌤️', '🌞', '✨']
+
+type Rating = 1 | 2 | 3 | 4 | 5
 
 export function Habits({ data }: Props) {
   const today = todayIso()
@@ -17,14 +41,24 @@ export function Habits({ data }: Props) {
 function HabitsForm({ data, today }: { data: ReturnType<typeof useAppData>; today: string }) {
   const existing = data.habits.find(h => h.date === today)
   const targets = data.targets!
+  const [expanded, setExpanded] = useState(false)
 
   const [form, setForm] = useState<Omit<HabitLog, 'id'>>(() => ({
     date: today,
     sleepHours: existing?.sleepHours ?? 7,
+    sleepQuality: existing?.sleepQuality,
     waterMl: existing?.waterMl ?? 0,
     steps: existing?.steps ?? 0,
     mood: existing?.mood ?? 3,
     stress: existing?.stress ?? 3,
+    energyLevel: existing?.energyLevel,
+    hungerLevel: existing?.hungerLevel,
+    sweetCravings: existing?.sweetCravings,
+    bowelMovements: existing?.bowelMovements,
+    alcoholUnits: existing?.alcoholUnits,
+    screenTimeHours: existing?.screenTimeHours,
+    outdoorMinutes: existing?.outdoorMinutes,
+    socialContact: existing?.socialContact,
     mindfulnessMinutes: existing?.mindfulnessMinutes ?? 0,
     note: existing?.note ?? '',
   }))
@@ -41,7 +75,6 @@ function HabitsForm({ data, today }: { data: ReturnType<typeof useAppData>; toda
     })
   }
 
-  // 7-day summary
   const weekSummary = useMemo(() => {
     const days = Array.from({ length: 7 }, (_, i) => isoDaysAgo(6 - i))
     return days.map(d => {
@@ -52,12 +85,15 @@ function HabitsForm({ data, today }: { data: ReturnType<typeof useAppData>; toda
         waterMl: h?.waterMl ?? 0,
         steps: h?.steps ?? 0,
         mindfulnessMinutes: h?.mindfulnessMinutes ?? 0,
+        energy: h?.energyLevel ?? 0,
       }
     })
   }, [data.habits])
 
-  const avgSleep = weekSummary.reduce((s, d) => s + d.sleepHours, 0) / weekSummary.filter(d => d.sleepHours > 0).length || 0
-  const avgSteps = Math.round(weekSummary.reduce((s, d) => s + d.steps, 0) / weekSummary.filter(d => d.steps > 0).length || 0)
+  const sleepDays = weekSummary.filter(d => d.sleepHours > 0).length
+  const stepDays = weekSummary.filter(d => d.steps > 0).length
+  const avgSleep = sleepDays > 0 ? weekSummary.reduce((s, d) => s + d.sleepHours, 0) / sleepDays : 0
+  const avgSteps = stepDays > 0 ? Math.round(weekSummary.reduce((s, d) => s + d.steps, 0) / stepDays) : 0
 
   return (
     <div>
@@ -107,51 +143,50 @@ function HabitsForm({ data, today }: { data: ReturnType<typeof useAppData>; toda
             </div>
           </div>
 
+          {/* Sleep quality */}
+          <RatingRow
+            icon={<Moon size={14} />}
+            label="איכות שינה"
+            value={form.sleepQuality}
+            emojis={QUALITY_EMOJI}
+            onChange={v => setForm({ ...form, sleepQuality: v })}
+          />
+
           {/* Mood */}
-          <div>
-            <label className="label flex items-center gap-2">
-              <Smile size={14} /> מצב רוח
-            </label>
-            <div className="flex gap-2 justify-around">
-              {MOOD_EMOJI.map((emoji, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setForm({ ...form, mood: (i + 1) as 1 | 2 | 3 | 4 | 5 })}
-                  className="text-3xl p-2 rounded-xl transition-all"
-                  style={{
-                    background: form.mood === i + 1 ? 'var(--surface-3)' : 'transparent',
-                    transform: form.mood === i + 1 ? 'scale(1.15)' : 'scale(1)',
-                  }}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          </div>
+          <RatingRow
+            icon={<Smile size={14} />}
+            label="מצב רוח"
+            value={form.mood}
+            emojis={MOOD_EMOJI}
+            onChange={v => setForm({ ...form, mood: v })}
+          />
 
           {/* Stress */}
-          <div>
-            <label className="label flex items-center gap-2">
-              <Zap size={14} /> רמת לחץ
-            </label>
-            <div className="flex gap-2 justify-around">
-              {STRESS_EMOJI.map((emoji, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setForm({ ...form, stress: (i + 1) as 1 | 2 | 3 | 4 | 5 })}
-                  className="text-3xl p-2 rounded-xl transition-all"
-                  style={{
-                    background: form.stress === i + 1 ? 'var(--surface-3)' : 'transparent',
-                    transform: form.stress === i + 1 ? 'scale(1.15)' : 'scale(1)',
-                  }}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          </div>
+          <RatingRow
+            icon={<Zap size={14} />}
+            label="רמת לחץ"
+            value={form.stress}
+            emojis={STRESS_EMOJI}
+            onChange={v => setForm({ ...form, stress: v })}
+          />
+
+          {/* Energy */}
+          <RatingRow
+            icon={<Zap size={14} />}
+            label="רמת אנרגיה"
+            value={form.energyLevel}
+            emojis={ENERGY_EMOJI}
+            onChange={v => setForm({ ...form, energyLevel: v })}
+          />
+
+          {/* Hunger */}
+          <RatingRow
+            icon={<Utensils size={14} />}
+            label="רעב לאורך היום"
+            value={form.hungerLevel}
+            emojis={HUNGER_EMOJI}
+            onChange={v => setForm({ ...form, hungerLevel: v })}
+          />
 
           {/* Steps */}
           <div>
@@ -213,6 +248,98 @@ function HabitsForm({ data, today }: { data: ReturnType<typeof useAppData>; toda
           </div>
         </div>
 
+        {/* Expandable extras */}
+        <button
+          type="button"
+          onClick={() => setExpanded(v => !v)}
+          className="btn btn-ghost btn-sm mt-6 w-full"
+        >
+          {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          {expanded ? 'הסתר שאלות נוספות' : 'שאלות נוספות · חשקים, אלכוהול, מסכים, טבע'}
+        </button>
+
+        {expanded && (
+          <div className="grid md:grid-cols-2 gap-6 mt-6 pt-6 border-t" style={{ borderColor: 'var(--border)' }}>
+            <RatingRow
+              icon={<Apple size={14} />}
+              label="חשקים למתוק"
+              value={form.sweetCravings}
+              emojis={CRAVING_EMOJI}
+              onChange={v => setForm({ ...form, sweetCravings: v })}
+            />
+
+            <div>
+              <label className="label flex items-center gap-2">
+                <Toilet size={14} /> יציאות היום
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={10}
+                className="input"
+                placeholder="1"
+                value={form.bowelMovements ?? ''}
+                onChange={e => setForm({ ...form, bowelMovements: e.target.value ? Number(e.target.value) : undefined })}
+              />
+            </div>
+
+            <div>
+              <label className="label flex items-center gap-2">
+                <Wine size={14} /> יחידות אלכוהול
+              </label>
+              <input
+                type="number"
+                step="0.5"
+                min={0}
+                className="input"
+                placeholder="0"
+                value={form.alcoholUnits ?? ''}
+                onChange={e => setForm({ ...form, alcoholUnits: e.target.value ? Number(e.target.value) : undefined })}
+              />
+              <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                יחידה = 330 מ"ל בירה / 150 מ"ל יין / 45 מ"ל אלכוהול חזק
+              </div>
+            </div>
+
+            <div>
+              <label className="label flex items-center gap-2">
+                <Monitor size={14} /> שעות מסך (מעבר לעבודה)
+              </label>
+              <input
+                type="number"
+                step="0.5"
+                min={0}
+                className="input"
+                placeholder="2"
+                value={form.screenTimeHours ?? ''}
+                onChange={e => setForm({ ...form, screenTimeHours: e.target.value ? Number(e.target.value) : undefined })}
+              />
+            </div>
+
+            <div>
+              <label className="label flex items-center gap-2">
+                <Sun size={14} /> דקות בחוץ / באור טבעי
+              </label>
+              <input
+                type="number"
+                min={0}
+                className="input"
+                placeholder="20"
+                value={form.outdoorMinutes ?? ''}
+                onChange={e => setForm({ ...form, outdoorMinutes: e.target.value ? Number(e.target.value) : undefined })}
+              />
+            </div>
+
+            <RatingRow
+              icon={<Users size={14} />}
+              label="קשר חברתי משמעותי"
+              value={form.socialContact}
+              emojis={SOCIAL_EMOJI}
+              onChange={v => setForm({ ...form, socialContact: v })}
+            />
+          </div>
+        )}
+
         <button className="btn btn-primary mt-6" onClick={save}>
           <Save size={16} /> שמור יום
         </button>
@@ -244,6 +371,45 @@ function HabitsForm({ data, today }: { data: ReturnType<typeof useAppData>; toda
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  )
+}
+
+function RatingRow({
+  icon,
+  label,
+  value,
+  emojis,
+  onChange,
+}: {
+  icon: React.ReactNode
+  label: string
+  value: Rating | undefined
+  emojis: string[]
+  onChange: (v: Rating) => void
+}) {
+  return (
+    <div>
+      <label className="label flex items-center gap-2">
+        {icon} {label}
+      </label>
+      <div className="flex gap-2 justify-around">
+        {emojis.map((emoji, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onChange((i + 1) as Rating)}
+            className="text-2xl p-2 rounded-xl transition-all"
+            style={{
+              background: value === i + 1 ? 'var(--surface-3)' : 'transparent',
+              transform: value === i + 1 ? 'scale(1.15)' : 'scale(1)',
+              opacity: value === undefined ? 0.7 : value === i + 1 ? 1 : 0.5,
+            }}
+          >
+            {emoji}
+          </button>
+        ))}
       </div>
     </div>
   )

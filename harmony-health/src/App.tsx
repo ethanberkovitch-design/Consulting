@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Home,
   UtensilsCrossed,
@@ -12,9 +12,11 @@ import {
   X,
   Wind,
   Lightbulb,
+  LogOut,
 } from 'lucide-react'
 import { useAppData } from './hooks/useAppData.ts'
-import type { ScreenKey } from './types.ts'
+import type { Account, ScreenKey } from './types.ts'
+import { Auth } from './components/Auth.tsx'
 import { Onboarding } from './components/Onboarding.tsx'
 import { Dashboard } from './components/Dashboard.tsx'
 import { FoodDiary } from './components/FoodDiary.tsx'
@@ -26,12 +28,14 @@ import { Mindfulness } from './components/Mindfulness.tsx'
 import { Tips } from './components/Tips.tsx'
 import { MethodPage } from './components/MethodPage.tsx'
 import { ProfilePage } from './components/ProfilePage.tsx'
+import { currentAccount, logout } from './lib/accounts.ts'
 
 interface NavEntry {
   key: ScreenKey
   label: string
   Icon: typeof Home
   hiddenIfNoExercise?: boolean
+  hiddenIfNoMeditation?: boolean
 }
 
 const NAV: NavEntry[] = [
@@ -40,7 +44,7 @@ const NAV: NavEntry[] = [
   { key: 'plan', label: 'תפריט שבועי', Icon: Calendar },
   { key: 'weight', label: 'משקל ומדדים', Icon: TrendingUp },
   { key: 'workouts', label: 'אימונים', Icon: Dumbbell, hiddenIfNoExercise: true },
-  { key: 'mindfulness', label: 'מיינדפולנס', Icon: Wind },
+  { key: 'mindfulness', label: 'מיינדפולנס', Icon: Wind, hiddenIfNoMeditation: true },
   { key: 'habits', label: 'הרגלים ורווחה', Icon: Heart },
   { key: 'tips', label: 'טיפים והגיגים', Icon: Lightbulb },
   { key: 'method', label: 'השיטה', Icon: Sparkles },
@@ -48,16 +52,34 @@ const NAV: NavEntry[] = [
 ]
 
 export default function App() {
-  const data = useAppData()
+  const [account, setAccount] = useState<Account | null>(() => currentAccount())
+  const data = useAppData(account?.id ?? null)
   const [screen, setScreen] = useState<ScreenKey>('dashboard')
   const [mobileOpen, setMobileOpen] = useState(false)
 
+  useEffect(() => {
+    setScreen('dashboard')
+  }, [account?.id])
+
+  if (!account) {
+    return <Auth onAuthenticated={setAccount} />
+  }
+
   if (!data.profile) {
-    return <Onboarding onComplete={data.setProfile} />
+    return <Onboarding account={account} onComplete={data.setProfile} />
+  }
+
+  function handleLogout() {
+    logout()
+    setAccount(null)
   }
 
   const showWorkouts = data.profile.exercise !== 'no'
-  const nav = NAV.filter(n => !(n.hiddenIfNoExercise && !showWorkouts))
+  const showMeditation = data.profile.meditation !== 'no'
+  const nav = NAV.filter(n =>
+    !(n.hiddenIfNoExercise && !showWorkouts) &&
+    !(n.hiddenIfNoMeditation && !showMeditation)
+  )
 
   return (
     <div className="min-h-screen flex" dir="rtl">
@@ -112,6 +134,22 @@ export default function App() {
               יעד: <strong>{data.profile.goalWeightKg} ק"ג</strong>
             </div>
           </div>
+
+          <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
+            <div className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>
+              מחובר בתור
+            </div>
+            <div className="text-sm mb-3 truncate" style={{ color: 'var(--navy)' }} title={account.email}>
+              {account.email}
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="btn btn-ghost btn-sm w-full"
+            >
+              <LogOut size={14} /> התנתק
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -145,11 +183,12 @@ export default function App() {
           {screen === 'weight' && <WeightTracker data={data} />}
           {screen === 'workouts' && showWorkouts && <Workouts data={data} />}
           {screen === 'workouts' && !showWorkouts && <NoExerciseNotice />}
-          {screen === 'mindfulness' && <Mindfulness data={data} />}
+          {screen === 'mindfulness' && showMeditation && <Mindfulness data={data} />}
+          {screen === 'mindfulness' && !showMeditation && <NoMeditationNotice />}
           {screen === 'habits' && <Habits data={data} />}
           {screen === 'tips' && <Tips data={data} />}
           {screen === 'method' && <MethodPage />}
-          {screen === 'profile' && <ProfilePage data={data} />}
+          {screen === 'profile' && <ProfilePage data={data} account={account} onLogout={handleLogout} />}
         </div>
       </main>
     </div>
@@ -163,6 +202,18 @@ function NoExerciseNotice() {
       <h2 className="text-2xl mb-2">בחרת בשקט מהאימונים</h2>
       <p className="text-sm max-w-md mx-auto" style={{ color: 'var(--text-secondary)' }}>
         אין בעיה — התוכנית שלך עדיין תעבוד. אם תרצה להוסיף פעילות בעתיד, שנה את ההעדפה בפרופיל.
+      </p>
+    </div>
+  )
+}
+
+function NoMeditationNotice() {
+  return (
+    <div className="card text-center py-10">
+      <div className="text-4xl mb-3">🧘</div>
+      <h2 className="text-2xl mb-2">בחרת לוותר על מיינדפולנס</h2>
+      <p className="text-sm max-w-md mx-auto" style={{ color: 'var(--text-secondary)' }}>
+        לא בעיה — התוכנית שלך תעבוד גם ככה. אם תרצה להתנסות בעתיד, שנה את ההעדפה בפרופיל.
       </p>
     </div>
   )
