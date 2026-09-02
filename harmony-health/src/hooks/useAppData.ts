@@ -4,6 +4,7 @@ import type {
   DiaryEntry,
   GratitudeEntry,
   HabitLog,
+  MethodologyCheckIn,
   MindfulnessSession,
   UserProfile,
   WeightLog,
@@ -31,6 +32,7 @@ export function useAppData(accountId: string | null) {
   const [habits, setHabits] = useLocalState<HabitLog[]>(key('habits'), [])
   const [mindful, setMindful] = useLocalState<MindfulnessSession[]>(key('mindful'), [])
   const [gratitude, setGratitude] = useLocalState<GratitudeEntry[]>(key('gratitude'), [])
+  const [methodologyCheckIns, setMethodologyCheckIns] = useLocalState<MethodologyCheckIn[]>(key('methodologyCheckIns'), [])
   const [settings, setSettings] = useLocalState<AppSettings>(key('settings'), DEFAULT_SETTINGS)
 
   const targets = useMemo(() => (profile ? macros(profile) : null), [profile])
@@ -86,6 +88,13 @@ export function useAppData(accountId: string | null) {
     })
   }
 
+  function addMethodologyCheckIn(entry: Omit<MethodologyCheckIn, 'id'>) {
+    setMethodologyCheckIns(prev => [
+      ...prev.filter(c => !(c.date === entry.date && c.methodology === entry.methodology)),
+      { ...entry, id: uid() },
+    ])
+  }
+
   function upsertGratitude(entry: Omit<GratitudeEntry, 'id'>) {
     setGratitude(prev => {
       const existing = prev.find(g => g.date === entry.date)
@@ -108,6 +117,7 @@ export function useAppData(accountId: string | null) {
     setHabits([])
     setMindful([])
     setGratitude([])
+    setMethodologyCheckIns([])
     setSettings(DEFAULT_SETTINGS)
   }
 
@@ -128,6 +138,8 @@ export function useAppData(accountId: string | null) {
     addMindfulness,
     gratitude,
     upsertGratitude,
+    methodologyCheckIns,
+    addMethodologyCheckIn,
     settings,
     setSettings,
     markCheckedInToday,

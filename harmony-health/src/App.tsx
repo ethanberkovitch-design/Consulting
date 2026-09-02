@@ -187,7 +187,7 @@ export default function App() {
           {screen === 'mindfulness' && !showMeditation && <NoMeditationNotice />}
           {screen === 'habits' && <Habits data={data} />}
           {screen === 'tips' && <Tips data={data} />}
-          {screen === 'method' && <MethodPage />}
+          {screen === 'method' && <MethodPage data={data} />}
           {screen === 'profile' && <ProfilePage data={data} account={account} onLogout={handleLogout} />}
         </div>
       </main>

@@ -206,6 +206,16 @@ export interface DailyTargets extends MacroTargets {
   date: string
 }
 
+// Weekly self-report on how the chosen methodology is working. 1 = struggling,
+// 5 = feels great. Three consecutive lows trigger a swap suggestion.
+export interface MethodologyCheckIn {
+  id: string
+  date: string           // yyyy-mm-dd
+  methodology: MethodologyKey
+  fit: 1 | 2 | 3 | 4 | 5
+  notes?: string
+}
+
 export interface AppSettings {
   notifications: {
     enabled: boolean

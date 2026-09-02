@@ -4,6 +4,7 @@
 // final call, we don't force them into one.
 
 import { METHODOLOGIES, type Methodology, type MethodologyKey } from '../data/methodologies.ts'
+import type { MethodologyCheckIn } from '../types.ts'
 
 export type ScheduleKind = 'office' | 'travel' | 'shifts' | 'flexible'
 export type CookingTime = 'less_15' | '15_30' | 'more_30'
@@ -119,3 +120,37 @@ export function suggestFor(a: MethodologyAnswers): { top: MethodologyMatch; alte
 }
 
 export type { Methodology, MethodologyKey }
+
+// Fit averaged from the last 4 recorded weekly check-ins for the CURRENT method.
+export function recentMethodologyFit(
+  checkIns: MethodologyCheckIn[],
+  currentKey: MethodologyKey | undefined,
+): { count: number; avg: number | null; lowStreak: number } {
+  if (!currentKey) return { count: 0, avg: null, lowStreak: 0 }
+  const forMethod = checkIns
+    .filter(c => c.methodology === currentKey)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 4)
+  if (forMethod.length === 0) return { count: 0, avg: null, lowStreak: 0 }
+  const avg = forMethod.reduce((s, c) => s + c.fit, 0) / forMethod.length
+  let lowStreak = 0
+  for (const c of forMethod) {
+    if (c.fit <= 2) lowStreak++
+    else break
+  }
+  return { count: forMethod.length, avg: Math.round(avg * 10) / 10, lowStreak }
+}
+
+// Was the last check-in more than 7 days ago (or none yet)?
+export function needsWeeklyCheckIn(
+  checkIns: MethodologyCheckIn[],
+  currentKey: MethodologyKey | undefined,
+): boolean {
+  if (!currentKey) return false
+  const forMethod = checkIns.filter(c => c.methodology === currentKey)
+  if (forMethod.length === 0) return true
+  const latest = forMethod.reduce((a, b) => a.date > b.date ? a : b)
+  const days = (Date.now() - new Date(latest.date).getTime()) / 86_400_000
+  return days >= 7
+}
+
