@@ -5,6 +5,7 @@ import type { useAppData } from '../hooks/useAppData.ts'
 import { todayIso } from '../lib/storage.ts'
 import {
   notificationPermission,
+  notificationsSupported,
   requestNotificationPermission,
   scheduleDailyReminders,
 } from '../lib/notifications.ts'
@@ -25,8 +26,10 @@ export function DailyCheckIn({ data, onNavigate }: Props) {
   const habitToday = data.habits.find(h => h.date === today)
   const alreadyLogged = !!habitToday
   const [dismissed, setDismissed] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
   const notifs = data.settings.notifications
   const [permission, setPermission] = useState(notificationPermission())
+  const supported = notificationsSupported()
 
   useEffect(() => {
     if (!notifs.enabled || permission !== 'granted') return
@@ -35,6 +38,10 @@ export function DailyCheckIn({ data, onNavigate }: Props) {
   }, [notifs.enabled, notifs.times, permission])
 
   async function enableNotifications() {
+    if (!supported) {
+      setShowHelp(true)
+      return
+    }
     const p = await requestNotificationPermission()
     setPermission(p)
     if (p === 'granted') {
@@ -42,6 +49,8 @@ export function DailyCheckIn({ data, onNavigate }: Props) {
         ...data.settings,
         notifications: { ...notifs, enabled: true },
       })
+    } else if (p === 'denied') {
+      setShowHelp(true)
     }
   }
 
@@ -101,12 +110,33 @@ export function DailyCheckIn({ data, onNavigate }: Props) {
                 <BellOff size={14} /> כבה תזכורות
               </button>
             )}
-            {permission === 'denied' && (
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                הדפדפן חסם התראות. שנה בהגדרות האתר כדי לקבל תזכורות.
-              </span>
-            )}
           </div>
+
+          {showHelp && (
+            <div
+              className="mt-3 p-3 rounded-xl text-xs leading-relaxed"
+              style={{ background: 'rgba(11,31,58,0.06)', color: 'var(--text-secondary)' }}
+            >
+              <div className="font-semibold mb-1" style={{ color: 'var(--navy)' }}>
+                למה זה לא עבד?
+              </div>
+              {!supported ? (
+                <>
+                  הדפדפן הזה לא תומך בהתראות מקומיות. באייפון (Safari 16.4+) —
+                  שתף → הוסף למסך הבית, ואז פתח את האפליקציה משם. במחשב —
+                  Chrome, Edge או Firefox יתמכו בזה.
+                </>
+              ) : (
+                <>
+                  ההתראות חסומות. פתח את הגדרות הדפדפן לאתר הזה והפעל את
+                  ההרשאה. באייפון: הגדרות → Safari → מתקדם → ייחודי לאתר.
+                </>
+              )}
+              <div className="mt-2" style={{ color: 'var(--text-muted)' }}>
+                גם בלי התראות — הכרטיס הזה יופיע לך כל יום עד שתעשה צ׳ק-אין.
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

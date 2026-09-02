@@ -22,6 +22,21 @@ export type FastingWindow = 'none' | '12_12' | '14_10' | '16_8'
 export type ExerciseParticipation = 'yes' | 'limited' | 'no'
 export type MeditationParticipation = 'yes' | 'curious' | 'no'
 
+// Which of the well-known weight-loss methods best fits this user. Assigned
+// via the onboarding quiz and re-evaluated periodically. See src/data/
+// methodologies.ts and src/lib/methodology.ts.
+export type MethodologyKey =
+  | 'intermittent_fasting'
+  | 'calorie_counting'
+  | 'volumetrics'
+  | 'mediterranean'
+  | 'low_carb'
+  | 'high_protein'
+  | 'plate_method'
+  | 'mindful_eating'
+  | 'meal_replacements'
+  | 'habit_stacking'
+
 // A single lightweight local account. Password is stored in a browser-only
 // hash (not for production security) — the point is to gate the profile and
 // let one browser hold multiple people. Cloud sync (real Supabase Auth) can
@@ -58,6 +73,12 @@ export interface UserProfile {
   fasting: FastingWindow
   exercise: ExerciseParticipation
   meditation: MeditationParticipation
+  // The methodology chosen from the onboarding matcher. Optional so the
+  // pre-methodology flow still validates.
+  methodology?: MethodologyKey
+  // Free-text reasons the matcher gave when the user picked this one — we
+  // surface them back on the Method page as a reminder of "why this fits me".
+  methodologyReasons?: string[]
   waterTracking: boolean
   allergies: string[]
   dislikes: string[]

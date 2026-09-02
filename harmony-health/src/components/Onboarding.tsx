@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight, Sparkles, Check, AlertTriangle, User } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Sparkles, Check, AlertTriangle, User, Compass } from 'lucide-react'
 import type {
   Account,
   ActivityLevel,
@@ -8,6 +8,7 @@ import type {
   FastingWindow,
   Goal,
   MeditationParticipation,
+  MethodologyKey,
   Sex,
   UserProfile,
 } from '../types.ts'
@@ -20,6 +21,16 @@ import {
   targetCalories,
   tdee,
 } from '../lib/calculations.ts'
+import {
+  matchMethodologies,
+  type CookingTime,
+  type MethodologyAnswers,
+  type PastExperience,
+  type Priority,
+  type ScheduleKind,
+  type SocialFrequency,
+  type TrackingTolerance,
+} from '../lib/methodology-match.ts'
 import { createAccount, findAccountByEmail } from '../lib/accounts.ts'
 
 interface Props {
@@ -38,6 +49,7 @@ const STEPS = [
   'מיינדפולנס',
   'סגנון תזונה',
   'חלון אכילה',
+  'השיטה שלך',
   'העדפות',
   'התאמות אישיות',
   'התוכנית שלך',
@@ -76,9 +88,10 @@ export function Onboarding({ account, onComplete }: Props) {
       case 5: return !!form.meditation
       case 6: return !!form.dietStyle
       case 7: return !!form.fasting
-      case 8: return true
+      case 8: return !!form.methodology
       case 9: return true
       case 10: return true
+      case 11: return true
       default: return false
     }
   }, [step, form])
@@ -102,6 +115,8 @@ export function Onboarding({ account, onComplete }: Props) {
       fasting: form.fasting as FastingWindow,
       exercise: (form.exercise ?? 'yes') as ExerciseParticipation,
       meditation: (form.meditation ?? 'yes') as MeditationParticipation,
+      methodology: form.methodology,
+      methodologyReasons: form.methodologyReasons,
       waterTracking: form.waterTracking ?? true,
       allergies: form.allergies ?? [],
       dislikes: form.dislikes ?? [],
@@ -151,9 +166,10 @@ export function Onboarding({ account, onComplete }: Props) {
           {step === 5 && <StepMeditation form={form} update={update} />}
           {step === 6 && <StepDietStyle form={form} update={update} />}
           {step === 7 && <StepFasting form={form} update={update} />}
-          {step === 8 && <StepAppOptions form={form} update={update} />}
-          {step === 9 && <StepPreferences form={form} update={update} />}
-          {step === 10 && <StepPlan form={form} account={account} />}
+          {step === 8 && <StepMethodology form={form} update={update} />}
+          {step === 9 && <StepAppOptions form={form} update={update} />}
+          {step === 10 && <StepPreferences form={form} update={update} />}
+          {step === 11 && <StepPlan form={form} account={account} />}
 
           {step > 0 && (
             <div className="flex justify-between items-center mt-8 pt-6 border-t" style={{ borderColor: 'var(--border)' }}>
@@ -563,11 +579,159 @@ function StepFasting({ form, update }: { form: FormState; update: <K extends key
   )
 }
 
-function StepAppOptions({ form, update }: { form: FormState; update: <K extends keyof UserProfile>(k: K, v: UserProfile[K]) => void }) {
+const SCHEDULE_OPTIONS: { key: ScheduleKind; label: string }[] = [
+  { key: 'office', label: 'שגרה קבועה (משרד/בית)' },
+  { key: 'flexible', label: 'שעות גמישות' },
+  { key: 'shifts', label: 'משמרות משתנות' },
+  { key: 'travel', label: 'נסיעות עבודה תכופות' },
+]
+const COOKING_OPTIONS: { key: CookingTime; label: string }[] = [
+  { key: 'less_15', label: 'פחות מ-15 דק׳ ליום' },
+  { key: '15_30', label: '15–30 דק׳ ליום' },
+  { key: 'more_30', label: 'יותר מ-30 דק׳ — אני אוהב לבשל' },
+]
+const SOCIAL_OPTIONS: { key: SocialFrequency; label: string }[] = [
+  { key: 'rare', label: 'כמעט לא אוכל בחוץ' },
+  { key: 'weekly', label: '1–2 פעמים בשבוע' },
+  { key: 'often', label: '3+ פעמים בשבוע' },
+]
+const TRACKING_OPTIONS: { key: TrackingTolerance; label: string }[] = [
+  { key: 'love_it', label: 'אוהב לעקוב אחרי כל דבר' },
+  { key: 'short_term_ok', label: 'בסדר לזמן קצר' },
+  { key: 'never', label: 'לא בשבילי — אל תספור בכלל' },
+]
+const PAST_OPTIONS: { key: PastExperience; label: string }[] = [
+  { key: 'never_dieted', label: 'זו הפעם הראשונה שלי' },
+  { key: 'tried_and_failed', label: 'ניסיתי כמה פעמים ולא החזיק' },
+  { key: 'lost_but_regained', label: 'ירדתי — ואז חזרתי לאותו מקום' },
+  { key: 'currently_succeeding', label: 'בתהליך מוצלח, רוצה להעמיק' },
+]
+const PRIORITY_OPTIONS: { key: Priority; label: string }[] = [
+  { key: 'fast_results', label: 'תוצאות מהירות' },
+  { key: 'easy_routine', label: 'שגרה קלה שלא נשברת' },
+  { key: 'long_term_health', label: 'בריאות לטווח ארוך' },
+  { key: 'build_habits', label: 'בניית הרגלים חדשים' },
+]
+
+function StepMethodology({ form, update }: { form: FormState; update: <K extends keyof UserProfile>(k: K, v: UserProfile[K]) => void }) {
+  const [answers, setAnswers] = useState<Partial<MethodologyAnswers>>({})
+
+  function pick<K extends keyof MethodologyAnswers>(k: K, v: MethodologyAnswers[K]) {
+    setAnswers(prev => ({ ...prev, [k]: v }))
+  }
+
+  const complete =
+    !!answers.schedule && !!answers.cookingTime && !!answers.socialEating &&
+    !!answers.tracking && !!answers.past && !!answers.priority
+
+  const ranked = useMemo(() => {
+    if (!complete) return null
+    return matchMethodologies(answers as MethodologyAnswers).slice(0, 3)
+  }, [complete, answers])
+
   return (
     <div>
       <div className="section-title">
         <span className="kicker">שלב 8</span>
+        <h2>איזו שיטה הכי מתאימה לך?</h2>
+      </div>
+      <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
+        אין שיטה אחת שעובדת לכולם. 6 שאלות קצרות — ונציג לך את 3 השיטות שהכי מתאימות
+        למי שאתה, ולא לפי טרנד. אתה תבחר בסוף.
+      </p>
+
+      <div className="space-y-5">
+        <MiniPicker label="שגרת העבודה שלך" options={SCHEDULE_OPTIONS} value={answers.schedule} onChange={v => pick('schedule', v)} />
+        <MiniPicker label="כמה זמן ביום אתה מוכן להשקיע במטבח?" options={COOKING_OPTIONS} value={answers.cookingTime} onChange={v => pick('cookingTime', v)} />
+        <MiniPicker label="כמה פעמים בשבוע אוכלים בחוץ / באירועים?" options={SOCIAL_OPTIONS} value={answers.socialEating} onChange={v => pick('socialEating', v)} />
+        <MiniPicker label="מה יחסך למעקב אחרי אוכל?" options={TRACKING_OPTIONS} value={answers.tracking} onChange={v => pick('tracking', v)} />
+        <MiniPicker label="הניסיון הקודם שלך" options={PAST_OPTIONS} value={answers.past} onChange={v => pick('past', v)} />
+        <MiniPicker label="מה הכי חשוב לך?" options={PRIORITY_OPTIONS} value={answers.priority} onChange={v => pick('priority', v)} />
+      </div>
+
+      {ranked && (
+        <div className="mt-8 pt-6 border-t" style={{ borderColor: 'var(--border)' }}>
+          <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--gold-deep)' }}>
+            3 השיטות הכי מתאימות לך — בחר אחת
+          </div>
+          <div className="grid gap-3">
+            {ranked.map(({ methodology: m, reasons }, i) => (
+              <button
+                key={m.key}
+                type="button"
+                onClick={() => {
+                  update('methodology', m.key as MethodologyKey)
+                  update('methodologyReasons', reasons)
+                }}
+                className="p-4 rounded-2xl text-right border transition-all"
+                style={{
+                  background: form.methodology === m.key ? 'var(--navy)' : 'var(--surface-1)',
+                  color: form.methodology === m.key ? 'var(--text-inverse)' : 'var(--navy)',
+                  borderColor: form.methodology === m.key ? 'var(--navy)' : 'var(--border-strong)',
+                }}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  {i === 0 && <span className="pill pill-gold" style={{ padding: '2px 8px' }}>#1 התאמה</span>}
+                  <span className="font-semibold text-lg">{m.name}</span>
+                </div>
+                <div className="text-xs mb-2 opacity-80">{m.tagline}</div>
+                {reasons.length > 0 && (
+                  <ul className="text-xs opacity-90 space-y-1">
+                    {reasons.map((r, ri) => (
+                      <li key={ri} className="flex gap-1 items-start">
+                        <Compass size={12} style={{ marginTop: 3, flexShrink: 0 }} />
+                        <span>{r}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </button>
+            ))}
+          </div>
+          <div className="text-xs mt-4" style={{ color: 'var(--text-muted)' }}>
+            תוכל להחליף בכל שלב מהפרופיל. השיטה תשפיע על התפריט המומלץ ועל הטיפים שתקבל.
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MiniPicker<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string
+  options: { key: T; label: string }[]
+  value: T | undefined
+  onChange: (v: T) => void
+}) {
+  return (
+    <div>
+      <div className="text-sm font-semibold mb-2" style={{ color: 'var(--navy)' }}>{label}</div>
+      <div className="grid grid-cols-2 gap-2">
+        {options.map(o => (
+          <button
+            key={o.key}
+            type="button"
+            onClick={() => onChange(o.key)}
+            className={`btn btn-sm ${value === o.key ? 'btn-primary' : 'btn-ghost'}`}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function StepAppOptions({ form, update }: { form: FormState; update: <K extends keyof UserProfile>(k: K, v: UserProfile[K]) => void }) {
+  return (
+    <div>
+      <div className="section-title">
+        <span className="kicker">שלב 9</span>
         <h2>העדפות אפליקציה</h2>
       </div>
 
@@ -619,7 +783,7 @@ function StepPreferences({ form, update }: { form: FormState; update: <K extends
   return (
     <div>
       <div className="section-title">
-        <span className="kicker">שלב 9</span>
+        <span className="kicker">שלב 10</span>
         <h2>מה חשוב לדעת עליך?</h2>
       </div>
 
