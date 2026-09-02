@@ -148,11 +148,19 @@ export function projectedWeeklyLossKg(profile: UserProfile): number {
 }
 
 // Estimate a realistic date to reach the goal weight (in weeks).
+// When the user has set a feasible deadline, we honor it — otherwise we
+// compute the ceiling based on the actual safe weekly loss.
 export function projectedWeeksToGoal(profile: UserProfile): number | null {
-  const weeklyLoss = projectedWeeklyLossKg(profile)
-  if (weeklyLoss <= 0) return null
   const toLose = profile.currentWeightKg - profile.goalWeightKg
   if (toLose <= 0) return 0
+
+  if (profile.deadlineMonths && profile.deadlineMonths > 0) {
+    const f = deadlineFeasibility(profile)
+    if (f?.feasible) return Math.round(profile.deadlineMonths * 4.33)
+  }
+
+  const weeklyLoss = projectedWeeklyLossKg(profile)
+  if (weeklyLoss <= 0) return null
   return Math.ceil(toLose / weeklyLoss)
 }
 

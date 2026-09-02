@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Plus, TrendingDown, TrendingUp, Minus, Ruler } from 'lucide-react'
+import { Plus, TrendingDown, TrendingUp, Minus, Ruler, X } from 'lucide-react'
 import type { useAppData } from '../hooks/useAppData.ts'
 import { todayIso } from '../lib/storage.ts'
 import { bmi, bmiCategory } from '../lib/calculations.ts'
@@ -174,7 +174,18 @@ export function WeightTracker({ data }: Props) {
       {showAdd && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center p-0 md:p-4" onClick={() => setShowAdd(false)}>
           <div className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-6" onClick={e => e.stopPropagation()}>
-            <h3 className="text-2xl mb-4">שקילה של היום</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-2xl">שקילה של היום</h3>
+              <button
+                type="button"
+                onClick={() => setShowAdd(false)}
+                aria-label="סגור"
+                className="p-2 rounded-full"
+                style={{ color: 'var(--text-secondary)', background: 'var(--surface-2)' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
             <div className="space-y-4">
               <div>
                 <label className="label">משקל (ק"ג)</label>

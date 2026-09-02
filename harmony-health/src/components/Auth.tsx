@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { LogIn, UserPlus, Sparkles, Mail, Lock, User as UserIcon, AlertCircle } from 'lucide-react'
+import { LogIn, UserPlus, Sparkles, Mail, Lock, User as UserIcon, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import type { Account } from '../types.ts'
 import { createAccount, loginAccount } from '../lib/accounts.ts'
 
@@ -17,6 +17,7 @@ export function Auth({ onAuthenticated }: Props) {
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -118,15 +119,26 @@ export function Auth({ onAuthenticated }: Props) {
               <label className="label flex items-center gap-2">
                 <Lock size={14} /> סיסמה
               </label>
-              <input
-                className="input"
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder={mode === 'signup' ? 'לפחות 6 תווים' : ''}
-                autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-                dir="ltr"
-              />
+              <div className="relative">
+                <input
+                  className="input pr-10"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder={mode === 'signup' ? 'לפחות 6 תווים' : ''}
+                  autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                  dir="ltr"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  aria-label={showPassword ? 'הסתר סיסמה' : 'הצג סיסמה'}
+                  className="absolute top-1/2 -translate-y-1/2 left-3 p-1"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
 
             {mode === 'signup' && (
@@ -134,14 +146,25 @@ export function Auth({ onAuthenticated }: Props) {
                 <label className="label flex items-center gap-2">
                   <Lock size={14} /> אישור סיסמה
                 </label>
-                <input
-                  className="input"
-                  type="password"
-                  value={confirm}
-                  onChange={e => setConfirm(e.target.value)}
-                  autoComplete="new-password"
-                  dir="ltr"
-                />
+                <div className="relative">
+                  <input
+                    className="input pr-10"
+                    type={showPassword ? 'text' : 'password'}
+                    value={confirm}
+                    onChange={e => setConfirm(e.target.value)}
+                    autoComplete="new-password"
+                    dir="ltr"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(v => !v)}
+                    aria-label={showPassword ? 'הסתר סיסמה' : 'הצג סיסמה'}
+                    className="absolute top-1/2 -translate-y-1/2 left-3 p-1"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
             )}
 
