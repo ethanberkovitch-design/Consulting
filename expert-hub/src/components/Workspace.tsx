@@ -248,28 +248,28 @@ export function Workspace({ user, expert, conversation: initial, onCreated, onBa
   return (
     <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_300px]">
       {/* Conversation */}
-      <section
-        className="flex min-h-[calc(100vh-6rem)] min-w-0 flex-col rounded-xl border"
-        style={{ background: 'var(--surface-1)', borderColor: 'var(--border)' }}
-      >
+      <section className="bp-panel bp-corners flex min-h-[calc(100vh-6rem)] min-w-0 flex-col">
         <div className="flex items-center gap-3 border-b px-4 py-3" style={{ borderColor: 'var(--border)' }}>
           <button
             type="button"
             onClick={onBack}
-            className="grid h-9 w-9 place-items-center rounded-md hover:bg-[var(--surface-2)]"
+            className="btn-line grid h-9 w-9 place-items-center rounded-md"
             aria-label={t('allExperts')}
             title={t('allExperts')}
           >
             <BackIcon className="h-5 w-5" aria-hidden="true" />
           </button>
           <span
-            className="grid h-9 w-9 place-items-center rounded-lg"
-            style={{ background: 'var(--surface-2)', color: CATEGORY_COLOR[expert.category] }}
+            className="grid h-10 w-10 place-items-center rounded-lg border"
+            style={{ borderColor: 'var(--border)', background: 'rgba(6,16,29,0.6)', color: CATEGORY_COLOR[expert.category] }}
           >
             <expert.icon className="h-5 w-5" aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1">
-            <h1 className="truncate font-bold">{expert.name[lang]}</h1>
+            <h1 className="flex items-center gap-2 truncate font-bold">
+              {expert.name[lang]}
+              <span className="pulse-dot inline-block h-1.5 w-1.5 rounded-full" style={{ background: 'var(--status-good)' }} aria-hidden="true" />
+            </h1>
             {conversation?.title && (
               <p dir="auto" className="truncate text-start text-xs" style={{ color: 'var(--text-muted)' }}>
                 {conversation.title}
@@ -279,7 +279,7 @@ export function Workspace({ user, expert, conversation: initial, onCreated, onBa
           <button
             type="button"
             onClick={handleDelete}
-            className="grid h-9 w-9 place-items-center rounded-md hover:bg-[var(--surface-2)]"
+            className="grid h-9 w-9 place-items-center rounded-md transition-colors hover:bg-[rgba(255,122,114,0.1)] hover:text-[var(--status-critical)]"
             aria-label={t('deleteConversation')}
             title={t('deleteConversation')}
             style={{ color: 'var(--text-muted)' }}
@@ -293,22 +293,30 @@ export function Workspace({ user, expert, conversation: initial, onCreated, onBa
             <p style={{ color: 'var(--text-muted)' }}>{t('loading')}</p>
           ) : chat.length === 0 && !pending ? (
             <div className="mx-auto max-w-2xl py-6">
-              <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
+              <p className="tech-label fade-up" style={{ color: 'var(--line)' }}>
+                {lang === 'he' ? 'מוכן לניתוח' : 'Ready'}
+              </p>
+              <p className="fade-up mt-2 text-xl" style={{ color: 'var(--text-secondary)', ['--delay' as string]: '0.05s' }}>
                 {expert.summary[lang]}
               </p>
-              <h2 className="mb-3 mt-6 text-sm font-bold" style={{ color: 'var(--text-muted)' }}>
-                {t('suggested')}
-              </h2>
+              <div className="dim-ticks mb-4 mt-8">
+                <div className="dim-line">
+                  <span>{t('suggested')}</span>
+                </div>
+              </div>
               <div className="flex flex-col gap-2">
-                {expert.starters[lang].map((starter) => (
+                {expert.starters[lang].map((starter, i) => (
                   <button
                     key={starter}
                     type="button"
                     onClick={() => setDraft(starter)}
-                    className="rounded-lg border px-4 py-3 text-start text-sm hover:border-[var(--brand)]"
-                    style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}
+                    className="bp-card fade-up group flex items-center gap-3 rounded-lg border px-4 py-3 text-start text-sm"
+                    style={{ borderColor: 'var(--border)', background: 'rgba(6,16,29,0.5)', ['--delay' as string]: `${0.1 + i * 0.06}s` }}
                   >
-                    {starter}
+                    <span className="mono shrink-0 text-xs" style={{ color: 'var(--line)' }} dir="ltr">
+                      Q{i + 1}
+                    </span>
+                    <span className="flex-1">{starter}</span>
                   </button>
                 ))}
               </div>
@@ -336,14 +344,17 @@ export function Workspace({ user, expert, conversation: initial, onCreated, onBa
                       sourcesLabel={t('sources')}
                     />
                   ) : null}
-                  <p className="mt-2 flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-                    {pending.status === 'searching' ? (
-                      <Search className="h-4 w-4 animate-pulse" aria-hidden="true" />
-                    ) : (
-                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                    )}
-                    {pending.mode === 'report' ? t('generatingReport') : statusLabel[pending.status]}
-                  </p>
+                  <div className="mt-3 max-w-sm">
+                    <p className="mb-2 flex items-center gap-2 text-sm" style={{ color: 'var(--line)' }}>
+                      {pending.status === 'searching' ? (
+                        <Search className="h-4 w-4" aria-hidden="true" />
+                      ) : (
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      )}
+                      {pending.mode === 'report' ? t('generatingReport') : statusLabel[pending.status]}
+                    </p>
+                    <div className="scan-bar" aria-hidden="true" />
+                  </div>
                 </li>
               )}
             </ol>
@@ -355,7 +366,7 @@ export function Workspace({ user, expert, conversation: initial, onCreated, onBa
           <div
             role="alert"
             className="mx-4 mb-2 flex items-start justify-between gap-2 whitespace-pre-line rounded-md border px-3 py-2 text-sm"
-            style={{ borderColor: 'var(--status-critical)', color: 'var(--status-critical)' }}
+            style={{ borderColor: 'var(--status-critical)', color: 'var(--status-critical)', background: 'rgba(255,122,114,0.08)' }}
           >
             <span>{error}</span>
             <button type="button" onClick={() => setError(null)} aria-label={t('close')}>
@@ -373,14 +384,14 @@ export function Workspace({ user, expert, conversation: initial, onCreated, onBa
           }}
         >
           <div
-            className="flex items-end gap-2 rounded-lg border p-2 focus-within:border-[var(--brand)]"
-            style={{ borderColor: 'var(--border-strong)' }}
+            className="flex items-end gap-2 rounded-lg border p-2 transition-shadow focus-within:border-[var(--brand)] focus-within:shadow-[var(--glow-brand)]"
+            style={{ borderColor: 'var(--border-strong)', background: 'rgba(6,16,29,0.7)' }}
           >
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-md hover:bg-[var(--surface-2)] disabled:opacity-50"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-md transition-colors hover:bg-[rgba(108,182,255,0.1)] disabled:opacity-50"
               aria-label={t('upload')}
               title={t('upload')}
             >
@@ -415,8 +426,7 @@ export function Workspace({ user, expert, conversation: initial, onCreated, onBa
               <button
                 type="submit"
                 disabled={!draft.trim()}
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-md disabled:opacity-40"
-                style={{ background: 'var(--brand)', color: 'var(--on-brand)' }}
+                className="btn-accent grid h-10 w-10 shrink-0 place-items-center rounded-md disabled:opacity-40"
                 aria-label={t('send')}
                 title={t('send')}
               >
@@ -432,8 +442,16 @@ export function Workspace({ user, expert, conversation: initial, onCreated, onBa
 
       {/* Documents and reports */}
       <aside className="flex flex-col gap-4">
-        <section className="rounded-xl border p-4" style={{ background: 'var(--surface-1)', borderColor: 'var(--border)' }}>
-          <h2 className="mb-3 font-bold">{t('documents')}</h2>
+        <section className="bp-panel bp-corners p-4">
+          <p className="tech-label">INPUT</p>
+          <h2 className="mb-3 mt-1 flex items-center justify-between font-bold">
+            {t('documents')}
+            {documents.length > 0 && (
+              <span className="mono rounded border px-1.5 text-xs" style={{ borderColor: 'var(--border)', color: 'var(--line)' }}>
+                {documents.length}
+              </span>
+            )}
+          </h2>
           {documents.length === 0 ? (
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
               {t('noDocuments')}
@@ -441,20 +459,20 @@ export function Workspace({ user, expert, conversation: initial, onCreated, onBa
           ) : (
             <ul className="flex flex-col gap-1">
               {documents.map((doc) => (
-                <li key={doc.id} className="flex items-center gap-2 rounded-md px-1 py-1.5">
+                <li key={doc.id} className="flex items-center gap-2 rounded-md border px-2 py-1.5" style={{ borderColor: 'var(--border)', background: 'rgba(6,16,29,0.5)' }}>
                   <DocIcon name={doc.name} mediaType={doc.media_type} />
                   <span className="min-w-0 flex-1">
                     <span dir="auto" className="block truncate text-start text-sm" title={doc.name}>
                       {splitFileName(doc.name).base}
                     </span>
-                    <span className="block text-xs" style={{ color: 'var(--text-muted)' }}>
+                    <span className="mono block text-xs" style={{ color: 'var(--text-muted)' }}>
                       {[splitFileName(doc.name).ext, formatBytes(doc.size_bytes)].filter(Boolean).join(' · ')}
                     </span>
                   </span>
                   <button
                     type="button"
                     onClick={() => handleRemove(doc)}
-                    className="grid h-7 w-7 place-items-center rounded hover:bg-[var(--surface-2)]"
+                    className="grid h-7 w-7 place-items-center rounded transition-colors hover:bg-[rgba(255,122,114,0.1)] hover:text-[var(--status-critical)]"
                     aria-label={`${t('remove')} ${doc.name}`}
                     title={t('remove')}
                     style={{ color: 'var(--text-muted)' }}
@@ -477,7 +495,7 @@ export function Workspace({ user, expert, conversation: initial, onCreated, onBa
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-dashed px-3 py-2.5 text-sm font-medium disabled:opacity-60"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-dashed px-3 py-3 text-sm font-medium transition-colors hover:border-[var(--line)] hover:bg-[rgba(79,209,232,0.06)] disabled:opacity-60"
             style={{ borderColor: 'var(--border-strong)' }}
           >
             {uploading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FileUp className="h-4 w-4" aria-hidden="true" />}
@@ -488,15 +506,15 @@ export function Workspace({ user, expert, conversation: initial, onCreated, onBa
           </p>
         </section>
 
-        <section className="rounded-xl border p-4" style={{ background: 'var(--surface-1)', borderColor: 'var(--border)' }}>
-          <h2 className="mb-3 font-bold">{t('reports')}</h2>
+        <section className="bp-panel bp-corners p-4">
+          <p className="tech-label">OUTPUT</p>
+          <h2 className="mb-3 mt-1 font-bold">{t('reports')}</h2>
           <button
             type="button"
             onClick={() => run('report')}
             disabled={!canReport}
             title={canReport ? undefined : t('reportNeedsContent')}
-            className="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2.5 text-sm font-bold disabled:opacity-50"
-            style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
+            className="btn-accent flex w-full items-center justify-center gap-2 rounded-md px-3 py-3 text-sm font-bold disabled:opacity-50"
           >
             {pending?.mode === 'report' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ScrollText className="h-4 w-4" aria-hidden="true" />}
             {pending?.mode === 'report' ? t('generatingReport') : t('generateReport')}
@@ -513,11 +531,11 @@ export function Workspace({ user, expert, conversation: initial, onCreated, onBa
                   <button
                     type="button"
                     onClick={() => setOpenReport(r)}
-                    className="flex w-full items-center gap-2 rounded-md px-1 py-1.5 text-start text-sm hover:bg-[var(--surface-2)]"
+                    className="flex w-full items-center gap-2 rounded-md px-1 py-1.5 text-start text-sm transition-colors hover:bg-[rgba(108,182,255,0.08)]"
                   >
                     <ScrollText className="h-4 w-4 shrink-0" style={{ color: 'var(--accent)' }} aria-hidden="true" />
                     <span dir="auto" className="truncate text-start">{reportTitle(r.content) ?? t('report')}</span>
-                    <span className="ms-auto shrink-0 text-xs" style={{ color: 'var(--text-muted)' }}>
+                    <span className="mono ms-auto shrink-0 text-xs" style={{ color: 'var(--text-muted)' }}>
                       {dateFormat.format(new Date(r.created_at))}
                     </span>
                   </button>
@@ -547,13 +565,18 @@ function ChatBubble({
   const isUser = message.role === 'user';
   return (
     <article className={isUser ? 'ms-auto max-w-[85%]' : 'max-w-full'}>
-      <p className="mb-1 text-xs font-bold" style={{ color: 'var(--text-muted)' }}>
+      <p className="tech-label mb-1.5 flex items-center gap-1.5" style={isUser ? undefined : { color: 'var(--line)' }}>
+        {!isUser && <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: 'var(--line)' }} aria-hidden="true" />}
         {isUser ? youLabel : expertLabel}
       </p>
       <div
         dir={isUser ? 'auto' : undefined}
-        className={isUser ? 'whitespace-pre-wrap rounded-lg px-4 py-3 text-start' : ''}
-        style={isUser ? { background: 'var(--surface-2)' } : undefined}
+        className={isUser ? 'whitespace-pre-wrap rounded-lg border px-4 py-3 text-start' : 'border-s-2 ps-4'}
+        style={
+          isUser
+            ? { background: 'rgba(108,182,255,0.1)', borderColor: 'rgba(108,182,255,0.25)' }
+            : { borderColor: 'rgba(79,209,232,0.35)' }
+        }
       >
         {isUser ? message.content : <Markdown>{message.content}</Markdown>}
       </div>
@@ -589,17 +612,17 @@ function ReportChip({ message, label, action, date, onOpen }: { message: Message
     <button
       type="button"
       onClick={onOpen}
-      className="flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-start hover:border-[var(--accent)]"
-      style={{ borderColor: 'var(--border)', background: 'var(--accent-soft)' }}
+      className="bp-card flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-start hover:border-[var(--accent)]"
+      style={{ borderColor: 'rgba(255,181,71,0.3)', background: 'var(--accent-soft)' }}
     >
       <ScrollText className="h-5 w-5 shrink-0" style={{ color: 'var(--accent)' }} aria-hidden="true" />
       <span className="min-w-0 flex-1">
         <span dir="auto" className="block truncate text-start font-bold">{reportTitle(message.content) ?? label}</span>
-        <span className="block text-xs" style={{ color: 'var(--text-muted)' }}>
+        <span className="mono block text-xs" style={{ color: 'var(--text-muted)' }}>
           {label} · {date}
         </span>
       </span>
-      <span className="shrink-0 text-sm font-medium underline" style={{ color: 'var(--brand)' }}>
+      <span className="shrink-0 text-sm font-bold" style={{ color: 'var(--accent)' }}>
         {action}
       </span>
     </button>
