@@ -33,8 +33,8 @@ const MODEL = Deno.env.get('EXPERT_MODEL') ?? 'claude-opus-5-5';
 type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 const EFFORTS: readonly Effort[] = ['low', 'medium', 'high', 'xhigh', 'max'];
 const EFFORT = (Deno.env.get('EXPERT_EFFORT') ?? 'high') as Effort;
-/** 'on' gives the expert a code sandbox for calculations (see buildTools). */
-const CALC = Deno.env.get('EXPERT_CODE_EXECUTION') === 'on';
+/** Code sandbox for calculations (see buildTools); on unless EXPERT_CODE_EXECUTION=off. */
+const CALC = Deno.env.get('EXPERT_CODE_EXECUTION') !== 'off';
 const MAX_TOKENS = 64000;
 /** Anthropic's request limit is 32 MB; base64 inflates by ~4/3. Stay well under. */
 const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
