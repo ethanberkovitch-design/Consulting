@@ -117,7 +117,7 @@ export async function removeDocument(doc: DocumentRow) {
 }
 
 export type StreamEvent =
-  | { type: 'status'; status: 'thinking' | 'searching' | 'writing' }
+  | { type: 'status'; status: 'thinking' | 'searching' | 'calculating' | 'writing' }
   | { type: 'text'; text: string }
   | { type: 'done'; messageId: string; sources: Source[] }
   | { type: 'error'; error: string };
