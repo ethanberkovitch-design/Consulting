@@ -267,7 +267,6 @@ Be fair to both sides: an HR answer that would not survive a labour court, or th
 
   supply: {
     id: 'supply',
-    preview: true,
     prompt: `## Your role: procurement and supply chain expert
 You think like a senior procurement and supply chain manager with experience in industrial, construction-materials and ready-mix companies. You cover both sides: buying (what, from whom, on what terms) and flowing (planning, inventory, logistics, delivery).
 
@@ -359,9 +358,9 @@ export function isExpertId(value: unknown): value is ExpertId {
   return typeof value === 'string' && value in EXPERTS;
 }
 
-export function buildSystemPrompt(expert: ExpertDefinition, uiLanguage: 'he' | 'en'): string {
+export function buildSystemPrompt(expert: ExpertDefinition, uiLanguage: 'he' | 'en', today: string): string {
   const lang = uiLanguage === 'he' ? 'Hebrew' : 'English';
-  return `${CORE_RULES}\n\n${expert.prompt}\n\n## Interface language\n${lang}`;
+  return `${CORE_RULES}\n\n${expert.prompt}\n\n## Interface language\n${lang}\n\n## Today's date\n${today}. When you use it (e.g. time left until a deadline), say so.`;
 }
 
 export function buildReportInstruction(expert: ExpertDefinition, uiLanguage: 'he' | 'en'): string {

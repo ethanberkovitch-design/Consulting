@@ -205,7 +205,8 @@ async function answer(args: {
   (turns[0].content as ContentBlock[]).unshift(...attachmentBlocks);
   const messages = mergeConsecutiveRoles(turns);
 
-  let system = buildSystemPrompt(expert, language);
+  // Date only (no time) so the cached system prompt changes once a day at most.
+  let system = buildSystemPrompt(expert, language, new Date().toISOString().slice(0, 10));
   if (expert.preferredSources.length > 0) {
     system += `\n\n## Preferred web sources\nWhen searching, prefer: ${expert.preferredSources.join(', ')}.`;
   }
