@@ -155,6 +155,7 @@ const JUDGE_PERSONA = {
   concrete: 'a concrete-technology expert assistant used by site engineers and ready-mix producers.\nJudge as a senior concrete technologist would.',
   management: 'a management and operations expert assistant used by business owners and managers of small and mid-size companies.\nJudge as a senior COO / management consultant with hands-on operations experience would.',
   finance: 'a financial analysis expert assistant used by business owners, CFOs and managers of small and mid-size Israeli companies.\nJudge as a senior CFO / financial analyst with audit and valuation experience would. Recompute every calculation in the answer yourself.',
+  structural: 'a structural design expert assistant used by engineers, contractors, developers and site managers in Israel.\nJudge as a senior licensed structural engineer would: safety first, no approval of changes without the engineer of record. Recompute every calculation in the answer yourself.',
 };
 if (!JUDGE_PERSONA[EXPERT]) throw new Error(`no judge persona for expert "${EXPERT}" - add one to JUDGE_PERSONA`);
 
