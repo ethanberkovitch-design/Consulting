@@ -5,14 +5,15 @@
  * Authorization: Bearer <user access token>
  *
  * Responds with Server-Sent Events:
- *   {type:'status', status:'thinking'|'searching'}
+ *   {type:'status', status:'thinking'|'searching'|'calculating'|'writing'}
  *   {type:'text', text}
  *   {type:'done', messageId, sources, model, usage, stopReason}
  *   {type:'error', error}
  *
  * Admins (public.expert_admins) may pass `effort` to override EXPERT_EFFORT
- * for one request — used by the eval runner to compare settings. Everyone
- * else always gets the configured effort.
+ * for one request, and `calc: true|false` to override EXPERT_CODE_EXECUTION —
+ * used by the eval runner to compare settings. Everyone else always gets the
+ * configured values.
  *
  * All database and storage access runs with the caller's JWT, so RLS decides
  * what this function can read — a user can never pull another user's files.
@@ -32,6 +33,8 @@ const MODEL = Deno.env.get('EXPERT_MODEL') ?? 'claude-opus-5-5';
 type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 const EFFORTS: readonly Effort[] = ['low', 'medium', 'high', 'xhigh', 'max'];
 const EFFORT = (Deno.env.get('EXPERT_EFFORT') ?? 'high') as Effort;
+/** 'on' gives the expert a code sandbox for calculations (see buildTools). */
+const CALC = Deno.env.get('EXPERT_CODE_EXECUTION') === 'on';
 const MAX_TOKENS = 64000;
 /** Anthropic's request limit is 32 MB; base64 inflates by ~4/3. Stay well under. */
 const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
@@ -73,7 +76,7 @@ Deno.serve(async (req) => {
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) return json({ error: 'Not signed in' }, 401);
 
-  let body: { conversationId?: string; mode?: string; message?: string; language?: string; effort?: string };
+  let body: { conversationId?: string; mode?: string; message?: string; language?: string; effort?: string; calc?: boolean };
   try {
     body = await req.json();
   } catch {
@@ -95,11 +98,14 @@ Deno.serve(async (req) => {
   const expert = EXPERTS[conversation.expert_id];
 
   let effort = EFFORT;
-  if (body.effort !== undefined) {
-    if (!EFFORTS.includes(body.effort as Effort)) return json({ error: 'Invalid effort' }, 400);
+  let calc = CALC;
+  if (body.effort !== undefined || body.calc !== undefined) {
+    if (body.effort !== undefined && !EFFORTS.includes(body.effort as Effort)) return json({ error: 'Invalid effort' }, 400);
+    if (body.calc !== undefined && typeof body.calc !== 'boolean') return json({ error: 'Invalid calc' }, 400);
     const { data: isAdmin } = await supabase.rpc('is_expert_admin');
-    if (isAdmin !== true) return json({ error: 'effort override is admin-only' }, 403);
-    effort = body.effort as Effort;
+    if (isAdmin !== true) return json({ error: 'overrides are admin-only' }, 403);
+    if (body.effort !== undefined) effort = body.effort as Effort;
+    if (body.calc !== undefined) calc = body.calc;
   }
 
   if (mode === 'chat') {
@@ -126,7 +132,7 @@ Deno.serve(async (req) => {
         }
       };
       try {
-        await answer({ supabase, expert, conversationId: conversation.id, mode, language, effort, send });
+        await answer({ supabase, expert, conversationId: conversation.id, mode, language, effort, calc, send });
       } catch (err) {
         console.error(err);
         send({ type: 'error', error: describeError(err) });
@@ -148,9 +154,10 @@ async function answer(args: {
   mode: 'chat' | 'report';
   language: Language;
   effort: Effort;
+  calc: boolean;
   send: (event: Record<string, unknown>) => void;
 }) {
-  const { supabase, expert, conversationId, mode, language, effort, send } = args;
+  const { supabase, expert, conversationId, mode, language, effort, calc, send } = args;
   send({ type: 'status', status: 'thinking' });
 
   const [{ data: history }, { data: documents }, { data: library }] = await Promise.all([
@@ -198,6 +205,9 @@ async function answer(args: {
   if (expert.preferredSources.length > 0) {
     system += `\n\n## Preferred web sources\nWhen searching, prefer: ${expert.preferredSources.join(', ')}.`;
   }
+  if (calc) {
+    system += `\n\n## Calculations\nRun every calculation beyond a single simple operation in the code execution tool and take the numbers you report from its output. Never do multi-step arithmetic in your head. The code is for you only: show the user the calculation in plain words and units, not the code.`;
+  }
 
   const anthropic = new Anthropic();
   let finalText = '';
@@ -205,6 +215,8 @@ async function answer(args: {
   let usage: Record<string, unknown> | null = null;
   let servedModel = MODEL;
   let stopReason: string | null = null;
+  // A paused turn that used the code sandbox must resume in the same container.
+  let containerId: string | undefined;
 
   for (let attempt = 0; attempt <= MAX_CONTINUATIONS; attempt++) {
     const stream = anthropic.beta.messages.stream({
@@ -214,7 +226,8 @@ async function answer(args: {
       output_config: { effort },
       system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
       cache_control: { type: 'ephemeral' },
-      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: 5 }],
+      tools: buildTools(calc),
+      ...(containerId ? { container: containerId } : {}),
       messages,
       betas: ['server-side-fallback-2026-07-01'],
       // Policy declines are re-run on Anthropic's recommended fallback model.
@@ -223,7 +236,7 @@ async function answer(args: {
 
     for await (const event of stream) {
       if (event.type === 'content_block_start' && event.content_block.type === 'server_tool_use') {
-        send({ type: 'status', status: 'searching' });
+        send({ type: 'status', status: event.content_block.name === 'web_search' ? 'searching' : 'calculating' });
       } else if (event.type === 'content_block_start' && event.content_block.type === 'text') {
         send({ type: 'status', status: 'writing' });
       } else if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
@@ -236,6 +249,7 @@ async function answer(args: {
     usage = final.usage as unknown as Record<string, unknown>;
     servedModel = final.model;
     stopReason = final.stop_reason;
+    containerId = final.container?.id ?? containerId;
     collectSources(final.content, sources);
 
     if (final.stop_reason === 'refusal') {
@@ -273,6 +287,20 @@ async function answer(args: {
     .eq('id', conversationId);
 
   send({ type: 'done', messageId: saved.id, sources: sourceList, model: servedModel, usage, stopReason });
+}
+
+/**
+ * Web search always; with calc, also a code sandbox for arithmetic. The
+ * 20260209 web search runs its own sandbox for result filtering, and a second
+ * sandbox next to it confuses the model, so calc pairs the sandbox with the
+ * basic web search instead.
+ */
+function buildTools(calc: boolean): Anthropic.Beta.BetaToolUnion[] {
+  if (!calc) return [{ type: 'web_search_20260209', name: 'web_search', max_uses: 5 }];
+  return [
+    { type: 'web_search_20250305', name: 'web_search', max_uses: 5 },
+    { type: 'code_execution_20260521', name: 'code_execution' },
+  ];
 }
 
 async function buildAttachmentBlocks(

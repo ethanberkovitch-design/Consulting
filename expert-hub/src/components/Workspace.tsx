@@ -44,7 +44,7 @@ interface WorkspaceProps {
   onChanged: () => void;
 }
 
-type Status = 'thinking' | 'searching' | 'writing';
+type Status = 'thinking' | 'searching' | 'calculating' | 'writing';
 
 interface Pending {
   mode: 'chat' | 'report';
@@ -236,6 +236,7 @@ export function Workspace({ user, expert, conversation: initial, onCreated, onBa
   const statusLabel: Record<Status, string> = {
     thinking: t('statusThinking'),
     searching: t('statusSearching'),
+    calculating: t('statusCalculating'),
     writing: t('statusWriting'),
   };
   const dateFormat = new Intl.DateTimeFormat(lang === 'he' ? 'he-IL' : 'en-GB', {

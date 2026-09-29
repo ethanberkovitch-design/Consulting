@@ -1,8 +1,9 @@
 name: Expert Hub eval
 
-# Runs one expert's eval cases through the real production path twice -
-# baseline (effort=high) and v1 (effort=medium) - grades them with a Claude
-# judge, and uploads the report. Manual only: every run spends API credit.
+# Runs one expert's eval cases through the real production path twice and
+# grades them with a Claude judge. compare=effort: baseline effort=high vs v1
+# effort=medium. compare=calc: both high, baseline without and v1 with the
+# code-execution sandbox. Manual only: every run spends API credit.
 
 on:
   workflow_dispatch:
@@ -11,6 +12,11 @@ on:
         description: Expert id (folder under expert-hub/evals)
         default: concrete
         required: true
+      compare:
+        description: What to compare
+        type: choice
+        options: [effort, calc]
+        default: effort
       limit:
         description: Pilot size - run only the first N cases (0 = all)
         default: '3'
@@ -42,6 +48,9 @@ jobs:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       FLOW: ${{ inputs.expert }}/runs
       APPROVE: ${{ inputs.approve_harness && '--approve-harness' || '' }}
+      V1_EFFORT: ${{ inputs.compare == 'calc' && 'high' || 'medium' }}
+      BASE_CALC: ${{ inputs.compare == 'calc' && 'off' || '' }}
+      V1_CALC: ${{ inputs.compare == 'calc' && 'on' || '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -50,12 +59,21 @@ jobs:
           cache: npm
           cache-dependency-path: expert-hub/evals/package-lock.json
       - run: npm ci
-      - name: Baseline (effort=high)
-        run: EVAL_EFFORT=high node run-eval.mjs --flow "$FLOW" --variant baseline --model claude-opus-5-5 --concurrency 3 --timeout-s 300 $APPROVE
-      - name: v1 (effort=medium)
+      - name: Label the variants
+        run: |
+          node -e '
+            const fs = require("fs"); const p = process.env.FLOW + "/_state.json";
+            const s = JSON.parse(fs.readFileSync(p, "utf8"));
+            s.variant_notes = process.env.V1_CALC
+              ? { baseline: "effort=high, no code execution", v1: "effort=high + code execution" }
+              : { baseline: "effort=high (production setting)", v1: "effort=medium" };
+            fs.writeFileSync(p, JSON.stringify(s, null, 2) + "\n");'
+      - name: Baseline
+        run: EVAL_EFFORT=high EVAL_CALC=$BASE_CALC node run-eval.mjs --flow "$FLOW" --variant baseline --model claude-opus-5-5 --concurrency 3 --timeout-s 300 $APPROVE
+      - name: v1
         # one failed baseline case should not cancel the comparison on the rest
         if: success() || failure()
-        run: EVAL_EFFORT=medium node run-eval.mjs --flow "$FLOW" --variant v1 --model claude-opus-5-5 --concurrency 3 --timeout-s 300 $APPROVE
+        run: EVAL_EFFORT=$V1_EFFORT EVAL_CALC=$V1_CALC node run-eval.mjs --flow "$FLOW" --variant v1 --model claude-opus-5-5 --concurrency 3 --timeout-s 300 $APPROVE
       - name: Summary and report
         if: always()
         run: |

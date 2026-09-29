@@ -50,6 +50,7 @@ const strings = {
   suggested: { he: 'אפשר להתחיל מכאן', en: 'Start here' },
   statusThinking: { he: 'המומחה מנתח…', en: 'The expert is analysing…' },
   statusSearching: { he: 'מחפש מקורות עדכניים…', en: 'Searching current sources…' },
+  statusCalculating: { he: 'מחשב…', en: 'Calculating…' },
   statusWriting: { he: 'כותב…', en: 'Writing…' },
   sources: { he: 'מקורות', en: 'Sources' },
   you: { he: 'אתם', en: 'You' },
