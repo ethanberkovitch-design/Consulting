@@ -23,7 +23,14 @@ export function useAuth() {
     session,
     user: session?.user ?? null,
     loading,
-    signUp: (email: string, password: string) => supabase.auth.signUp({ email, password }),
+    // Send the confirmation link back to this app, not to the project's default Site URL
+    // (which is shared with pension-advisor). The URL must be in Supabase's Redirect URLs list.
+    signUp: (email: string, password: string) =>
+      supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: `${window.location.origin}${window.location.pathname}` },
+      }),
     signIn: (email: string, password: string) => supabase.auth.signInWithPassword({ email, password }),
     signOut: () => supabase.auth.signOut(),
   };
