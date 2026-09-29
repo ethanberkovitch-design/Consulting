@@ -21,6 +21,7 @@ import { ReportView } from './ReportView';
 import { useI18n } from '../lib/i18n';
 import { CATEGORY_COLOR, type ExpertCard } from '../experts/registry';
 import {
+  createConversation,
   deleteConversation,
   loadDocuments,
   loadMessages,
@@ -36,7 +37,9 @@ import { ACCEPT, MAX_FILE_BYTES, UnsupportedFileError, formatBytes, prepareFile 
 interface WorkspaceProps {
   user: User;
   expert: ExpertCard;
-  conversation: Conversation;
+  /** null until the first question or upload — empty conversations are never stored. */
+  conversation: Conversation | null;
+  onCreated: (conversation: Conversation) => void;
   onBack: () => void;
   onChanged: () => void;
 }
@@ -49,11 +52,12 @@ interface Pending {
   status: Status;
 }
 
-export function Workspace({ user, expert, conversation, onBack, onChanged }: WorkspaceProps) {
+export function Workspace({ user, expert, conversation: initial, onCreated, onBack, onChanged }: WorkspaceProps) {
   const { t, lang, dir } = useI18n();
   const [messages, setMessages] = useState<Message[]>([]);
   const [documents, setDocuments] = useState<DocumentRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [conversation, setConversation] = useState<Conversation | null>(initial);
+  const [loading, setLoading] = useState(initial !== null);
   const [pending, setPending] = useState<Pending | null>(null);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -64,9 +68,13 @@ export function Workspace({ user, expert, conversation, onBack, onChanged }: Wor
   const fileInputRef = useRef<HTMLInputElement>(null);
   const BackIcon = dir === 'rtl' ? ArrowRight : ArrowLeft;
 
+  // Load only the conversation this workspace opened with. A conversation created here
+  // later (first question) must not trigger a reload that would wipe the live answer.
+  const [initialId] = useState(initial?.id);
   useEffect(() => {
     let cancelled = false;
-    Promise.all([loadMessages(conversation.id), loadDocuments(conversation.id)])
+    if (!initialId) return;
+    Promise.all([loadMessages(initialId), loadDocuments(initialId)])
       .then(([m, d]) => {
         if (cancelled) return;
         setMessages(m);
@@ -76,9 +84,27 @@ export function Workspace({ user, expert, conversation, onBack, onChanged }: Wor
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
-      abortRef.current?.abort();
     };
-  }, [conversation.id]);
+  }, [initialId]);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
+
+  // One shared promise, so several uploads at once still create a single conversation.
+  const conversationRef = useRef<Promise<Conversation> | null>(initial ? Promise.resolve(initial) : null);
+  const ensureConversation = useCallback((): Promise<Conversation> => {
+    if (!conversationRef.current) {
+      const creating = createConversation(expert.id).then((created) => {
+        setConversation(created);
+        onCreated(created);
+        return created;
+      });
+      creating.catch(() => {
+        conversationRef.current = null;
+      });
+      conversationRef.current = creating;
+    }
+    return conversationRef.current;
+  }, [expert.id, onCreated]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: 'end' });
@@ -105,7 +131,8 @@ export function Workspace({ user, expert, conversation, onBack, onChanged }: Wor
       setPending({ mode, text: '', status: 'thinking' });
       let text = '';
       try {
-        for await (const event of streamExpert({ conversationId: conversation.id, mode, message, language: lang }, controller.signal)) {
+        const { id: conversationId } = await ensureConversation();
+        for await (const event of streamExpert({ conversationId, mode, message, language: lang }, controller.signal)) {
           if (event.type === 'status') {
             setPending((p) => (p ? { ...p, status: event.status } : p));
           } else if (event.type === 'text') {
@@ -141,7 +168,7 @@ export function Workspace({ user, expert, conversation, onBack, onChanged }: Wor
         onChanged();
       }
     },
-    [conversation.id, lang, onChanged, t],
+    [ensureConversation, lang, onChanged, t],
   );
 
   const send = () => {
@@ -163,7 +190,8 @@ export function Workspace({ user, expert, conversation, onBack, onChanged }: Wor
       }
       try {
         const prepared = await prepareFile(file);
-        const row = await uploadDocument(user.id, conversation.id, prepared);
+        const { id: conversationId } = await ensureConversation();
+        const row = await uploadDocument(user.id, conversationId, prepared);
         setDocuments((prev) => [...prev, row]);
       } catch (err) {
         problems.push(
@@ -188,6 +216,10 @@ export function Workspace({ user, expert, conversation, onBack, onChanged }: Wor
   };
 
   const handleDelete = async () => {
+    if (!conversation) {
+      onBack();
+      return;
+    }
     if (!window.confirm(t('confirmDelete'))) return;
     try {
       await deleteConversation(conversation, documents);
@@ -238,7 +270,7 @@ export function Workspace({ user, expert, conversation, onBack, onChanged }: Wor
           </span>
           <div className="min-w-0 flex-1">
             <h1 className="truncate font-bold">{expert.name[lang]}</h1>
-            {conversation.title && (
+            {conversation?.title && (
               <p dir="auto" className="truncate text-start text-xs" style={{ color: 'var(--text-muted)' }}>
                 {conversation.title}
               </p>

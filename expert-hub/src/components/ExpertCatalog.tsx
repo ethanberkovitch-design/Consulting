@@ -12,12 +12,11 @@ const CATEGORY_LABEL: Record<Category, StringKey> = {
 interface ExpertCatalogProps {
   conversations: Conversation[];
   loading: boolean;
-  busyExpert: ExpertId | null;
   onPick: (expertId: ExpertId) => void;
   onOpen: (conversation: Conversation) => void;
 }
 
-export function ExpertCatalog({ conversations, loading, busyExpert, onPick, onOpen }: ExpertCatalogProps) {
+export function ExpertCatalog({ conversations, loading, onPick, onOpen }: ExpertCatalogProps) {
   const { t, lang, dir } = useI18n();
   const Chevron = dir === 'rtl' ? ChevronLeft : ChevronRight;
   const sortedExperts = [...EXPERTS].sort(
@@ -38,9 +37,8 @@ export function ExpertCatalog({ conversations, loading, busyExpert, onPick, onOp
             <button
               key={expert.id}
               type="button"
-              disabled={busyExpert !== null}
               onClick={() => onPick(expert.id)}
-              className="group flex flex-col gap-3 rounded-xl border p-5 text-start transition-colors disabled:cursor-wait hover:border-[var(--brand)]"
+              className="group flex flex-col gap-3 rounded-xl border p-5 text-start transition-colors hover:border-[var(--brand)]"
               style={{ background: 'var(--surface-1)', borderColor: 'var(--border)', boxShadow: 'var(--shadow-card)' }}
             >
               <span className="flex items-center justify-between gap-2">
@@ -57,7 +55,7 @@ export function ExpertCatalog({ conversations, loading, busyExpert, onPick, onOp
                 </span>
               </span>
               <span className="text-lg font-bold">
-                {busyExpert === expert.id ? t('loading') : expert.name[lang]}
+                {expert.name[lang]}
               </span>
               <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                 {expert.summary[lang]}
