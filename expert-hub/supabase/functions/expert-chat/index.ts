@@ -7,8 +7,12 @@
  * Responds with Server-Sent Events:
  *   {type:'status', status:'thinking'|'searching'}
  *   {type:'text', text}
- *   {type:'done', messageId, sources}
+ *   {type:'done', messageId, sources, model, usage, stopReason}
  *   {type:'error', error}
+ *
+ * Admins (public.expert_admins) may pass `effort` to override EXPERT_EFFORT
+ * for one request — used by the eval runner to compare settings. Everyone
+ * else always gets the configured effort.
  *
  * All database and storage access runs with the caller's JWT, so RLS decides
  * what this function can read — a user can never pull another user's files.
@@ -25,7 +29,9 @@ import {
 } from '../_shared/experts.ts';
 
 const MODEL = Deno.env.get('EXPERT_MODEL') ?? 'claude-opus-5-5';
-const EFFORT = (Deno.env.get('EXPERT_EFFORT') ?? 'high') as 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+const EFFORTS: readonly Effort[] = ['low', 'medium', 'high', 'xhigh', 'max'];
+const EFFORT = (Deno.env.get('EXPERT_EFFORT') ?? 'high') as Effort;
 const MAX_TOKENS = 64000;
 /** Anthropic's request limit is 32 MB; base64 inflates by ~4/3. Stay well under. */
 const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
@@ -67,7 +73,7 @@ Deno.serve(async (req) => {
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) return json({ error: 'Not signed in' }, 401);
 
-  let body: { conversationId?: string; mode?: string; message?: string; language?: string };
+  let body: { conversationId?: string; mode?: string; message?: string; language?: string; effort?: string };
   try {
     body = await req.json();
   } catch {
@@ -87,6 +93,14 @@ Deno.serve(async (req) => {
   if (!conversation) return json({ error: 'Conversation not found' }, 404);
   if (!isExpertId(conversation.expert_id)) return json({ error: 'Unknown expert' }, 400);
   const expert = EXPERTS[conversation.expert_id];
+
+  let effort = EFFORT;
+  if (body.effort !== undefined) {
+    if (!EFFORTS.includes(body.effort as Effort)) return json({ error: 'Invalid effort' }, 400);
+    const { data: isAdmin } = await supabase.rpc('is_expert_admin');
+    if (isAdmin !== true) return json({ error: 'effort override is admin-only' }, 403);
+    effort = body.effort as Effort;
+  }
 
   if (mode === 'chat') {
     const { error } = await supabase
@@ -112,7 +126,7 @@ Deno.serve(async (req) => {
         }
       };
       try {
-        await answer({ supabase, expert, conversationId: conversation.id, mode, language, send });
+        await answer({ supabase, expert, conversationId: conversation.id, mode, language, effort, send });
       } catch (err) {
         console.error(err);
         send({ type: 'error', error: describeError(err) });
@@ -133,9 +147,10 @@ async function answer(args: {
   conversationId: string;
   mode: 'chat' | 'report';
   language: Language;
+  effort: Effort;
   send: (event: Record<string, unknown>) => void;
 }) {
-  const { supabase, expert, conversationId, mode, language, send } = args;
+  const { supabase, expert, conversationId, mode, language, effort, send } = args;
   send({ type: 'status', status: 'thinking' });
 
   const [{ data: history }, { data: documents }, { data: library }] = await Promise.all([
@@ -188,13 +203,15 @@ async function answer(args: {
   let finalText = '';
   const sources = new Map<string, Source>();
   let usage: Record<string, unknown> | null = null;
+  let servedModel = MODEL;
+  let stopReason: string | null = null;
 
   for (let attempt = 0; attempt <= MAX_CONTINUATIONS; attempt++) {
     const stream = anthropic.beta.messages.stream({
       model: MODEL,
       max_tokens: MAX_TOKENS,
       thinking: { type: 'adaptive' },
-      output_config: { effort: EFFORT },
+      output_config: { effort },
       system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
       cache_control: { type: 'ephemeral' },
       tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: 5 }],
@@ -217,6 +234,8 @@ async function answer(args: {
 
     const final = await stream.finalMessage();
     usage = final.usage as unknown as Record<string, unknown>;
+    servedModel = final.model;
+    stopReason = final.stop_reason;
     collectSources(final.content, sources);
 
     if (final.stop_reason === 'refusal') {
@@ -253,7 +272,7 @@ async function answer(args: {
     .update({ updated_at: new Date().toISOString() })
     .eq('id', conversationId);
 
-  send({ type: 'done', messageId: saved.id, sources: sourceList });
+  send({ type: 'done', messageId: saved.id, sources: sourceList, model: servedModel, usage, stopReason });
 }
 
 async function buildAttachmentBlocks(

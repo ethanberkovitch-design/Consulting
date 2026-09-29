@@ -1,0 +1,7 @@
+node_modules
+# run outputs live in the GitHub Actions artifact, not in git
+*/runs/baseline
+*/runs/v*
+*/runs/report.html
+*/runs/state.json
+*/runs/trajectory
