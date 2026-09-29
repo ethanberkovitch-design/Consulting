@@ -185,7 +185,7 @@ function context(c) {
   return `<question>\n${c.prompt}\n</question>\n<documents>\n${docs || '(none)'}\n</documents>\n<criterion>\n${c.good}\n</criterion>`;
 }
 
-async function judge(schema, content) {
+async function judge(schema, content, attempt = 1) {
   const res = await anthropic.messages.parse({
     model: JUDGE_MODEL,
     max_tokens: 4000,
@@ -193,6 +193,7 @@ async function judge(schema, content) {
     messages: [{ role: 'user', content }],
     output_config: { format: zodOutputFormat(schema) },
   });
+  if (!res.parsed_output && attempt < 2) return judge(schema, content, attempt + 1);
   if (!res.parsed_output) {
     const e = new Error(`judge returned no parsable output (stop_reason=${res.stop_reason})`);
     e.judge_model = res.model;
