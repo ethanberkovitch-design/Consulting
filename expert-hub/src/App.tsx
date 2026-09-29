@@ -5,16 +5,22 @@ import { ExpertCatalog } from './components/ExpertCatalog';
 import { Workspace } from './components/Workspace';
 import { useAuth } from './hooks/useAuth';
 import { useI18n } from './lib/i18n';
-import { createConversation, listConversations, type Conversation } from './lib/api';
+import { listConversations, type Conversation } from './lib/api';
 import { getExpert, type ExpertId } from './experts/registry';
+
+/** key stays fixed when a new conversation gets its id, so the workspace is not remounted mid-answer. */
+interface OpenWorkspace {
+  key: string;
+  expertId: ExpertId;
+  conversation: Conversation | null;
+}
 
 export default function App() {
   const { user, loading, signOut } = useAuth();
   const { t } = useI18n();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [listLoading, setListLoading] = useState(false);
-  const [active, setActive] = useState<Conversation | null>(null);
-  const [busyExpert, setBusyExpert] = useState<ExpertId | null>(null);
+  const [active, setActive] = useState<OpenWorkspace | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
@@ -23,7 +29,10 @@ export default function App() {
       const list = await listConversations();
       setConversations(list);
       // The server titles a conversation from its first question; pick that up.
-      setActive((prev) => (prev ? (list.find((c) => c.id === prev.id) ?? prev) : prev));
+      setActive((prev) => {
+        const match = prev?.conversation && list.find((c) => c.id === prev.conversation?.id);
+        return prev && match ? { ...prev, conversation: match } : prev;
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : t('somethingWrong'));
     } finally {
@@ -41,19 +50,20 @@ export default function App() {
     setActive(null);
   };
 
-  const startConversation = async (expertId: ExpertId) => {
+  // Picking an expert only opens the workspace; the conversation row is created
+  // on the first question or upload, so browsing never leaves empty conversations.
+  const startConversation = (expertId: ExpertId) => {
     setError(null);
-    setBusyExpert(expertId);
-    try {
-      setActive(await createConversation(expertId));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('somethingWrong'));
-    } finally {
-      setBusyExpert(null);
-    }
+    setActive({ key: `new-${Date.now()}`, expertId, conversation: null });
   };
+  const openConversation = (conversation: Conversation) =>
+    setActive({ key: conversation.id, expertId: conversation.expert_id, conversation });
+  const handleCreated = useCallback(
+    (conversation: Conversation) => setActive((prev) => (prev ? { ...prev, conversation } : prev)),
+    [],
+  );
 
-  const activeExpert = active ? getExpert(active.expert_id) : undefined;
+  const activeExpert = active ? getExpert(active.expertId) : undefined;
 
   return (
     <>
@@ -71,10 +81,11 @@ export default function App() {
         <AuthScreen />
       ) : active && activeExpert ? (
         <Workspace
-          key={active.id}
+          key={active.key}
           user={user}
           expert={activeExpert}
-          conversation={active}
+          conversation={active.conversation}
+          onCreated={handleCreated}
           onBack={() => setActive(null)}
           onChanged={refresh}
         />
@@ -82,9 +93,8 @@ export default function App() {
         <ExpertCatalog
           conversations={conversations}
           loading={listLoading}
-          busyExpert={busyExpert}
           onPick={startConversation}
-          onOpen={setActive}
+          onOpen={openConversation}
         />
       )}
     </>

@@ -46,7 +46,7 @@ export function ReportView({ report, expert, onClose }: ReportViewProps) {
   return createPortal(
     <div
       className="print-layer fixed inset-0 z-50 overflow-y-auto px-4 py-6"
-      style={{ background: 'var(--page)' }}
+      style={{ background: 'rgba(6,16,29,0.9)', backdropFilter: 'blur(8px)' }}
       role="dialog"
       aria-modal="true"
       aria-label={t('report')}
@@ -55,8 +55,7 @@ export function ReportView({ report, expert, onClose }: ReportViewProps) {
         <button
           type="button"
           onClick={() => window.print()}
-          className="flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-bold"
-          style={{ background: 'var(--brand)', color: 'var(--on-brand)' }}
+          className="btn-accent flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-bold"
         >
           <Printer className="h-4 w-4" aria-hidden="true" />
           {t('printPdf')}
@@ -64,8 +63,7 @@ export function ReportView({ report, expert, onClose }: ReportViewProps) {
         <button
           type="button"
           onClick={downloadMarkdown}
-          className="flex items-center gap-1.5 rounded-md border px-4 py-2 text-sm font-medium"
-          style={{ borderColor: 'var(--border-strong)', background: 'var(--surface-1)' }}
+          className="btn-line flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium"
         >
           <Download className="h-4 w-4" aria-hidden="true" />
           {t('downloadMd')}
@@ -73,8 +71,7 @@ export function ReportView({ report, expert, onClose }: ReportViewProps) {
         <button
           type="button"
           onClick={onClose}
-          className="flex items-center gap-1.5 rounded-md border px-4 py-2 text-sm font-medium"
-          style={{ borderColor: 'var(--border-strong)', background: 'var(--surface-1)' }}
+          className="btn-line flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium"
         >
           <X className="h-4 w-4" aria-hidden="true" />
           {t('close')}
@@ -82,8 +79,8 @@ export function ReportView({ report, expert, onClose }: ReportViewProps) {
       </div>
 
       <article
-        className="print-sheet mx-auto max-w-4xl rounded-xl border px-6 py-8 md:px-12 md:py-10"
-        style={{ background: 'var(--surface-1)', borderColor: 'var(--border)', boxShadow: 'var(--shadow-card)' }}
+        className="print-sheet sheet-paper mx-auto max-w-4xl rounded-md px-6 py-8 md:px-12 md:py-10"
+        style={{ boxShadow: '0 0 0 1px rgba(108,182,255,0.25), 0 30px 80px rgba(0,0,0,0.5)' }}
       >
         <header
           className="mb-6 flex flex-wrap items-center justify-between gap-2 border-b pb-4 text-sm"

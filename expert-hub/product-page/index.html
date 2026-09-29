@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#06101d">
 <title>Expert Hub — מומחים שמנתחים את המסמכים שלכם</title>
 <meta name="description" content="מומחים בבטון, פלדה, תכנון מבנים, פיננסים וניהול, שמנתחים את המסמכים שלכם ומפנים למקור של כל טענה.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/site.css">
 </head>
 <body>
@@ -54,35 +55,51 @@
 
   <section data-cv-section="experts" id="experts" class="band">
     <div class="wrap">
+      <p class="label" data-cv="experts.label">05 מומחים</p>
       <h2 data-cv="experts.title">המומחים</h2>
       <p class="section-lead" data-cv="experts.subtitle">כל מומחה בנוי סביב החומר שאנשי המקצוע בתחום עובדים איתו בפועל, והתקנים שחלים עליו.</p>
       <div class="cards">
         <article class="card">
-          <span class="tag tag-eng" data-cv="experts.concrete.tag">הנדסה</span>
+          <div class="card-head">
+            <span class="code" data-cv="experts.concrete.code">EXP-01</span>
+            <span class="tag tag-eng" data-cv="experts.concrete.tag">הנדסה</span>
+          </div>
           <h3 data-cv="experts.concrete.name">מומחה בטון</h3>
           <p data-cv="experts.concrete.text">תכנוני תערובות, תוצאות בדיקות חוזק, התאמה למפרט ולתקן, סדקים וליקויי ביצוע, יציקות בחום ובקור.</p>
           <p class="docs" data-cv="experts.concrete.docs">תכנון תערובת · דוחות מעבדה · תעודות משלוח · מפרט טכני</p>
         </article>
         <article class="card">
-          <span class="tag tag-eng" data-cv="experts.steel.tag">הנדסה</span>
+          <div class="card-head">
+            <span class="code" data-cv="experts.steel.code">EXP-02</span>
+            <span class="tag tag-eng" data-cv="experts.steel.tag">הנדסה</span>
+          </div>
           <h3 data-cv="experts.steel.name">מומחה פלדה</h3>
           <p data-cv="experts.steel.text">בדיקת אלמנטים וחיבורים עם חישוב מלא, תעודות יצרן, ריתוך וברגים, יציבות בהקמה, הגנה מקורוזיה ומאש.</p>
           <p class="docs" data-cv="experts.steel.docs">תכניות ייצור · חישובים · תעודות יצרן · דוחות NDT</p>
         </article>
         <article class="card">
-          <span class="tag tag-eng" data-cv="experts.structural.tag">הנדסה</span>
+          <div class="card-head">
+            <span class="code" data-cv="experts.structural.code">EXP-03</span>
+            <span class="tag tag-eng" data-cv="experts.structural.tag">הנדסה</span>
+          </div>
           <h3 data-cv="experts.structural.name">מומחה תכנון מבנים</h3>
           <p data-cv="experts.structural.text">מסלול עומסים, בסיס תכנון, רעידות אדמה, בדיקות סבירות למודל, והשלכות של שינויים שמתבקשים באתר.</p>
           <p class="docs" data-cv="experts.structural.docs">תכניות קונסטרוקציה · דוח קרקע · חישובים סטטיים</p>
         </article>
         <article class="card">
-          <span class="tag tag-fin" data-cv="experts.finance.tag">פיננסים</span>
+          <div class="card-head">
+            <span class="code" data-cv="experts.finance.code">EXP-04</span>
+            <span class="tag tag-fin" data-cv="experts.finance.tag">פיננסים</span>
+          </div>
           <h3 data-cv="experts.finance.name">מומחה פיננסי</h3>
           <p data-cv="experts.finance.text">דוחות כספיים, תזרים והון חוזר, יחסים פיננסיים, בדיקת הנחות במודלים, אמות מידה בהלוואות והערכות שווי.</p>
           <p class="docs" data-cv="experts.finance.docs">דוחות כספיים · מודל אקסל · תקציב · הסכמי הלוואה</p>
         </article>
         <article class="card">
-          <span class="tag tag-mgmt" data-cv="experts.management.tag">ניהול</span>
+          <div class="card-head">
+            <span class="code" data-cv="experts.management.code">EXP-05</span>
+            <span class="tag tag-mgmt" data-cv="experts.management.tag">ניהול</span>
+          </div>
           <h3 data-cv="experts.management.name">מומחה ניהולי</h3>
           <p data-cv="experts.management.text">אבחון צוואר הבקבוק, בדיקה שהיעדים, כוח האדם והתקציב מתיישבים, ותכנית ביצוע עם אחראים ומדדים.</p>
           <p class="docs" data-cv="experts.management.docs">תכנית עסקית · מצגת הנהלה · מבנה ארגוני · דוחות KPI</p>
@@ -93,20 +110,21 @@
 
   <section data-cv-section="how" class="how">
     <div class="wrap">
+      <p class="label" data-cv="how.label">תהליך</p>
       <h2 data-cv="how.title">איך זה עובד</h2>
       <ol class="steps">
         <li>
-          <span class="step-num" aria-hidden="true">1</span>
+          <span class="step-num" aria-hidden="true">01</span>
           <h3 data-cv="how.step-1.title">בוחרים מומחה</h3>
           <p data-cv="how.step-1.text">כל שיחה שייכת לתחום אחד, כך שהתשובות נשארות ממוקדות בתקנים ובפרקטיקה של אותו תחום.</p>
         </li>
         <li>
-          <span class="step-num" aria-hidden="true">2</span>
+          <span class="step-num" aria-hidden="true">02</span>
           <h3 data-cv="how.step-2.title">מעלים מסמכים ושואלים</h3>
           <p data-cv="how.step-2.text">PDF, Word, Excel, CSV ותמונות. טבלאות, שרטוטים ותכניות נקראים כמו שהם, בלי העתקה ידנית.</p>
         </li>
         <li>
-          <span class="step-num" aria-hidden="true">3</span>
+          <span class="step-num" aria-hidden="true">03</span>
           <h3 data-cv="how.step-3.title">מקבלים ניתוח ודוח</h3>
           <p data-cv="how.step-3.text">תשובות עם הפניה למקור, ובסיום דוח מקצועי לפי תבנית קבועה לכל תחום, מוכן להורדה כ-PDF.</p>
         </li>
@@ -117,6 +135,7 @@
   <section data-cv-section="trust" class="band">
     <div class="wrap trust-grid">
       <div>
+        <p class="label" data-cv="trust.label">כללי עבודה</p>
         <h2 data-cv="trust.title">מה המומחים לא עושים</h2>
         <p class="section-lead" data-cv="trust.subtitle">הכללים האלה חלים על כל מומחה במערכת, בכל תשובה.</p>
       </div>
@@ -131,6 +150,7 @@
 
   <section data-cv-section="privacy" class="privacy">
     <div class="wrap privacy-grid">
+      <p class="label" data-cv="privacy.label">אבטחה</p>
       <h2 data-cv="privacy.title">המסמכים שלכם נשארים שלכם</h2>
       <p data-cv="privacy.text">כל משתמש רואה רק את השיחות והמסמכים שלו. ההגבלה נאכפת במסד הנתונים עצמו, לא רק בממשק. הקבצים נשמרים באחסון פרטי, ומחיקת שיחה מוחקת גם את המסמכים שלה.</p>
     </div>
