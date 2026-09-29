@@ -26,6 +26,8 @@ changes (effort level, prompt edits, model upgrades) are decided on evidence.
 | --- | --- |
 | `concrete/cases.json`, `concrete/docs/` | the 15 approved questions and synthetic documents |
 | `concrete/review.html` | the cases rendered for review |
+| `management/cases.json`, `management/docs/` | 15 approved management questions and synthetic documents |
+| `cases-page.mjs` | renders `<expert>/review.html` from `cases.json` for approval |
 | `expert-hub-case.mjs` | Expert Hub specifics: load, run through production, judge |
 | `run-eval.mjs` | runner (resume, backoff, timeouts, error sidecar, harness gate) |
 | `summarize.mjs` | per-variant table with 95% intervals and cost |
@@ -38,6 +40,13 @@ changes (effort level, prompt edits, model upgrades) are decided on evidence.
 2. Add it to `expert_admins` (needed for the effort override).
 3. Add repository secrets (Settings → Secrets and variables → Actions):
    `EVAL_EMAIL`, `EVAL_PASSWORD`, `ANTHROPIC_API_KEY` (for the judge).
+
+## Adding an expert
+
+1. `<expert>/cases.json` + `<expert>/docs/` + `<expert>/runs/_state.json` (copy from concrete).
+2. `node cases-page.mjs <expert> "<name>"` and have the product owner approve the page.
+3. Add the expert's line to `JUDGE_PERSONA` in `expert-hub-case.mjs`.
+4. Run the workflow with `expert = <expert>` and the approval box ticked.
 
 ## Running
 
