@@ -43,7 +43,7 @@ supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
 # אופציונלי: EXPERT_MODEL (ברירת מחדל claude-opus-5-5), EXPERT_EFFORT (ברירת מחדל high)
 
 # 3. פריסת הפונקציה
-supabase functions deploy expert-chat
+supabase functions deploy expert-chat --no-verify-jwt   # the function verifies the user itself
 
 # 4. הרשאת מנהל לספריית הידע (ב-SQL editor)
 insert into public.expert_admins (user_id) values ('<user-uuid>');
