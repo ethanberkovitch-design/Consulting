@@ -31,14 +31,37 @@ for (const v of variants) {
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const label = (v) => `${v}${state.variant_notes?.[v] ? ` — ${state.variant_notes[v]}` : ''}`;
 
-// CI log: grades and judge reasoning per case, without the (long) answers.
+// CI log: one JSON line per answer - grades, judge reasoning and the answer itself.
 for (const [id, c] of byCase) {
   for (const v of variants) {
-    const r = c.runs[v]?.row;
-    if (!r) continue;
-    console.log(JSON.stringify({ case: id, variant: v, latency_s: r.latency_s, out_tokens: r.usage?.output_tokens, grade: r.grade, explanation: r.explanation }));
+    const run = c.runs[v];
+    if (!run) continue;
+    const r = run.row;
+    console.log(JSON.stringify({ case: id, variant: v, latency_s: r.latency_s, out_tokens: r.usage?.output_tokens, grade: r.grade, explanation: r.explanation, answer: run.answer }));
   }
 }
+
+// Markdown version for the GitHub run page (step summary): readable in any
+// browser, no download. One collapsible block per case.
+const md = [`## Review: question, answers, and the judge's grades\n`,
+  'For each question, open the block and read both answers. Would you have scored anything differently?\n'];
+let n = 0;
+for (const [id, c] of byCase) {
+  n++;
+  md.push(`<details><summary><b>${String(n).padStart(2, '0')} · ${esc(c.prompt)}</b></summary>\n`);
+  for (const v of variants) {
+    const run = c.runs[v];
+    if (!run) continue;
+    const g = run.row.grade ?? {};
+    const ex = run.row.explanation ?? {};
+    md.push(`\n### ${esc(label(v))}\n`);
+    md.push(`${run.row.latency_s?.toFixed?.(1)} s · ${run.row.usage?.output_tokens} output tokens\n`);
+    for (const m of state.metrics) md.push(`- **${esc(m.label)}:** ${g[m.id]}${ex[m.id] ? ` — ${esc(ex[m.id])}` : ''}`);
+    md.push(`\n<blockquote>\n\n${run.answer}\n\n</blockquote>\n`);
+  }
+  md.push('</details>\n');
+}
+writeFileSync(join(flow, 'review.md'), md.join('\n'));
 
 const sections = [...byCase].map(([id, c], i) => {
   const cols = variants.filter((v) => c.runs[v]).map((v) => {
