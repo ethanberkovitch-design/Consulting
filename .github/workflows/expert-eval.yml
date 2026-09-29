@@ -9,9 +9,10 @@ on:
   workflow_dispatch:
     inputs:
       expert:
-        description: Expert id (folder under expert-hub/evals)
+        description: Which expert to test
+        type: choice
+        options: [concrete, management, finance, structural, steel]
         default: concrete
-        required: true
       compare:
         description: What to compare
         type: choice
