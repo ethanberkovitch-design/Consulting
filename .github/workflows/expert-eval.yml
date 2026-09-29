@@ -63,6 +63,7 @@ jobs:
           cat "$FLOW/summary.md"
           cat "$FLOW/summary.md" >> "$GITHUB_STEP_SUMMARY"
           node review-page.mjs "$FLOW"
+          cat "$FLOW/review.md" >> "$GITHUB_STEP_SUMMARY"
           node build-report-lite.mjs "$FLOW"
       - uses: actions/upload-artifact@v4
         if: always()
