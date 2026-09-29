@@ -97,13 +97,17 @@ Deno.serve(async (req) => {
   if (!isExpertId(conversation.expert_id)) return json({ error: 'Unknown expert' }, 400);
   const expert = EXPERTS[conversation.expert_id];
 
+  // Admin status is needed for preview experts and for overrides; look it up once.
+  let admin: boolean | null = null;
+  const isAdmin = async () => (admin ??= (await supabase.rpc('is_expert_admin')).data === true);
+  if (expert.preview && !(await isAdmin())) return json({ error: 'Unknown expert' }, 400);
+
   let effort = EFFORT;
   let calc = CALC;
   if (body.effort !== undefined || body.calc !== undefined) {
     if (body.effort !== undefined && !EFFORTS.includes(body.effort as Effort)) return json({ error: 'Invalid effort' }, 400);
     if (body.calc !== undefined && typeof body.calc !== 'boolean') return json({ error: 'Invalid calc' }, 400);
-    const { data: isAdmin } = await supabase.rpc('is_expert_admin');
-    if (isAdmin !== true) return json({ error: 'overrides are admin-only' }, 403);
+    if (!(await isAdmin())) return json({ error: 'overrides are admin-only' }, 403);
     if (body.effort !== undefined) effort = body.effort as Effort;
     if (body.calc !== undefined) calc = body.calc;
   }
