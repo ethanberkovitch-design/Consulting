@@ -1,0 +1,69 @@
+name: Expert Hub eval
+
+# Runs one expert's eval cases through the real production path twice -
+# baseline (effort=high) and v1 (effort=medium) - grades them with a Claude
+# judge, and uploads the report. Manual only: every run spends API credit.
+
+on:
+  workflow_dispatch:
+    inputs:
+      expert:
+        description: Expert id (folder under expert-hub/evals)
+        default: concrete
+        required: true
+      limit:
+        description: Pilot size - run only the first N cases (0 = all)
+        default: '3'
+        required: true
+      approve_harness:
+        description: I reviewed expert-hub/evals/run-eval.mjs and expert-hub-case.mjs and approve running them
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: expert-eval
+  cancel-in-progress: false
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: expert-hub/evals
+    env:
+      EVAL_EXPERT: ${{ inputs.expert }}
+      EVAL_LIMIT: ${{ inputs.limit }}
+      EVAL_EMAIL: ${{ secrets.EVAL_EMAIL }}
+      EVAL_PASSWORD: ${{ secrets.EVAL_PASSWORD }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      FLOW: ${{ inputs.expert }}/runs
+      APPROVE: ${{ inputs.approve_harness && '--approve-harness' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: expert-hub/evals/package-lock.json
+      - run: npm ci
+      - name: Baseline (effort=high)
+        run: EVAL_EFFORT=high node run-eval.mjs --flow "$FLOW" --variant baseline --model claude-opus-5-5 --concurrency 3 --timeout-s 300 $APPROVE
+      - name: v1 (effort=medium)
+        # one failed baseline case should not cancel the comparison on the rest
+        if: success() || failure()
+        run: EVAL_EFFORT=medium node run-eval.mjs --flow "$FLOW" --variant v1 --model claude-opus-5-5 --concurrency 3 --timeout-s 300 $APPROVE
+      - name: Summary and report
+        if: always()
+        run: |
+          node summarize.mjs "$FLOW" | tee "$FLOW/summary.md" >> "$GITHUB_STEP_SUMMARY"
+          node build-report-lite.mjs "$FLOW"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-${{ inputs.expert }}-${{ github.run_number }}
+          path: expert-hub/evals/${{ inputs.expert }}/runs
+          retention-days: 30

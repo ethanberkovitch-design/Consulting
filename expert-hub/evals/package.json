@@ -1,0 +1,10 @@
+{
+  "name": "expert-hub-evals",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.129.0",
+    "@supabase/supabase-js": "^2.117.0",
+    "zod": "^4.1.0"
+  }
+}
