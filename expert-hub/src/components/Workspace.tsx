@@ -464,7 +464,7 @@ export function Workspace({ user, expert, conversation, onBack, onChanged }: Wor
             disabled={!canReport}
             title={canReport ? undefined : t('reportNeedsContent')}
             className="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2.5 text-sm font-bold disabled:opacity-50"
-            style={{ background: 'var(--accent)', color: '#fff' }}
+            style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
           >
             {pending?.mode === 'report' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ScrollText className="h-4 w-4" aria-hidden="true" />}
             {pending?.mode === 'report' ? t('generatingReport') : t('generateReport')}

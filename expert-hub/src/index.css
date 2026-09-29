@@ -11,19 +11,20 @@
   --surface-3: #e3e7ec;
   --text-primary: #111a24;
   --text-secondary: #46525f;
-  --text-muted: #6f7a86;
+  --text-muted: #5f6a76;
   --border: #d8dde3;
   --border-strong: #b9c1ca;
 
   --brand: #12304f;
   --brand-hover: #1b426b;
   --on-brand: #ffffff;
-  --accent: #c77a12;
+  --accent: #9a5a0a;
+  --on-accent: #ffffff;
   --accent-soft: #fbf1e2;
   --focus: #2f6fb3;
 
   --cat-engineering: #2f6fb3;
-  --cat-finance: #1a8566;
+  --cat-finance: #15735a;
   --cat-management: #8a4fb8;
 
   --status-good: #1a7f37;
@@ -54,6 +55,7 @@
     --brand-hover: #79aee3;
     --on-brand: #0b1520;
     --accent: #f2a93b;
+    --on-accent: #0b1520;
     --accent-soft: #2e2413;
     --focus: #79aee3;
     --cat-engineering: #6ea6e0;
@@ -81,6 +83,7 @@
   --brand-hover: #79aee3;
   --on-brand: #0b1520;
   --accent: #f2a93b;
+  --on-accent: #0b1520;
   --accent-soft: #2e2413;
   --focus: #79aee3;
   --cat-engineering: #6ea6e0;
@@ -109,7 +112,7 @@ body {
 
 ::selection {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 /* Rendered markdown from the experts */
