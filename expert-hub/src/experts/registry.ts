@@ -1,11 +1,11 @@
-import { Briefcase, Building2, Construction, LineChart, Layers, type LucideIcon } from 'lucide-react';
+import { Briefcase, Building2, Construction, LineChart, Layers, Truck, type LucideIcon } from 'lucide-react';
 import type { Language } from '../lib/i18n';
 
 /**
  * Public expert cards. The prompts live server-side only
  * (supabase/functions/_shared/experts.ts); ids must match.
  */
-export type ExpertId = 'management' | 'finance' | 'concrete' | 'steel' | 'structural';
+export type ExpertId = 'management' | 'finance' | 'concrete' | 'steel' | 'structural' | 'supply';
 export type Category = 'engineering' | 'finance' | 'management';
 
 type Localized = Record<Language, string>;
@@ -148,6 +148,32 @@ export const EXPERTS: ExpertCard[] = [
         'Do the targets, headcount and budget in the attached plan fit together?',
         'What is the main operational bottleneck according to the attached data?',
         'Build an execution plan for next quarter: owners, milestones and KPIs',
+      ],
+    },
+  },
+  {
+    id: 'supply',
+    category: 'management',
+    icon: Truck,
+    name: { he: 'מומחה רכש ושרשרת אספקה', en: 'Procurement & supply chain expert' },
+    summary: {
+      he: 'השוואת הצעות לפי עלות כוללת, חוזים והצמדות, ספקים וסיכונים, מלאי ולוגיסטיקה.',
+      en: 'Quotes compared on total cost, contracts and indexation, suppliers and risk, inventory and logistics.',
+    },
+    typicalDocuments: {
+      he: 'הצעות מחיר, חוזי ספקים, נתוני רכש, דוחות מלאי ואספקה',
+      en: 'Supplier quotes, supply contracts, purchasing data, inventory and delivery reports',
+    },
+    starters: {
+      he: [
+        'השווה בין הצעות המחיר המצורפות לפי עלות כוללת ולא רק לפי מחיר ליחידה',
+        'בדוק שהחשבונית של הספק תואמת את סעיף ההצמדה בחוזה',
+        'איפה הסיכון הגדול ביותר בשרשרת האספקה שלנו לפי הנתונים המצורפים?',
+      ],
+      en: [
+        'Compare the attached quotes on total cost, not just unit price',
+        'Check that the supplier’s invoice matches the indexation clause in the contract',
+        'Where is the biggest risk in our supply chain according to the attached data?',
       ],
     },
   },
