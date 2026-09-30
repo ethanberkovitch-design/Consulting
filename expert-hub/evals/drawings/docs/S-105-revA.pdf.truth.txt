@@ -1,2 +1,3 @@
 [Ground truth for the judge]
 Sheet S-105 rev A (01.07.2026, for construction). Grid 1-2-3 at 6.00 + 6.00 m, axes A-B. Columns C1-C6 all 30/30. Beam B-3 30/50 runs north-south ON axis 2.
+Title block (all printed on the sheet): date 01.07.2026; drawn by א.ל.; engineer signature field: י.כהן, מהנדס. Quoting these from the sheet is correct, not invented.

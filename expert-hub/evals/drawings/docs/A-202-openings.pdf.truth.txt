@@ -1,3 +1,4 @@
 [Ground truth for the judge]
 Sheet A-202 (architecture), openings plan floor 1, scale 1:100, revision C, for construction.
 Wall W3 on axis C (east wall, between axes 1 and 2) has window W-07: width 1.80 m, height 1.40 m, sill +0.90 (from note).
+Title block (all printed on the sheet): date 10.08.2026; drawn by א.ל.; engineer signature field: מ.לוי, אדריכל. Quoting these from the sheet is correct, not invented.

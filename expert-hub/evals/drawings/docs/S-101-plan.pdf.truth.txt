@@ -3,3 +3,4 @@ Sheet S-101, "תוכנית תקרה מעל קומת קרקע", scale 1:100. Grid
 Notes: 1. dimensions in metres. 2. concrete B30. 3. Do not build before receiving a construction revision ("אין לבצע לפני קבלת מהדורה לביצוע").
 Title block: revision B, status "למכרז" (for tender), date 12.08.2026, engineer signature field EMPTY.
 Revision table: A 02.07.2026 "להערות" (for comments); B 12.08.2026 "למכרז" (for tender).
+Title block (all printed on the sheet): date 12.08.2026; drawn by א.ל.; engineer signature field: (empty). Quoting these from the sheet is correct, not invented.

@@ -3,3 +3,4 @@ Sheet A-203, storeroom plan, scale 1:100, revision A, for construction.
 Axes A-B-C-D, dimensioned only on the south side: 4.20 + 5.40 + 3.60. North wall (labelled "קיר צפוני") runs A to D, no dimension on it. Axes 1-2: 7.00 m.
 Notes: axis dimensions in metres; block walls 25 cm, symmetric about the axis.
 North wall: axis to axis 13.20 m; outer face to outer face 13.45 m (13.20 + 2 x 0.125); inner clear 12.95 m.
+Title block (all printed on the sheet): date 11.08.2026; drawn by א.ל.; engineer signature field: מ.לוי, אדריכל. Quoting these from the sheet is correct, not invented.

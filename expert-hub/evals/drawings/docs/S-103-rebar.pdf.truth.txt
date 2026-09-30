@@ -6,3 +6,4 @@ B 16, 24, 8.50, 204.00, 1.578, 321.91
 C 8, 120, 1.60, 192.00, 0.395, 75.84
 Printed total: 540.00 kg. The correct sum of the rows is 610.87 kg; the printed total is 70.87 kg too low (row B alone matches; the error is in the total).
 Notes: rebar per SI 4466; unit mass per SI 4466; cover 25 mm.
+Title block (all printed on the sheet): date 20.08.2026; drawn by א.ל.; engineer signature field: י.כהן, מהנדס. Quoting these from the sheet is correct, not invented.
