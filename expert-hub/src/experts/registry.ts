@@ -1,11 +1,11 @@
-import { Briefcase, Building2, Construction, LineChart, Layers, Mountain, Truck, type LucideIcon } from 'lucide-react';
+import { Briefcase, Building2, Construction, LineChart, Layers, Mountain, Truck, Users, type LucideIcon } from 'lucide-react';
 import type { Language } from '../lib/i18n';
 
 /**
  * Public expert cards. The prompts live server-side only
  * (supabase/functions/_shared/experts.ts); ids must match.
  */
-export type ExpertId = 'management' | 'finance' | 'concrete' | 'steel' | 'structural' | 'supply' | 'geology';
+export type ExpertId = 'management' | 'finance' | 'concrete' | 'steel' | 'structural' | 'supply' | 'geology' | 'hr';
 export type Category = 'engineering' | 'finance' | 'management';
 
 type Localized = Record<Language, string>;
@@ -174,6 +174,32 @@ export const EXPERTS: ExpertCard[] = [
         'Do the targets, headcount and budget in the attached plan fit together?',
         'What is the main operational bottleneck according to the attached data?',
         'Build an execution plan for next quarter: owners, milestones and KPIs',
+      ],
+    },
+  },
+  {
+    id: 'hr',
+    category: 'management',
+    icon: Users,
+    name: { he: 'מומחה משאבי אנוש', en: 'HR expert' },
+    summary: {
+      he: 'תחלופה וגיוס, תגמול ובונוסים, שוויון בשכר, שיחות קשות, צמצומים ויחסי עבודה.',
+      en: 'Turnover and hiring, pay and bonuses, pay equity, difficult conversations, layoffs and employee relations.',
+    },
+    typicalDocuments: {
+      he: 'נתוני עובדים ועזיבות, טבלאות שכר, תוכניות בונוס, סידורי עבודה, מדיניות',
+      en: 'Headcount and turnover data, pay tables, bonus plans, work schedules, policies',
+    },
+    starters: {
+      he: [
+        'נתח את נתוני העזיבה המצורפים: איפה הבעיה ומה עושים?',
+        'בדוק את תוכנית הבונוס המצורפת: כמה תעלה ומה היא מתגמלת בפועל',
+        'אנחנו צריכים לצמצם עובדים. מה התהליך הנכון?',
+      ],
+      en: [
+        'Analyse the attached turnover data: where is the problem and what do we do?',
+        'Review the attached bonus plan: what will it cost and what does it really reward?',
+        'We need to reduce headcount. What is the right process?',
       ],
     },
   },
