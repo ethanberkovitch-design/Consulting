@@ -3,9 +3,11 @@ import { TopBar } from './components/TopBar';
 import { AuthScreen } from './components/AuthScreen';
 import { ExpertCatalog } from './components/ExpertCatalog';
 import { Workspace } from './components/Workspace';
+import { LibraryAdmin } from './components/LibraryAdmin';
 import { useAuth } from './hooks/useAuth';
 import { useI18n } from './lib/i18n';
 import { listConversations, type Conversation } from './lib/api';
+import { isAdmin } from './lib/library';
 import { getExpert, type ExpertId } from './experts/registry';
 
 /** key stays fixed when a new conversation gets its id, so the workspace is not remounted mid-answer. */
@@ -22,6 +24,8 @@ export default function App() {
   const [listLoading, setListLoading] = useState(false);
   const [active, setActive] = useState<OpenWorkspace | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [adminFor, setAdminFor] = useState<string | null>(null);
+  const [showLibrary, setShowLibrary] = useState(false);
 
   const refresh = useCallback(async () => {
     setListLoading(true);
@@ -44,16 +48,24 @@ export default function App() {
     if (user) void refresh();
   }, [user, refresh]);
 
+  // Only decides whether to show the library button; the server enforces access.
+  useEffect(() => {
+    if (user) void isAdmin().then((yes) => setAdminFor(yes ? user.id : null));
+  }, [user]);
+  const admin = !!user && adminFor === user.id;
+
   const handleSignOut = async () => {
     await signOut();
     setConversations([]);
     setActive(null);
+    setShowLibrary(false);
   };
 
   // Picking an expert only opens the workspace; the conversation row is created
   // on the first question or upload, so browsing never leaves empty conversations.
   const startConversation = (expertId: ExpertId) => {
     setError(null);
+    setShowLibrary(false);
     setActive({ key: `new-${Date.now()}`, expertId, conversation: null });
   };
   const openConversation = (conversation: Conversation) =>
@@ -67,7 +79,22 @@ export default function App() {
 
   return (
     <>
-      <TopBar email={user?.email} onHome={() => setActive(null)} onSignOut={handleSignOut} />
+      <TopBar
+        email={user?.email}
+        onHome={() => {
+          setActive(null);
+          setShowLibrary(false);
+        }}
+        onSignOut={handleSignOut}
+        onLibrary={
+          admin
+            ? () => {
+                setActive(null);
+                setShowLibrary(true);
+              }
+            : undefined
+        }
+      />
       {error && (
         <p role="alert" className="mx-auto mt-4 max-w-7xl px-4 text-sm" style={{ color: 'var(--status-critical)' }}>
           {error}
@@ -79,6 +106,8 @@ export default function App() {
         </p>
       ) : !user ? (
         <AuthScreen />
+      ) : showLibrary && admin ? (
+        <LibraryAdmin />
       ) : active && activeExpert ? (
         <Workspace
           key={active.key}

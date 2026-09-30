@@ -85,6 +85,49 @@ const strings = {
     he: 'למחוק את השיחה, ההודעות והמסמכים שלה? אי אפשר לשחזר.',
     en: 'Delete this conversation with its messages and documents? This cannot be undone.',
   },
+  library: { he: 'ספריית מומחים', en: 'Expert library' },
+  libraryIntro: {
+    he: 'מסמכי ייחוס שכל מומחה מקבל עם כל שאלה: נהלים פנימיים, מפרטים, קטעים ממוקדים מתקנים. מה שכאן נשלח למודל בכל שאלה למומחה, ולכן משפיע על העלות.',
+    en: 'Reference documents each expert receives with every question: internal procedures, specifications, focused excerpts of standards. Everything here goes to the model with each question to that expert, so it drives cost.',
+  },
+  libraryCopyright: {
+    he: 'תקנים של מכון התקנים ומסמכים מסחריים מוגנים בזכויות יוצרים. העלו רק חומר שיש לכם רישיון להשתמש בו בשירות.',
+    en: 'SII standards and commercial documents are copyrighted. Upload only material you are licensed to use in the service.',
+  },
+  libraryUpload: { he: 'הוספת מסמך', en: 'Add a document' },
+  libraryExpert: { he: 'מומחה', en: 'Expert' },
+  libraryTitle: { he: 'כותרת (המומחה רואה אותה)', en: 'Title (the expert sees it)' },
+  libraryTitleHint: { he: 'למשל: נוהל יציקה פנימי, מהדורה 3', en: 'e.g. Internal pouring procedure, rev. 3' },
+  libraryFile: { he: 'קובץ', en: 'File' },
+  libraryAdd: { he: 'העלאה', en: 'Upload' },
+  libraryCounting: { he: 'סופר טוקנים…', en: 'Counting tokens…' },
+  libraryEmpty: { he: 'אין מסמכים בספרייה של מומחה זה.', en: 'No documents in this expert’s library.' },
+  libraryActive: { he: 'פעיל', en: 'Active' },
+  libraryInactive: { he: 'כבוי', en: 'Off' },
+  libraryRecount: { he: 'ספירה מחדש', en: 'Recount' },
+  libraryDelete: { he: 'מחיקה', en: 'Delete' },
+  libraryConfirmDelete: {
+    he: 'למחוק את המסמך מהספרייה? אי אפשר לשחזר.',
+    en: 'Delete this document from the library? This cannot be undone.',
+  },
+  libraryTokens: { he: 'טוקנים', en: 'tokens' },
+  libraryPerQuestion: { he: 'תוספת לכל שאלה', en: 'Added to each question' },
+  libraryFirstQuestion: { he: 'שאלה ראשונה', en: 'first question' },
+  libraryCachedQuestion: { he: 'שאלות נוספות תוך 5 דקות', en: 'further questions within 5 minutes' },
+  libraryOverBudget: {
+    he: 'חורג מתקרת הספרייה למומחה (15MB פעילים). כבו או מחקו מסמך אחר קודם.',
+    en: 'Exceeds the expert’s library cap (15MB active). Turn off or delete another document first.',
+  },
+  libraryWarnTokens: {
+    he: 'ספרייה גדולה: כל שאלה למומחה הזה מתייקרת משמעותית. עדיף קטעים ממוקדים על פני מסמכים שלמים.',
+    en: 'Large library: every question to this expert costs noticeably more. Prefer focused excerpts over whole documents.',
+  },
+  libraryNotCounted: { he: 'לא נספר', en: 'not counted' },
+  libraryCountFailed: {
+    he: 'המודל לא הצליח לקרוא את הקובץ, והוא נשאר כבוי:',
+    en: 'The model could not read the file, so it stays off:',
+  },
+  libraryAdminsOnly: { he: 'המסך הזה פתוח למנהלים בלבד.', en: 'This screen is for admins only.' },
 } as const;
 
 export type StringKey = keyof typeof strings;
