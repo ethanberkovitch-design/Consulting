@@ -455,7 +455,6 @@ Schedules support contract claims; say when a delay question also needs the cont
       'Open questions and missing information',
     ],
     preferredSources: ['gov.il', 'pmi.org', 'aacei.org'],
-    preview: true,
   },
 
   geology: {
