@@ -11,7 +11,7 @@ on:
       expert:
         description: Which expert to test
         type: choice
-        options: [concrete, management, finance, structural, steel, supply, hr, innovation, geology, drawings, contracts, safety, scheduling]
+        options: [concrete, management, finance, structural, steel, supply, hr, innovation, geology, drawings, contracts, safety, scheduling, core]
         default: concrete
       compare:
         description: What to compare
@@ -43,6 +43,7 @@ jobs:
         working-directory: expert-hub/evals
     env:
       EVAL_EXPERT: ${{ inputs.expert }}
+      EVAL_MIXED: ${{ inputs.expert == 'core' && '1' || '' }}
       EVAL_LIMIT: ${{ inputs.limit }}
       EVAL_EMAIL: ${{ secrets.EVAL_EMAIL }}
       EVAL_PASSWORD: ${{ secrets.EVAL_PASSWORD }}
