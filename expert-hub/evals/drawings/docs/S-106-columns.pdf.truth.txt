@@ -1,0 +1,4 @@
+[Ground truth for the judge]
+Sheet S-106, A1, ground floor columns, scale 1:100, revision B. Grid 1-5 at 4 x 6.00 m, A-D at 3 x 7.00 m -> 20 columns.
+Legend: C1 30/50 B40; C2 40/40 B40. C2 = the 6 interior columns (axes 2,3,4 x B,C); C1 = the 14 perimeter columns.
+Concrete if the question asks: not required.

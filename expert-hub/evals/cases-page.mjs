@@ -13,7 +13,10 @@ const cases = JSON.parse(readFileSync(join(expert, 'cases.json'), 'utf8'));
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 const articles = cases.map((c, i) => {
-  const docs = c.docs.map((d) => `<details><summary>📎 ${esc(d)}</summary><pre>${esc(readFileSync(join(expert, 'docs', d), 'utf8'))}</pre></details>`).join('');
+  // A PDF drawing is linked, and its ground truth (what the judge sees) is shown.
+  const docs = c.docs.map((d) => d.toLowerCase().endsWith('.pdf')
+    ? `<details><summary>📎 <a href="docs/${esc(d)}">${esc(d)}</a></summary><pre>${esc(readFileSync(join(expert, 'docs', `${d}.truth.txt`), 'utf8'))}</pre></details>`
+    : `<details><summary>📎 ${esc(d)}</summary><pre>${esc(readFileSync(join(expert, 'docs', d), 'utf8'))}</pre></details>`).join('');
   return `<article><header><span class="num">${String(i + 1).padStart(2, '0')}</span>${c.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</header>
 <p class="q" dir="auto">${esc(c.prompt)}</p>${docs}
 <p class="good"><b>מה תשובה טובה צריכה לכלול:</b> <span dir="auto">${esc(c.good)}</span></p></article>`;

@@ -1,0 +1,5 @@
+[Ground truth for the judge]
+Sheet S-001, general notes and column schedule, revision C, for construction, signed.
+General notes: 1. all elements B30 unless stated otherwise. 2. rebar per SI 4466. 3. cover: slabs 20 mm, beams and columns 25 mm, foundations 50 mm. 4. any contradiction between drawings must be coordinated with the engineer before execution.
+Column schedule: C1-C6 40x40 cm, B40, 8Ø16; C7-C10 30x50 cm, B30, 6Ø16.
+So columns C1-C6 need B40 (the schedule is the "stated otherwise" of note 1); C7-C10 B30. No real contradiction for C1-C6 given the "unless stated otherwise" wording.

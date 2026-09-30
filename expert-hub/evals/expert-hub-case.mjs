@@ -49,6 +49,8 @@ function session() {
 
 const anthropic = new Anthropic();
 
+const isPdf = (name) => name.toLowerCase().endsWith('.pdf');
+
 export function loadCases() {
   const dir = join(HERE, EXPERT);
   const all = JSON.parse(readFileSync(join(dir, 'cases.json'), 'utf8'));
@@ -56,7 +58,9 @@ export function loadCases() {
   const limit = Number(process.env.EVAL_LIMIT ?? 0);
   return (limit > 0 ? all.slice(0, limit) : all).map((c) => ({
     ...c,
-    docText: Object.fromEntries(c.docs.map((d) => [d, readFileSync(join(dir, 'docs', d), 'utf8')])),
+    // A PDF goes to the expert as is; the judge reads its hand-written ground truth (<name>.truth.txt).
+    docText: Object.fromEntries(c.docs.map((d) => [d, readFileSync(join(dir, 'docs', isPdf(d) ? `${d}.truth.txt` : d), 'utf8')])),
+    docBytes: Object.fromEntries(c.docs.filter(isPdf).map((d) => [d, readFileSync(join(dir, 'docs', d))])),
     // relative to the flow dir (<expert>/runs) so the report can link the inputs
     attachments: c.docs.map((d) => ({ kind: 'text', ref: `../docs/${d}`, alt: d })),
   }));
@@ -103,12 +107,13 @@ export async function runCase(c) {
   try {
     for (const name of c.docs) {
       const path = `${userId}/${conv.id}/${name}`;
-      const blob = new Blob([c.docText[name]], { type: 'text/plain;charset=utf-8' });
-      const up = await supabase.storage.from('expert-docs').upload(path, blob, { contentType: 'text/plain' });
+      const type = isPdf(name) ? 'application/pdf' : 'text/plain';
+      const blob = isPdf(name) ? new Blob([c.docBytes[name]], { type }) : new Blob([c.docText[name]], { type: `${type};charset=utf-8` });
+      const up = await supabase.storage.from('expert-docs').upload(path, blob, { contentType: type });
       if (up.error) throw up.error;
       uploaded.push(path);
       const row = await supabase.from('expert_documents').insert({
-        conversation_id: conv.id, name, media_type: 'text/plain', storage_path: path, size_bytes: blob.size,
+        conversation_id: conv.id, name, media_type: type, storage_path: path, size_bytes: blob.size,
       });
       if (row.error) throw row.error;
     }
@@ -160,6 +165,7 @@ const JUDGE_PERSONA = {
   supply: 'a procurement and supply chain expert assistant used by purchasing, operations and logistics managers of Israeli industrial and construction-materials companies.\nJudge as a senior procurement and supply chain director would. Recompute every calculation in the answer yourself.',
   geology: 'a geology expert assistant (engineering geology, geotechnics, quarries and aggregates) used by engineers, developers, contractors and quarry operators in Israel.\nJudge as a senior engineering geologist would: ground safety first, no approval of foundations or excavations without the geotechnical engineer. Recompute every calculation in the answer yourself.',
   hr: 'a human resources expert assistant used by owners, managers and HR staff of Israeli companies, including industrial companies with shift workers and drivers.\nJudge as a senior HR director who knows Israeli employment practice would: fair to employees and employer, no legal rulings without a labour lawyer. Recompute every calculation in the answer yourself.',
+  drawings: 'an expert assistant that reads construction drawings (architecture, structure, MEP, infrastructure) for site engineers, contractors and project managers.\nJudge as a senior site engineer who checks drawings before construction would: read what is written, never scale off a PDF, flag contradictions instead of guessing, send questions to the designer. Recompute every calculation in the answer yourself.',
   innovation: 'an innovation and sustainability expert assistant used by managers of Israeli industrial and construction-materials companies.\nJudge as a senior head of innovation and sustainability would: numbers from data with named emission factors, no greenwashing. Recompute every calculation in the answer yourself.',
 };
 if (!JUDGE_PERSONA[EXPERT]) throw new Error(`no judge persona for expert "${EXPERT}" - add one to JUDGE_PERSONA`);
@@ -185,7 +191,9 @@ const Pairwise = z.object({
 });
 
 function context(c) {
-  const docs = c.docs.map((d) => `<document name="${d}">\n${c.docText[d]}\n</document>`).join('\n');
+  const docs = c.docs
+    .map((d) => `<document name="${d}">\n${isPdf(d) ? '(A PDF drawing was given to the assistant. Below is the ground truth of what is on it, written by the test author.)\n' : ''}${c.docText[d]}\n</document>`)
+    .join('\n');
   return `<question>\n${c.prompt}\n</question>\n<documents>\n${docs || '(none)'}\n</documents>\n<criterion>\n${c.good}\n</criterion>`;
 }
 

@@ -1,0 +1,5 @@
+[Ground truth for the judge - the expert receives the PDF, not this text]
+Sheet S-101, "תוכנית תקרה מעל קומת קרקע", scale 1:100. Grid A-B-C at 6.00 + 6.00 m, axes 1-2 (8 m apart, not dimensioned). Six columns at grid intersections. Text: slab 20 cm thick.
+Notes: 1. dimensions in metres. 2. concrete B30. 3. Do not build before receiving a construction revision ("אין לבצע לפני קבלת מהדורה לביצוע").
+Title block: revision B, status "למכרז" (for tender), date 12.08.2026, engineer signature field EMPTY.
+Revision table: A 02.07.2026 "להערות" (for comments); B 12.08.2026 "למכרז" (for tender).

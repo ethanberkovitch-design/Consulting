@@ -1,0 +1,4 @@
+[Ground truth for the judge]
+Sheet A-301, section 1-1, scale 1:50, revision B, for construction.
+Levels: floor ±0.00; slab top +3.20; beam 40/60 (depth 60 cm including the slab, per note 2) -> beam underside +2.60 (level mark shown). Acoustic ceiling at +2.70 (dashed line). HVAC duct 40 cm high, running above the acoustic ceiling along the whole section (note 3).
+Conflicts: the ceiling (+2.70) is 10 cm ABOVE the beam underside (+2.60), so the ceiling cannot run continuously under the beam. The duct (40 cm) needs +2.70 to +3.10 at least above the ceiling; the space between ceiling and slab underside (+3.00) is only 30 cm, and at the beam there is no space at all -> the duct cannot pass the beam.
