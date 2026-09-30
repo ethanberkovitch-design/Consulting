@@ -1,11 +1,11 @@
-import { Briefcase, Building2, Construction, LineChart, Layers, Truck, type LucideIcon } from 'lucide-react';
+import { Briefcase, Building2, Construction, LineChart, Layers, Mountain, Truck, type LucideIcon } from 'lucide-react';
 import type { Language } from '../lib/i18n';
 
 /**
  * Public expert cards. The prompts live server-side only
  * (supabase/functions/_shared/experts.ts); ids must match.
  */
-export type ExpertId = 'management' | 'finance' | 'concrete' | 'steel' | 'structural' | 'supply';
+export type ExpertId = 'management' | 'finance' | 'concrete' | 'steel' | 'structural' | 'supply' | 'geology';
 export type Category = 'engineering' | 'finance' | 'management';
 
 type Localized = Record<Language, string>;
@@ -96,6 +96,32 @@ export const EXPERTS: ExpertCard[] = [
         'Review the attached design basis and flag gaps or questionable assumptions',
         'The contractor wants a new slab opening. What are the structural implications and what must be checked?',
         'Sanity-check slab thicknesses and column sizes in the attached drawings',
+      ],
+    },
+  },
+  {
+    id: 'geology',
+    category: 'engineering',
+    icon: Mountain,
+    name: { he: 'מומחה גיאולוגיה', en: 'Geology expert' },
+    summary: {
+      he: 'דוחות קרקע ומי תהום, סיכוני קרקע ויסודות, חפירות ומדרונות, מחצבות ואיכות אגרגטים.',
+      en: 'Site investigation and groundwater, ground hazards and foundations, excavations and slopes, quarries and aggregate quality.',
+    },
+    typicalDocuments: {
+      he: 'דוח קרקע, יומני קידוח, בדיקות מעבדה, תוכנית חפירה, בדיקות אגרגט',
+      en: 'Geotechnical report, borehole logs, lab tests, excavation plan, aggregate tests',
+    },
+    starters: {
+      he: [
+        'האם חקירת הקרקע המצורפת מספיקה לתכנון הביסוס של המבנה?',
+        'מה הסיכונים בתוכנית החפירה המצורפת, כולל מי תהום ומבנים שכנים?',
+        'האם האגרגט מהמחצבה מתאים לבטון לפי תוצאות הבדיקות המצורפות?',
+      ],
+      en: [
+        'Is the attached site investigation enough to design the foundations?',
+        'What are the risks in the attached excavation plan, including groundwater and neighbouring buildings?',
+        'Is the quarry aggregate suitable for concrete according to the attached test results?',
       ],
     },
   },
