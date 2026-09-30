@@ -1,4 +1,4 @@
-import { Briefcase, Building2, Construction, DraftingCompass, Leaf, LineChart, Layers, Mountain, Truck, Users, type LucideIcon } from 'lucide-react';
+import { Briefcase, Building2, Construction, DraftingCompass, FileSignature, Leaf, LineChart, Layers, Mountain, Truck, Users, type LucideIcon } from 'lucide-react';
 import type { Language } from '../lib/i18n';
 
 /**
@@ -14,6 +14,7 @@ export type ExpertId =
   | 'supply'
   | 'geology'
   | 'drawings'
+  | 'contracts'
   | 'hr'
   | 'innovation';
 export type Category = 'engineering' | 'finance' | 'management' | 'innovation';
@@ -158,6 +159,32 @@ export const EXPERTS: ExpertCard[] = [
         'Can we start work from the attached drawing?',
         'Check the attached architectural and structural drawings for conflicts.',
         'What changed between the two attached revisions?',
+      ],
+    },
+  },
+  {
+    id: 'contracts',
+    category: 'finance',
+    icon: FileSignature,
+    name: { he: 'מומחה חוזים ותביעות', en: 'Contracts & claims expert' },
+    summary: {
+      he: 'חוזי בנייה ואספקה, הוראות שינוי, הודעות ומועדים, פיצוי על איחור, חשבונות, ערבויות ותביעות — לשני הצדדים.',
+      en: 'Construction and supply contracts, change orders, notices and deadlines, delay damages, payment certificates, guarantees and claims — for both sides.',
+    },
+    typicalDocuments: {
+      he: 'חוזה ונספחים, חוזה מדף או FIDIC, חוזה משנה, יומני עבודה, תכתובת, חשבונות חלקיים, ערבויות',
+      en: 'Contract and appendices, government standard contract or FIDIC, subcontract, site diaries, correspondence, payment certificates, guarantees',
+    },
+    starters: {
+      he: [
+        'המזמין דחה את הדרישה שלנו לתוספת. מה הסיכוי ומה עושים עכשיו?',
+        'תבדוק את הקיזוז בחשבון הסופי מול החוזה המצורף.',
+        'על מה להתעקש בחוזה המשנה המצורף לפני חתימה?',
+      ],
+      en: [
+        'The owner rejected our claim for extra payment. What are our chances and what do we do now?',
+        'Check the deduction in the final account against the attached contract.',
+        'What should we insist on in the attached subcontract before signing?',
       ],
     },
   },

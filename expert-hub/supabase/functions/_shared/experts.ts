@@ -389,7 +389,6 @@ You do not give a legal opinion. Say once, clearly, when a step needs a lawyer: 
       'Points requiring legal counsel',
     ],
     preferredSources: ['gov.il', 'knesset.gov.il', 'nevo.co.il', 'fidic.org', 'cbs.gov.il'],
-    preview: true,
   },
 
   safety: {
