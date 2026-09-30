@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { AlertTriangle, FileText, Loader2, RefreshCw, Trash2, Upload } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, FileText, Loader2, RefreshCw, Trash2, Upload } from 'lucide-react';
 import { useI18n } from '../lib/i18n';
 import { ACCEPT, MAX_FILE_BYTES, UnsupportedFileError, formatBytes, prepareFile } from '../lib/files';
 import {
@@ -18,8 +18,9 @@ import { CATEGORY_COLOR, CATEGORY_ORDER, EXPERTS, type ExpertId } from '../exper
 
 const usd = (value: number) => (value < 0.01 && value > 0 ? '<$0.01' : `$${value.toFixed(2)}`);
 
-export function LibraryAdmin() {
-  const { t, lang } = useI18n();
+export function LibraryAdmin({ onBack }: { onBack: () => void }) {
+  const { t, lang, dir } = useI18n();
+  const BackIcon = dir === 'rtl' ? ArrowRight : ArrowLeft;
   const experts = useMemo(
     () => [...EXPERTS].sort((a, b) => CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category)),
     [],
@@ -132,6 +133,14 @@ export function LibraryAdmin() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
+      <button
+        type="button"
+        onClick={onBack}
+        className="btn-line mb-5 flex h-9 items-center gap-2 rounded-md px-3 text-sm font-medium"
+      >
+        <BackIcon className="h-4 w-4" aria-hidden="true" />
+        {t('backHome')}
+      </button>
       <p className="tech-label" style={{ color: 'var(--line)' }}>
         ADMIN · LIBRARY
       </p>

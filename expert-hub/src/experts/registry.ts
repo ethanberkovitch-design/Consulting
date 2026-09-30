@@ -16,7 +16,7 @@ export type ExpertId =
   | 'drawings'
   | 'hr'
   | 'innovation';
-export type Category = 'engineering' | 'finance' | 'management';
+export type Category = 'engineering' | 'finance' | 'management' | 'innovation';
 
 type Localized = Record<Language, string>;
 
@@ -215,7 +215,7 @@ export const EXPERTS: ExpertCard[] = [
   },
   {
     id: 'innovation',
-    category: 'management',
+    category: 'innovation',
     icon: Leaf,
     name: { he: 'מומחה חדשנות וקיימות', en: 'Innovation & sustainability expert' },
     summary: {
@@ -267,7 +267,7 @@ export const EXPERTS: ExpertCard[] = [
   },
   {
     id: 'supply',
-    category: 'management',
+    category: 'finance',
     icon: Truck,
     name: { he: 'מומחה רכש ושרשרת אספקה', en: 'Procurement & supply chain expert' },
     summary: {
@@ -293,12 +293,13 @@ export const EXPERTS: ExpertCard[] = [
   },
 ];
 
-export const CATEGORY_ORDER: Category[] = ['engineering', 'finance', 'management'];
+export const CATEGORY_ORDER: Category[] = ['engineering', 'finance', 'management', 'innovation'];
 
 export const CATEGORY_COLOR: Record<Category, string> = {
   engineering: 'var(--cat-engineering)',
   finance: 'var(--cat-finance)',
   management: 'var(--cat-management)',
+  innovation: 'var(--cat-innovation)',
 };
 
 export function getExpert(id: string): ExpertCard | undefined {
