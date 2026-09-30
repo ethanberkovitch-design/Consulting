@@ -3,3 +3,4 @@ Sheet S-202 (structure), walls plan floor 1, scale 1:100, revision B, for constr
 W3 on axis C: shear wall, 30 cm thick, "ללא פתחים" (no openings). W1 on axis A: shear wall.
 Notes: W1 and W3 are part of the lateral stability system; no openings in shear walls without the engineer's written approval; concrete B40.
 Conflict: architecture places a 1.80 m window in W3, the structural drawing shows W3 as a shear wall with no openings.
+Title block (all printed on the sheet): date 05.08.2026; drawn by א.ל.; engineer signature field: י.כהן, מהנדס. Quoting these from the sheet is correct, not invented.

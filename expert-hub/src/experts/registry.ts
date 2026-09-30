@@ -1,4 +1,4 @@
-import { Briefcase, Building2, Construction, Leaf, LineChart, Layers, Mountain, Truck, Users, type LucideIcon } from 'lucide-react';
+import { Briefcase, Building2, Construction, DraftingCompass, Leaf, LineChart, Layers, Mountain, Truck, Users, type LucideIcon } from 'lucide-react';
 import type { Language } from '../lib/i18n';
 
 /**
@@ -13,6 +13,7 @@ export type ExpertId =
   | 'structural'
   | 'supply'
   | 'geology'
+  | 'drawings'
   | 'hr'
   | 'innovation';
 export type Category = 'engineering' | 'finance' | 'management';
@@ -131,6 +132,32 @@ export const EXPERTS: ExpertCard[] = [
         'Is the attached site investigation enough to design the foundations?',
         'What are the risks in the attached excavation plan, including groundwater and neighbouring buildings?',
         'Is the quarry aggregate suitable for concrete according to the attached test results?',
+      ],
+    },
+  },
+  {
+    id: 'drawings',
+    category: 'engineering',
+    icon: DraftingCompass,
+    name: { he: 'מומחה קריאת תוכניות ביצוע', en: 'Construction drawings expert' },
+    summary: {
+      he: 'קריאת תוכניות בכל התחומים: גיליון כותרת ומהדורות, סתירות במידות ובמפלסים, תיאום בין תחומים וכתבי כמויות.',
+      en: 'Reads drawings in every discipline: title block and revisions, dimension and level conflicts, coordination between disciplines, and quantities.',
+    },
+    typicalDocuments: {
+      he: 'תוכניות, חתכים ופרטים ב-PDF (עדיף וקטורי), רשימות ברזל, טבלאות עמודים, הערות כלליות',
+      en: 'Plans, sections and details as PDF (vector preferred), rebar schedules, column schedules, general notes',
+    },
+    starters: {
+      he: [
+        'אפשר להתחיל לעבוד לפי התוכנית המצורפת?',
+        'תבדוק סתירות בין תוכנית האדריכלות לתוכנית הקונסטרוקציה המצורפות.',
+        'מה השתנה בין שתי המהדורות המצורפות?',
+      ],
+      en: [
+        'Can we start work from the attached drawing?',
+        'Check the attached architectural and structural drawings for conflicts.',
+        'What changed between the two attached revisions?',
       ],
     },
   },

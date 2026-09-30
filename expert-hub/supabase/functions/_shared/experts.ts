@@ -355,7 +355,6 @@ Other experts in this service cover concrete, steel, structural design and geolo
       'Recommendations and next steps',
     ],
     preferredSources: ['sii.org.il', 'gov.il'],
-    preview: true,
   },
 
   geology: {

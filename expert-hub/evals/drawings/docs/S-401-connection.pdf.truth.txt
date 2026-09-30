@@ -2,3 +2,4 @@
 Sheet S-401 (English), beam-column connection BC-1, scale 1:10, revision 0, for construction, signed R. Adler.
 HEB 200 column, IPE 300 beam, end plate 360x200x15, 4 x M20 grade 8.8 bolts in one vertical row. Top flange weld fillet a=5 both sides. "Bottom flange and web weld: see detail" - no such detail on the sheet.
 Missing: steel grade of members and plate; the referenced weld detail; bolt positions/gauge/edge distances and hole diameter not dimensioned; whether bolts are preloaded; surface treatment; the drawing shows 4 bolts in a single line (unusual for an end plate - typically pairs - worth querying).
+Title block (all printed on the sheet): date 2026-08-21; drawn by T.B.; engineer signature field: R. Adler, Eng.. Quoting these from the sheet is correct, not invented.

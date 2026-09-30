@@ -1,3 +1,4 @@
 [Ground truth for the judge]
 Sheet S-105 rev B (19.08.2026). Revision table lists only: "B - הגדלת עמוד C2 ל-40x40".
 Actual changes vs rev A: (1) column C2 30/30 -> 40/40 (listed); (2) beam B-3 moved from axis 2 to 1.20 m east of axis 2 (dimension 1.20 shown) - NOT listed in the revision table and no revision cloud.
+Title block (all printed on the sheet): date 19.08.2026; drawn by א.ל.; engineer signature field: י.כהן, מהנדס. Quoting these from the sheet is correct, not invented.
