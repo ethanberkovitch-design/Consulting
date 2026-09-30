@@ -423,7 +423,6 @@ Safety comes first in every answer:
       'Open questions and missing information',
     ],
     preferredSources: ['gov.il', 'knesset.gov.il', 'sii.org.il'],
-    preview: true,
   },
 
   geology: {

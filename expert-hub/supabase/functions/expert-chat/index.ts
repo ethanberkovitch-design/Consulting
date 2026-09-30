@@ -407,6 +407,10 @@ function toBase64(buffer: ArrayBuffer): string {
 
 function describeError(err: unknown): string {
   if (err instanceof Anthropic.RateLimitError) return 'The service is busy. Please try again in a minute.';
+  // The service's API credit ran out: the details are in the function log, not for the user.
+  if (err instanceof Anthropic.APIError && /credit balance/i.test(err.message)) {
+    return 'The service is temporarily unavailable. Please try again later.';
+  }
   if (err instanceof Anthropic.APIError) return `Model error (${err.status ?? 'network'}): ${err.message}`;
   return err instanceof Error ? err.message : 'Unexpected error';
 }

@@ -1,4 +1,4 @@
-import { Briefcase, Building2, Construction, DraftingCompass, FileSignature, Leaf, LineChart, Layers, Mountain, Truck, Users, type LucideIcon } from 'lucide-react';
+import { Briefcase, Building2, Construction, DraftingCompass, FileSignature, HardHat, Leaf, LineChart, Layers, Mountain, Truck, Users, type LucideIcon } from 'lucide-react';
 import type { Language } from '../lib/i18n';
 
 /**
@@ -15,6 +15,7 @@ export type ExpertId =
   | 'geology'
   | 'drawings'
   | 'contracts'
+  | 'safety'
   | 'hr'
   | 'innovation';
 export type Category = 'engineering' | 'finance' | 'management' | 'innovation';
@@ -185,6 +186,32 @@ export const EXPERTS: ExpertCard[] = [
         'The owner rejected our claim for extra payment. What are our chances and what do we do now?',
         'Check the deduction in the final account against the attached contract.',
         'What should we insist on in the attached subcontract before signing?',
+      ],
+    },
+  },
+  {
+    id: 'safety',
+    category: 'engineering',
+    icon: HardHat,
+    name: { he: 'מומחה בטיחות בעבודה', en: 'Occupational safety expert' },
+    summary: {
+      he: 'סקרי סיכונים, עבודה בגובה, פיגומים והרמות, חפירות, בטיחות מכונות במפעלים, חקירת אירועים ומדדי בטיחות.',
+      en: 'Risk assessments, work at height, scaffolds and lifting, excavations, machine safety in plants, incident investigation and safety KPIs.',
+    },
+    typicalDocuments: {
+      he: 'סקר סיכונים, תוכנית בטיחות, דוחות בדיקה, תוכנית הרמה, דוח אירוע, גיליון בטיחות (SDS), מטריצת הדרכות',
+      en: 'Risk assessment, safety plan, inspection reports, lift plan, incident report, safety data sheet (SDS), training matrix',
+    },
+    starters: {
+      he: [
+        'תבדוק את דוח בדיקת הפיגום המצורף. אפשר לעבוד מחר?',
+        'תבדוק את תוכנית ההרמה המצורפת מול טבלת העומסים.',
+        'אלה ממצאי סיור הבטיחות במפעל. מה הכי דחוף?',
+      ],
+      en: [
+        'Check the attached scaffold inspection. Can we work tomorrow?',
+        'Check the attached lift plan against the load chart.',
+        'These are the plant safety audit findings. What is most urgent?',
       ],
     },
   },
