@@ -107,7 +107,7 @@ export default function App() {
       ) : !user ? (
         <AuthScreen />
       ) : showLibrary && admin ? (
-        <LibraryAdmin />
+        <LibraryAdmin onBack={() => setShowLibrary(false)} />
       ) : active && activeExpert ? (
         <Workspace
           key={active.key}

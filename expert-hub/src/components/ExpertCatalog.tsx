@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
 import { useI18n, type StringKey } from '../lib/i18n';
 import { CATEGORY_COLOR, CATEGORY_ORDER, EXPERTS, getExpert, type Category, type ExpertId } from '../experts/registry';
@@ -7,7 +8,21 @@ const CATEGORY_LABEL: Record<Category, StringKey> = {
   engineering: 'categoryEngineering',
   finance: 'categoryFinance',
   management: 'categoryManagement',
+  innovation: 'categoryInnovation',
 };
+
+type Filter = Category | 'all';
+const FILTER_KEY = 'expert-hub:category';
+
+function readStoredFilter(): Filter {
+  try {
+    const stored = localStorage.getItem(FILTER_KEY);
+    if (stored === 'all' || CATEGORY_ORDER.includes(stored as Category)) return stored as Filter;
+  } catch {
+    // storage unavailable — fall through to default
+  }
+  return 'all';
+}
 
 interface ExpertCatalogProps {
   conversations: Conversation[];
@@ -19,9 +34,19 @@ interface ExpertCatalogProps {
 export function ExpertCatalog({ conversations, loading, onPick, onOpen }: ExpertCatalogProps) {
   const { t, lang, dir } = useI18n();
   const Chevron = dir === 'rtl' ? ChevronLeft : ChevronRight;
-  const sortedExperts = [...EXPERTS].sort(
-    (a, b) => CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category),
-  );
+  const [filter, setFilterState] = useState<Filter>(readStoredFilter);
+  const setFilter = (next: Filter) => {
+    setFilterState(next);
+    try {
+      localStorage.setItem(FILTER_KEY, next);
+    } catch {
+      // ignore
+    }
+  };
+  const sortedExperts = [...EXPERTS]
+    .filter((e) => filter === 'all' || e.category === filter)
+    .sort((a, b) => CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category));
+  const filters: Filter[] = ['all', ...CATEGORY_ORDER];
   const dateFormat = new Intl.DateTimeFormat(lang === 'he' ? 'he-IL' : 'en-GB', { day: 'numeric', month: 'short' });
 
   return (
@@ -45,7 +70,35 @@ export function ExpertCatalog({ conversations, loading, onPick, onOpen }: Expert
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div role="tablist" aria-label={lang === 'he' ? 'קטגוריות' : 'Categories'} className="mt-6 flex flex-wrap gap-2">
+          {filters.map((f) => {
+            const selected = filter === f;
+            const count = f === 'all' ? EXPERTS.length : EXPERTS.filter((e) => e.category === f).length;
+            return (
+              <button
+                key={f}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                onClick={() => setFilter(f)}
+                className="flex h-9 items-center gap-2 rounded-full border px-4 text-sm font-bold transition-colors"
+                style={{
+                  borderColor: selected ? (f === 'all' ? 'var(--accent)' : CATEGORY_COLOR[f]) : 'var(--border)',
+                  background: selected ? 'rgba(108,182,255,0.1)' : 'transparent',
+                  color: selected ? 'var(--text-primary)' : 'var(--text-secondary)',
+                }}
+              >
+                {f !== 'all' && <span className="h-2 w-2 rounded-full" style={{ background: CATEGORY_COLOR[f] }} />}
+                {t(f === 'all' ? 'categoryAll' : CATEGORY_LABEL[f])}
+                <span className="mono text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div key={filter} role="tabpanel" className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {sortedExperts.map((expert, index) => (
             <button
               key={expert.id}
