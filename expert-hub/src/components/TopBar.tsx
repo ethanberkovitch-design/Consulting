@@ -1,10 +1,12 @@
-import { Languages, LogOut } from 'lucide-react';
+import { Languages, Library, LogOut } from 'lucide-react';
 import { useI18n } from '../lib/i18n';
 
 interface TopBarProps {
   email?: string | null;
   onHome?: () => void;
   onSignOut?: () => void;
+  /** Set only for admins. */
+  onLibrary?: () => void;
 }
 
 export function LogoMark({ size = 32 }: { size?: number }) {
@@ -17,7 +19,7 @@ export function LogoMark({ size = 32 }: { size?: number }) {
   );
 }
 
-export function TopBar({ email, onHome, onSignOut }: TopBarProps) {
+export function TopBar({ email, onHome, onSignOut, onLibrary }: TopBarProps) {
   const { t, lang, setLang } = useI18n();
 
   return (
@@ -39,6 +41,17 @@ export function TopBar({ email, onHome, onSignOut }: TopBarProps) {
         </button>
 
         <div className="flex items-center gap-2">
+          {onLibrary && (
+            <button
+              type="button"
+              onClick={onLibrary}
+              className="btn-line flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium"
+              aria-label={t('library')}
+            >
+              <Library className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">{t('library')}</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setLang(lang === 'he' ? 'en' : 'he')}
