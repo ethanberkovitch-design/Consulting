@@ -1,11 +1,20 @@
-import { Briefcase, Building2, Construction, LineChart, Layers, Mountain, Truck, Users, type LucideIcon } from 'lucide-react';
+import { Briefcase, Building2, Construction, Leaf, LineChart, Layers, Mountain, Truck, Users, type LucideIcon } from 'lucide-react';
 import type { Language } from '../lib/i18n';
 
 /**
  * Public expert cards. The prompts live server-side only
  * (supabase/functions/_shared/experts.ts); ids must match.
  */
-export type ExpertId = 'management' | 'finance' | 'concrete' | 'steel' | 'structural' | 'supply' | 'geology' | 'hr';
+export type ExpertId =
+  | 'management'
+  | 'finance'
+  | 'concrete'
+  | 'steel'
+  | 'structural'
+  | 'supply'
+  | 'geology'
+  | 'hr'
+  | 'innovation';
 export type Category = 'engineering' | 'finance' | 'management';
 
 type Localized = Record<Language, string>;
@@ -174,6 +183,32 @@ export const EXPERTS: ExpertCard[] = [
         'Do the targets, headcount and budget in the attached plan fit together?',
         'What is the main operational bottleneck according to the attached data?',
         'Build an execution plan for next quarter: owners, milestones and KPIs',
+      ],
+    },
+  },
+  {
+    id: 'innovation',
+    category: 'management',
+    icon: Leaf,
+    name: { he: 'מומחה חדשנות וקיימות', en: 'Innovation & sustainability expert' },
+    summary: {
+      he: 'טביעת פחמן ובטון דל-פחמן, הצהרות סביבתיות ודיווח, פיילוטים ותיק פרויקטים, מענקים.',
+      en: 'Carbon footprint and low-carbon concrete, EPDs and reporting, pilots and project portfolio, grants.',
+    },
+    typicalDocuments: {
+      he: 'נתוני אנרגיה ודלק, תערובות, EPD, דוחות קיימות, הצעות פיילוט',
+      en: 'Energy and fuel data, mix designs, EPDs, sustainability reports, pilot proposals',
+    },
+    starters: {
+      he: [
+        'חשב את טביעת הפחמן שלנו לפי נתוני האנרגיה המצורפים',
+        'כמה פליטות נחסוך אם נחליף חלק מהצמנט בסיגים?',
+        'בדוק את טיוטת דוח הקיימות לפני פרסום: האם הטענות מבוססות?',
+      ],
+      en: [
+        'Calculate our carbon footprint from the attached energy data',
+        'How much would we cut emissions by replacing part of the cement with slag?',
+        'Review the draft sustainability report before publication: are the claims supported?',
       ],
     },
   },
