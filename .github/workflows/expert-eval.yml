@@ -11,7 +11,7 @@ on:
       expert:
         description: Which expert to test
         type: choice
-        options: [concrete, management, finance, structural, steel, supply, hr, innovation, geology, drawings, contracts]
+        options: [concrete, management, finance, structural, steel, supply, hr, innovation, geology, drawings, contracts, safety]
         default: concrete
       compare:
         description: What to compare
