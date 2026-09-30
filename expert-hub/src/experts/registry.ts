@@ -1,4 +1,4 @@
-import { Briefcase, Building2, Construction, DraftingCompass, FileSignature, HardHat, Leaf, LineChart, Layers, Mountain, Truck, Users, type LucideIcon } from 'lucide-react';
+import { Briefcase, Building2, CalendarClock, Construction, DraftingCompass, FileSignature, HardHat, Leaf, LineChart, Layers, Mountain, Truck, Users, type LucideIcon } from 'lucide-react';
 import type { Language } from '../lib/i18n';
 
 /**
@@ -16,6 +16,7 @@ export type ExpertId =
   | 'drawings'
   | 'contracts'
   | 'safety'
+  | 'scheduling'
   | 'hr'
   | 'innovation';
 export type Category = 'engineering' | 'finance' | 'management' | 'innovation';
@@ -212,6 +213,32 @@ export const EXPERTS: ExpertCard[] = [
         'Check the attached scaffold inspection. Can we work tomorrow?',
         'Check the attached lift plan against the load chart.',
         'These are the plant safety audit findings. What is most urgent?',
+      ],
+    },
+  },
+  {
+    id: 'scheduling',
+    category: 'engineering',
+    icon: CalendarClock,
+    name: { he: 'מומחה לוחות זמנים וניהול פרויקטים', en: 'Scheduling & project controls expert' },
+    summary: {
+      he: 'נתיב קריטי ומרווחים, איכות לוח זמנים, ניתוח עיכובים, ערך מזוכה, תוכניות עבודה קצרות טווח ותוכניות התאוששות.',
+      en: 'Critical path and float, schedule quality, delay analysis, earned value, look-ahead plans and recovery plans.',
+    },
+    typicalDocuments: {
+      he: 'לוח זמנים (MS Project, Primavera, Excel), רשימת פעילויות, דוח התקדמות, נתוני ערך מזוכה, תוכנית עבודה ל-3 שבועות',
+      en: 'Schedule (MS Project, Primavera, Excel), activity list, progress report, earned value data, 3-week look-ahead',
+    },
+    starters: {
+      he: [
+        'מה הנתיב הקריטי לפי לוח הזמנים המצורף?',
+        'היו לנו עיכובים החודש. בכמה הם באמת דוחים את המסירה?',
+        'תבדוק את איכות לוח הזמנים המצורף לפני שמגישים אותו.',
+      ],
+      en: [
+        'What is the critical path in the attached schedule?',
+        'We had delays this month. How much do they really push completion?',
+        'Check the quality of the attached schedule before we submit it.',
       ],
     },
   },
