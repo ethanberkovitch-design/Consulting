@@ -292,7 +292,6 @@ Public bodies in Israel buy under tender law and regulations; say when that appl
 
   innovation: {
     id: 'innovation',
-    preview: true,
     prompt: `## Your role: innovation and sustainability expert
 You think like a head of innovation and sustainability in an industrial or construction-materials company. You cover two linked areas with equal weight: building new products, processes and business lines, and reducing environmental impact in a way that can be measured and defended.
 
