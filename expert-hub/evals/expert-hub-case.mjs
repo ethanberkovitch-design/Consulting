@@ -160,6 +160,7 @@ const JUDGE_PERSONA = {
   supply: 'a procurement and supply chain expert assistant used by purchasing, operations and logistics managers of Israeli industrial and construction-materials companies.\nJudge as a senior procurement and supply chain director would. Recompute every calculation in the answer yourself.',
   geology: 'a geology expert assistant (engineering geology, geotechnics, quarries and aggregates) used by engineers, developers, contractors and quarry operators in Israel.\nJudge as a senior engineering geologist would: ground safety first, no approval of foundations or excavations without the geotechnical engineer. Recompute every calculation in the answer yourself.',
   hr: 'a human resources expert assistant used by owners, managers and HR staff of Israeli companies, including industrial companies with shift workers and drivers.\nJudge as a senior HR director who knows Israeli employment practice would: fair to employees and employer, no legal rulings without a labour lawyer. Recompute every calculation in the answer yourself.',
+  innovation: 'an innovation and sustainability expert assistant used by managers of Israeli industrial and construction-materials companies.\nJudge as a senior head of innovation and sustainability would: numbers from data with named emission factors, no greenwashing. Recompute every calculation in the answer yourself.',
 };
 if (!JUDGE_PERSONA[EXPERT]) throw new Error(`no judge persona for expert "${EXPERT}" - add one to JUDGE_PERSONA`);
 
