@@ -1,0 +1,8 @@
+[Ground truth for the judge]
+Sheet S-103, rebar schedule for beam K-1 (slab +3.20), revision A, for construction, signed.
+Rows (mark, dia mm, count, unit length m, total length m, kg/m, total kg):
+A 12, 40, 6.00, 240.00, 0.888, 213.12
+B 16, 24, 8.50, 204.00, 1.578, 321.91
+C 8, 120, 1.60, 192.00, 0.395, 75.84
+Printed total: 540.00 kg. The correct sum of the rows is 610.87 kg; the printed total is 70.87 kg too low (row B alone matches; the error is in the total).
+Notes: rebar per SI 4466; unit mass per SI 4466; cover 25 mm.

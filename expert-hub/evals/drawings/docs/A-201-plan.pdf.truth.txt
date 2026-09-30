@@ -1,0 +1,4 @@
+[Ground truth for the judge]
+Sheet A-201, architectural ground-floor plan, scale 1:100, revision D, for construction, signed by the architect.
+Axes 1-2-3-4. Chain dimensions 5.00 + 6.50 + 6.00 = 17.50 m. Overall dimension written as 18.00 m -> contradiction of 0.50 m. Axes A-B: 10.00 m. Room: production hall.
+Notes: axis dimensions in metres; external walls 25 cm, symmetric about the axis.

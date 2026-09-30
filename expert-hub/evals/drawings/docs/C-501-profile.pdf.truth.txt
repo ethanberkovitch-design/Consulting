@@ -1,0 +1,8 @@
+[Ground truth for the judge]
+Sheet C-501, longitudinal profile drainage line 2, horizontal 1:500 vertical 1:50, revision A, for construction. Flow MH1 -> MH4. PVC Ø315.
+MH1 ch 0+000 ground 47.80 invert 45.20
+MH2 ch 0+050 ground 47.60 invert 44.95
+MH3 ch 0+090 ground 47.50 invert 44.98
+MH4 ch 0+135 ground 47.20 invert 44.60
+Slopes: MH1-MH2 0.25/50 = 0.50% down; MH2-MH3 rises 0.03 over 40 m = -0.075% (REVERSE slope, water will not flow / will pond); MH3-MH4 0.38/45 = 0.84% down.
+Covers (ground - invert): 2.60, 2.65, 2.52, 2.60 m to invert.
