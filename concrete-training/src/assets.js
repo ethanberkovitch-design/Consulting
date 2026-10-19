@@ -21,6 +21,7 @@ const ICONS = [
   "FaHourglassHalf", "FaStarOfDavid", "FaGraduationCap", "FaMicroscope", "FaTachometerAlt",
   "FaCertificate", "FaWarehouse", "FaLink", "FaHandPaper", "FaTools", "FaEye", "FaBan",
   "FaSnowflake", "FaArrowDown", "FaArrowUp", "FaUserCheck", "FaGem", "FaDollarSign",
+  "FaRulerHorizontal", "FaVials", "FaSyncAlt", "FaListOl", "FaLeaf", "FaTrashAlt",
 ];
 const COLORS = { w: "#FFFFFF", n: "#003973", b: "#0081C8", g: "#6B6B6B", r: "#C62828", k: "#2E7D32" };
 
@@ -35,6 +36,8 @@ const ILLUSTRATIONS = {
   plastic: S.plasticCracks(), scaling: S.scaling(), curing: S.curing(),
   tile_ok: S.tile("ok"), tile_clay: S.tile("clay"), tile_lumps: S.tile("lumps"),
   tile_organic: S.tile("organic"), tile_phase: S.tile("phase"),
+  sampling: S.sampling(), sand_eq: S.sandEquivalent(), la_drum: S.laDrum(),
+  water_plant: S.waterPlant().svg, rca: S.rcaParticles(),
 };
 
 (async () => {
@@ -49,5 +52,6 @@ const ILLUSTRATIONS = {
     }
   }
   fs.writeFileSync(path.join(out, "micro_anchors.json"), JSON.stringify(S.microstructure().anchors));
+  fs.writeFileSync(path.join(out, "water_anchors.json"), JSON.stringify(S.waterPlant().anchors));
   console.log("assets ->", out);
 })();

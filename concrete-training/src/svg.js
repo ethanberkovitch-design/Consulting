@@ -505,8 +505,137 @@ function tile(kind) {
   return svg(W, Hh, b);
 }
 
+// ---------- Sampling: stockpile increments + riffle splitter ----------
+function sampling() {
+  const W = 1100, Hh = 520, R = rng(71);
+  let b = `<defs>${arrowHead("a", H.orange)}</defs>`;
+  b += `<rect x="0" y="470" width="620" height="14" fill="#${H.steel}"/>`;
+  b += `<path d="M20,470 C120,330 220,170 310,160 C400,170 500,330 600,470Z" fill="#C9BDA8" stroke="#${H.stoneDark}" stroke-width="3"/>`;
+  b += stones(R, scatter(R, 120, 220, 380, 240, 60, 7, 13, 2).filter((s) => s.cy > 470 - (470 - 160) * (1 - Math.abs(s.cx - 310) / 290)), "B8AA92", H.stoneDark, 1.5);
+  // segregated toe (coarse stones rolled down) — avoid sampling here
+  b += stones(R, [{ cx: 50, cy: 452, r: 16 }, { cx: 85, cy: 455, r: 13 }, { cx: 560, cy: 452, r: 16 }, { cx: 530, cy: 456, r: 12 }]);
+  // sampling points: top, middle, lower third, under the surface
+  for (const [x, y] of [[310, 215], [205, 330], [420, 330], [140, 420], [480, 420]]) {
+    b += `<circle cx="${x}" cy="${y}" r="17" fill="#${H.orange}" stroke="#fff" stroke-width="4"/>`;
+  }
+  b += `<line x1="640" y1="300" x2="720" y2="300" stroke="#${H.orange}" stroke-width="8" marker-end="url(#a)"/>`;
+  // riffle splitter
+  const rx = 760;
+  b += `<polygon points="${rx},170 ${rx + 300},170 ${rx + 270},290 ${rx + 30},290" fill="#D3D7DC" stroke="#${H.steel}" stroke-width="4"/>`;
+  for (let i = 0; i < 8; i++) {
+    const x = rx + 40 + i * 28;
+    b += `<rect x="${x}" y="290" width="22" height="60" fill="${i % 2 ? "#8F959D" : "#B9BDC3"}" stroke="#${H.steel}" stroke-width="2" transform="skewX(${i % 2 ? 20 : -20})" transform-origin="${x + 11} 290"/>`;
+  }
+  b += `<rect x="${rx - 20}" y="380" width="150" height="70" rx="6" fill="#${H.navyLight}" stroke="#${H.navy}" stroke-width="4"/>`;
+  b += `<rect x="${rx + 170}" y="380" width="150" height="70" rx="6" fill="#${H.navyLight}" stroke="#${H.navy}" stroke-width="4"/>`;
+  b += stones(R, scatter(R, rx - 15, 400, 140, 45, 10, 6, 10, 1));
+  b += stones(R, scatter(R, rx + 175, 400, 140, 45, 10, 6, 10, 1));
+  b += `<rect x="${rx + 90}" y="80" width="120" height="60" rx="8" fill="#${H.orange}"/>`;
+  b += stones(R, [{ cx: rx + 130, cy: 155, r: 8 }, { cx: rx + 160, cy: 160, r: 7 }]);
+  return svg(W, Hh, b);
+}
+
+// ---------- Sand equivalent: clean vs clayey sand in graduated cylinders ----------
+function sandEquivalent() {
+  const W = 760, Hh = 560, R = rng(73);
+  let b = `<defs>${arrowHead("n", H.navy)}</defs>`;
+  const cyl = (x, clay, sand) => {
+    let g = `<rect x="${x}" y="40" width="150" height="470" rx="14" fill="#FFFFFF" stroke="#${H.steel}" stroke-width="5"/>`;
+    g += `<rect x="${x + 6}" y="${500 - sand - clay - 40}" width="138" height="40" fill="#EAF6FD"/>`;
+    g += `<rect x="${x + 6}" y="${500 - sand - clay}" width="138" height="${clay}" fill="#B98A5A" opacity="0.75"/>`;
+    g += `<rect x="${x + 6}" y="${500 - sand}" width="138" height="${sand + 4}" fill="#D9C7A1"/>`;
+    g += dots(R, x + 8, 500 - sand, 134, sand, 120, 1.5, 3, "A8916A");
+    for (let k = 0; k < 9; k++) g += `<line x1="${x + 150}" y1="${80 + k * 48}" x2="${x + 130}" y2="${80 + k * 48}" stroke="#${H.steel}" stroke-width="2"/>`;
+    // h1 (top of clay) and h2 (top of sand)
+    g += `<line x1="${x - 20}" y1="500" x2="${x - 20}" y2="${500 - sand - clay}" stroke="#${H.navy}" stroke-width="3" marker-end="url(#n)"/>`;
+    g += `<text x="${x - 28}" y="${500 - (sand + clay) / 2}" text-anchor="end" font-family="DejaVu Sans" font-weight="bold" font-size="26" fill="#${H.navy}">h1</text>`;
+    g += `<line x1="${x + 175}" y1="500" x2="${x + 175}" y2="${500 - sand}" stroke="#${H.orange}" stroke-width="3" marker-end="url(#n)"/>`;
+    g += `<text x="${x + 185}" y="${500 - sand / 2}" font-family="DejaVu Sans" font-weight="bold" font-size="26" fill="#${H.orange}">h2</text>`;
+    return g;
+  };
+  b += cyl(80, 40, 200) + cyl(470, 230, 140);
+  return svg(W, Hh, b);
+}
+
+// ---------- Los Angeles drum ----------
+function laDrum() {
+  const W = 700, Hh = 520, R = rng(79);
+  let b = `<defs>${arrowHead("a", H.orange)}</defs>`;
+  b += `<rect x="60" y="440" width="580" height="30" rx="6" fill="#${H.navy}"/>`;
+  b += `<rect x="90" y="250" width="30" height="190" fill="#${H.steel}"/><rect x="580" y="250" width="30" height="190" fill="#${H.steel}"/>`;
+  b += `<circle cx="350" cy="250" r="190" fill="#D3D7DC" stroke="#${H.steel}" stroke-width="10"/>`;
+  b += `<circle cx="350" cy="250" r="165" fill="#F3F5F7"/>`;
+  b += `<rect x="320" y="85" width="140" height="22" fill="#${H.steel}" transform="rotate(-25 350 250)"/>`;
+  const balls = scatter(R, 230, 300, 240, 100, 11, 20, 20, 3);
+  b += stones(R, scatter(R, 210, 320, 280, 90, 22, 9, 16, 2, balls));
+  balls.forEach((s) => (b += `<circle cx="${s.cx}" cy="${s.cy}" r="19" fill="#4A5563"/><circle cx="${s.cx - 6}" cy="${s.cy - 6}" r="6" fill="#9AA3AD"/>`));
+  b += `<path d="M150,120 A230,230 0 0 1 550,120" fill="none" stroke="#${H.orange}" stroke-width="9" marker-end="url(#a)"/>`;
+  b += `<circle cx="350" cy="250" r="22" fill="#${H.navy}"/>`;
+  return svg(W, Hh, b);
+}
+
+// ---------- Recycled-water system, drawn right-to-left: truck → reclaimer → ponds → tank → plant ----------
+function waterPlant() {
+  const W = 1400, Hh = 380;
+  let b = `<defs>${arrowHead("w", H.water)}${arrowHead("a", H.orange)}</defs>`;
+  b += `<rect x="0" y="330" width="${W}" height="10" fill="#${H.blueGray}"/>`;
+  // 1 truck (x≈1260)
+  const tx = 1150;
+  b += `<g transform="rotate(-10 ${tx + 90} 230)"><ellipse cx="${tx + 90}" cy="230" rx="85" ry="42" fill="#D3D7DC" stroke="#${H.steel}" stroke-width="4"/></g>`;
+  b += `<path d="M${tx + 170},285 L${tx + 170},215 L${tx + 220},215 L${tx + 240},250 L${tx + 240},300 L${tx + 170},300Z" fill="#${H.orange}"/>`;
+  b += `<rect x="${tx}" y="285" width="190" height="14" fill="#${H.steel}"/>`;
+  for (const wx of [tx + 30, tx + 90, tx + 210]) b += `<circle cx="${wx}" cy="315" r="17" fill="#${H.navy}"/>`;
+  b += `<path d="M${tx},250 q-30,10 -40,40" fill="none" stroke="#${H.water}" stroke-width="6"/>`;
+  // 2 reclaimer (x≈960)
+  const rx = 880;
+  b += `<polygon points="${rx},180 ${rx + 170},180 ${rx + 150},300 ${rx + 20},300" fill="#${H.navyLight}" stroke="#${H.navy}" stroke-width="4"/>`;
+  b += `<line x1="${rx + 30}" y1="290" x2="${rx + 150}" y2="150" stroke="#${H.steel}" stroke-width="12"/>`;
+  for (let k = 0; k < 6; k++) b += `<line x1="${rx + 40 + k * 20}" y1="${280 - k * 23}" x2="${rx + 55 + k * 20}" y2="${292 - k * 23}" stroke="#${H.navy}" stroke-width="4"/>`;
+  b += stones(rng(5), [{ cx: rx + 170, cy: 145, r: 10 }, { cx: rx + 190, cy: 160, r: 9 }, { cx: rx + 180, cy: 318, r: 12 }, { cx: rx + 205, cy: 320, r: 10 }, { cx: rx + 192, cy: 305, r: 9 }]);
+  // 3 settling ponds cascade (x≈640)
+  const px = 520;
+  [0, 1, 2].forEach((k) => {
+    const x = px + 200 - k * 100, y = 230 + k * 20;
+    b += `<rect x="${x}" y="${y}" width="95" height="${100 - k * 20}" fill="#${H.waterLight}" stroke="#${H.steel}" stroke-width="4"/>`;
+    b += `<rect x="${x + 3}" y="${y + 60 - k * 20}" width="89" height="${37}" fill="#${k === 0 ? "9E8A6E" : k === 1 ? "B7A88F" : "CFC6B5"}"/>`;
+  });
+  // 4 agitated tank (x≈330)
+  const kx = 270;
+  b += `<rect x="${kx}" y="150" width="140" height="180" rx="10" fill="#${H.waterLight}" stroke="#${H.navy}" stroke-width="5"/>`;
+  b += `<rect x="${kx + 64}" y="110" width="12" height="160" fill="#${H.steel}"/><rect x="${kx + 40}" y="100" width="60" height="22" rx="4" fill="#${H.navy}"/>`;
+  b += `<path d="M${kx + 30},260 q40,-30 80,0" fill="none" stroke="#${H.steel}" stroke-width="7"/>`;
+  b += `<path d="M${kx + 30},230 a40,15 0 1 0 80,0" fill="none" stroke="#${H.orange}" stroke-width="4" marker-end="url(#a)"/>`;
+  // density meter
+  b += `<circle cx="${kx - 40}" cy="275" r="30" fill="#fff" stroke="#${H.navy}" stroke-width="6"/><line x1="${kx - 40}" y1="275" x2="${kx - 24}" y2="259" stroke="#${H.orange}" stroke-width="5"/>`;
+  // 5 batching plant (x≈90)
+  b += `<rect x="40" y="70" width="70" height="200" rx="8" fill="#${H.navyLight}" stroke="#${H.navy}" stroke-width="4"/><rect x="115" y="160" width="80" height="110" fill="#${H.navyLight}" stroke="#${H.navy}" stroke-width="4"/>`;
+  b += `<rect x="50" y="270" width="10" height="60" fill="#${H.navy}"/><rect x="180" y="270" width="10" height="60" fill="#${H.navy}"/>`;
+  // flow arrows (right → left)
+  for (const [x1, x2] of [[1110, 1060], [870, 830], [510, 425], [225, 205]]) {
+    b += `<line x1="${x1}" y1="200" x2="${x2}" y2="200" stroke="#${H.water}" stroke-width="8" marker-end="url(#w)"/>`;
+  }
+  return { svg: svg(W, Hh, b), anchors: [1255, 965, 670, 340, 115] };
+}
+
+// ---------- Natural vs recycled aggregate particle ----------
+function rcaParticles() {
+  const W = 820, Hh = 340, R = rng(83);
+  let b = "";
+  b += `<path d="${stonePath(200, 170, 120, R, 0.15)}" fill="#C2B6A1" stroke="#${H.stoneDark}" stroke-width="4"/>`;
+  b += dots(R, 140, 110, 120, 110, 30, 2, 4, "A99C86");
+  // recycled: original stone wrapped in porous adhered mortar
+  const shell = stonePath(610, 170, 140, R, 0.2);
+  b += `<defs><clipPath id="sh"><path d="${shell}"/></clipPath></defs>`;
+  b += `<path d="${shell}" fill="#B9BDC3"/>`;
+  b += `<g clip-path="url(#sh)">${dots(R, 460, 20, 300, 300, 160, 3, 7, "8F959D")}${dots(R, 460, 20, 300, 300, 60, 2, 4, "5B616A")}</g>`;
+  b += `<path d="${shell}" fill="none" stroke="#${H.orange}" stroke-width="5" stroke-dasharray="12 8"/>`;
+  b += `<path d="${stonePath(620, 175, 78, R, 0.15)}" fill="#C2B6A1" stroke="#${H.stoneDark}" stroke-width="4"/>`;
+  return svg(W, Hh, b);
+}
+
 module.exports = {
   H, skyline, aggregateSection, hydrationStages, microstructure, cubeLoad, poreSection,
   chlorideRebar, slumpCone, slumpShape, densityContainer, airMeter, specimen,
   compressionMachine, segregation, bleeding, honeycomb, plasticCracks, scaling, curing, tile,
+  sampling, sandEquivalent, laDrum, waterPlant, rcaParticles,
 };
