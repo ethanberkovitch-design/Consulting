@@ -633,9 +633,24 @@ function rcaParticles() {
   return svg(W, Hh, b);
 }
 
+// ---------- Rebound hammer against a concrete wall (non-destructive test) ----------
+function reboundHammer() {
+  const W = 360, Hh = 340, R = rng(89);
+  let b = `<rect x="250" y="20" width="90" height="300" fill="#${H.paste}" stroke="#${H.steel}" stroke-width="4"/>`;
+  b += dots(R, 254, 24, 82, 292, 70, 1.5, 3.2, H.pasteDark);
+  b += `<rect x="60" y="145" width="150" height="50" rx="22" fill="#${H.navy}"/>`;
+  b += `<rect x="205" y="160" width="45" height="20" rx="6" fill="#${H.steel}"/>`;
+  b += `<rect x="20" y="155" width="45" height="30" rx="8" fill="#${H.steel}"/>`;
+  b += `<rect x="95" y="152" width="80" height="16" rx="3" fill="#FFFFFF"/>`;
+  for (let k = 0; k < 8; k++) b += `<line x1="${100 + k * 10}" y1="152" x2="${100 + k * 10}" y2="${k % 2 ? 159 : 163}" stroke="#${H.navy}" stroke-width="2"/>`;
+  b += `<polygon points="138,170 132,180 144,180" fill="#${H.orange}"/>`;
+  for (const [x, y] of [[270, 80], [300, 110], [280, 240], [315, 265]]) b += `<circle cx="${x}" cy="${y}" r="6" fill="none" stroke="#${H.orange}" stroke-width="3"/>`;
+  return svg(W, Hh, b);
+}
+
 module.exports = {
   H, skyline, aggregateSection, hydrationStages, microstructure, cubeLoad, poreSection,
   chlorideRebar, slumpCone, slumpShape, densityContainer, airMeter, specimen,
   compressionMachine, segregation, bleeding, honeycomb, plasticCracks, scaling, curing, tile,
-  sampling, sandEquivalent, laDrum, waterPlant, rcaParticles,
+  sampling, sandEquivalent, laDrum, waterPlant, rcaParticles, reboundHammer,
 };
