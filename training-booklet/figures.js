@@ -323,4 +323,43 @@ F.measure = () => svg(680, 220,
     line(56, 20, 56, 170, { sw: 1.5 }) + [20, 50, 80, 110, 140, 170].map((y) => line(50, y, 62, y, { sw: 1.5 })).join('') + line(-40, 80, 72, 80, { c: C.orange, sw: 2, dash: '5 3' }) + t(95, 85, '8.2 מ\'', { size: 12, w: 700, fill: C.orange }) +
     t(0, 200, 'סילו: גובה, טבלת כיול, טונות', { size: 14, w: 700 })));
 
+F.orderflow = () => {
+  const s = ['מענה מכובד', 'בירור הצורך', 'איזה אלמנט', 'סוג הבטון', 'דרגת חשיפה', 'שיטת יציקה', 'כתובת ושעה', 'גישה למשאית'];
+  const P = '#C2185B';
+  return svg(680, 190, s.map((l, i) => {
+    const row = Math.floor(i / 4), col = i % 4, x = 590 - col * 170, y = 50 + row * 90;
+    return circ(x, y, 22, i === 0 ? P : C.white, { stroke: P, sw: 3 }) + t(x, y + 7, String(i + 1), { size: 18, w: 800, fill: i === 0 ? C.white : P }) +
+      t(x, y + 44, l, { size: 14, w: 700 }) + (col < 3 ? arrowL(x - 30, x - 140, y) : '');
+  }).join('') + line(80, 72, 80, 100, { sw: 1.5, dash: '4 3' }) + line(80, 100, 600, 100, { sw: 1.5, dash: '4 3' }) + line(600, 100, 600, 116, { sw: 1.5, dash: '4 3', m: 'ah' }));
+};
+
+F.exposure = () => {
+  const card = (x, title, sub, body, tone) => g(x, 0, rect(-75, 10, 150, 170, tone, { rx: 12, sw: 1.5 }) + body + t(0, 150, title, { size: 14, w: 800 }) + t(0, 169, sub, { size: 11.5, fill: C.grey }));
+  return svg(680, 190,
+    card(590, 'בתוך המבנה', 'יבש ומוגן: הכי קל', g(0, 75, I.building(), 1), C.greenL) +
+    card(420, 'בחוץ, בגשם', 'הרטבה וייבוש', g(0, 80, I.building(), 0.9) + [-40, -20, 0, 20, 40].map((dx) => line(dx, 18, dx - 6, 32, { c: C.water, sw: 2 })).join(''), C.yellowL) +
+    card(250, 'במגע עם האדמה', 'מלחים וסולפטים', rect(-55, 70, 110, 45, '#C9A57A', { rx: 0, sw: 0 }) + rect(-30, 40, 60, 60, C.concrete, { rx: 2 }) + [[-40, 100], [20, 108], [42, 92]].map(([a, b]) => circ(a, b, 3, C.white, { sw: 1 })).join(''), '#FDEBD7') +
+    card(80, 'ליד הים', 'מלח באוויר: הכי קשה', path('M-60,110 Q-45,100 -30,110 T0,110 T30,110 T60,110 L60,125 L-60,125 Z', C.water, { sw: 1.5 }) + rect(-25, 50, 50, 55, C.concrete, { rx: 2 }) + circ(35, 40, 12, C.yellow, { sw: 1.5 }), C.redL));
+};
+
+F.pour = () => {
+  const panel = (x, title, body) => g(x, 0, rect(-105, 10, 210, 190, '#FAFBFC', { rx: 12, sw: 1.5 }) + body + t(0, 188, title, { size: 15, w: 800 }));
+  const form = (x, y, w, h) => rect(x, y, w, h, 'none', { rx: 1, sw: 2.5, dash: '6 4' });
+  return svg(680, 210,
+    panel(570, 'שפיכה ישירה', g(-10, 110, I.truck(), 0.95) + path('M-62,104 L-88,138', 'none', { stroke: C.grey, sw: 6 }) + form(-100, 140, 50, 22) + path('M-88,140 L-80,155 L-96,155 Z', C.concrete, { sw: 1 })) +
+    panel(340, 'מנוף ודוד', line(55, 160, 55, 30, { sw: 5, c: C.yellow }) + line(55, 32, -70, 32, { sw: 5, c: C.yellow }) + line(-50, 32, -50, 80, { sw: 1.5 }) + path('M-66,80 L-34,80 L-40,112 L-60,112 Z', C.grey) + line(-50, 112, -50, 126, { sw: 3, c: C.concrete }) + form(-80, 130, 60, 26) + rect(40, 155, 30, 8, C.ink, { rx: 1, sw: 0 })) +
+    panel(110, 'משאבת בטון', rect(-80, 130, 80, 24, C.grey, { rx: 4 }) + circ(-62, 158, 9, C.ink) + circ(-18, 158, 9, C.ink) + path('M-40,130 L-10,50 L60,40 L72,92', 'none', { stroke: C.orange, sw: 7 }) + form(52, 100, 44, 26) + line(72, 92, 72, 108, { sw: 3, c: C.concrete })));
+};
+
+F.access = () => {
+  const items = [['road', 'דרך מהודקת', 'ומשטח פריקה'], ['slope', 'בלי ירידה תלולה', 'או בוץ'], ['wire', 'גובה פנוי', 'בלי קווי חשמל'], ['turn', 'מקום להסתובב', 'ולשטוף מרזב']];
+  const ic = {
+    road: path('M-30,30 L-12,-28 L12,-28 L30,30 Z', '#C9C2B4') + line(0, -22, 0, -12, { c: C.white, sw: 3 }) + line(0, -2, 0, 10, { c: C.white, sw: 3 }) + line(0, 20, 0, 28, { c: C.white, sw: 3 }),
+    slope: path('M-34,28 L34,28 L34,-20 Z', '#C9A57A') + g(4, -2, I.truck(), 0.32),
+    wire: line(-36, -20, 36, -26, { c: C.red, sw: 2.5 }) + line(-30, -28, -30, 30, { sw: 3, c: C.grey }) + g(4, 14, I.truck(), 0.36) + line(18, -18, 18, -2, { c: C.red, sw: 2, dash: '3 2' }),
+    turn: path('M-24,10 A24,24 0 1 1 22,16', 'none', { stroke: C.ink, sw: 3 }).replace('/>', ' marker-end="url(#ah)"/>') + circ(0, 0, 4, C.ink),
+  };
+  return svg(680, 140, items.map(([k, a, b], i) => { const x = 590 - i * 170; return g(x, 45, ic[k]) + t(x, 105, a, { size: 14, w: 800 }) + t(x, 124, b, { size: 12.5, fill: C.grey }); }).join(''));
+};
+
 module.exports = { figures: F, C };

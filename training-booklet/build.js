@@ -104,6 +104,7 @@ function blockHtml(b) {
     case 'table': return `<table><thead><tr>${b.head.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => `<tr>${r.map((c, i) => `<td${i === 0 ? ' class="first"' : ''}>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
     case 'keys': return `<div class="keys"><div class="kh">זכרו!</div><ul>${b.items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>`;
     case 'quiz': return `<div class="quiz"><div class="qh">בדקו את עצמכם</div><ol>${b.items.map((q) => `<li>${esc(q.q)}<div class="ans"></div><div class="ans"></div></li>`).join('')}</ol><div class="qf">התשובות בנספח ב'</div></div>`;
+    case 'form': return `<div class="orderform"><div class="ofh">${esc(b.title)}</div>${b.sections.map((sec) => `<table><thead><tr><th colspan="2">${esc(sec.h)}</th></tr></thead><tbody>${sec.fields.map((f) => `<tr><td class="first">${esc(f)}</td><td></td></tr>`).join('')}</tbody></table>`).join('')}</div>`;
     case 'learn': return '';
     default: throw new Error(`unknown block ${b.t}`);
   }
@@ -464,8 +465,18 @@ function buildDocx(pngs) {
       case 'table': return [table(b.head, b.rows, ch.color), sp()];
       case 'keys': return [boxT([para('זכרו!', { bold: true, size: 22, color: col, before: 0 }), ...b.items.map((x) => para(x, { num: 'bul', bold: true, after: 30 }))], 'F3F5F7', col), sp()];
       case 'quiz': return [para('בדקו את עצמכם', { heading: HeadingLevel.HEADING_2, size: 22, bold: true, color: col, before: 200, keepNext: true }),
-        ...b.items.flatMap((q, i) => [para(`${i + 1}. ${q.q}`, { keepNext: true }), para('_________________________________________________', { color: 'B0B8C1', after: 100 })]),
+        // The last answer line stays with the footer note so it never lands alone on a page.
+        ...b.items.flatMap((q, i) => [para(`${i + 1}. ${q.q}`, { keepNext: true }), para('_________________________________________________', { color: 'B0B8C1', after: 100, keepNext: i === b.items.length - 1 })]),
         para('התשובות בנספח ב\'', { size: 16, color: '6B7785' })];
+      case 'form': {
+        const cw = [Math.round(W * 0.42), W - Math.round(W * 0.42)];
+        const c = (children, w, o = {}) => new TableCell({ width: { size: w, type: WidthType.DXA }, columnSpan: o.span, borders: { top: cellB, bottom: cellB, left: cellB, right: cellB },
+          shading: o.fill ? { type: ShadingType.CLEAR, color: 'auto', fill: o.fill } : undefined, margins: { top: 60, bottom: 60, left: 80, right: 80 }, children });
+        return [para(b.title, { bold: true, size: 24, color: col, before: 160, keepNext: true }),
+          new Table({ width: { size: W, type: WidthType.DXA }, columnWidths: cw, visuallyRightToLeft: true, rows: b.sections.flatMap((sec) => [
+            new TableRow({ cantSplit: true, children: [c([para(sec.h, { bold: true, color: 'FFFFFF', size: 18, before: 0, after: 0, keepNext: true })], W, { span: 2, fill: col })] }),
+            ...sec.fields.map((f) => new TableRow({ cantSplit: true, height: { value: 420, rule: 'atLeast' }, children: [c([para(f, { bold: true, size: 17, before: 0, after: 0 })], cw[0], { fill: 'F3F5F7' }), c([para('', { before: 0, after: 0 })], cw[1])] }))]) }), sp()];
+      }
       case 'learn': return [boxT([para('בפרק הזה תלמדו:', { bold: true, color: col, before: 0 }), ...b.items.map((x) => para(x, { num: 'bul', after: 20 }))], 'F6F7F9', col), sp()];
     }
   };
@@ -511,13 +522,16 @@ function buildDocx(pngs) {
   }));
 }
 
+// --docx-only rebuilds the Word file and leaves the print PDFs untouched,
+// for reviewing content changes before they go to print.
+const DOCX_ONLY = process.argv.includes('--docx-only');
 (async () => {
-  for (const f of fs.readdirSync(OUT)) if (/\.(pdf|docx|html)$/.test(f)) fs.unlinkSync(path.join(OUT, f));
+  for (const f of fs.readdirSync(OUT)) if ((DOCX_ONLY ? /\.docx$/ : /\.(pdf|docx|html)$/).test(f)) fs.unlinkSync(path.join(OUT, f));
   const browser = await chromium.launch();
-  const r = await buildPdfs(browser);
-  console.log(`interior: ${r.contentPages} content pages + ${r.total - r.contentPages} notes pages = ${r.total}`, JSON.stringify(r.marks, (k, v) => (k.startsWith('fig') ? undefined : v)));
+  const r = DOCX_ONLY ? null : await buildPdfs(browser);
+  if (r) console.log(`interior: ${r.contentPages} content pages + ${r.total - r.contentPages} notes pages = ${r.total}`, JSON.stringify(r.marks, (k, v) => (k.startsWith('fig') ? undefined : v)));
   const pngs = await rasterFigures(browser);
   await browser.close();
   fs.writeFileSync(FILES.docx, await buildDocx(pngs));
-  console.log('wrote', Object.values(FILES).map((f) => path.basename(f)).join(', '));
+  console.log('wrote', (DOCX_ONLY ? [FILES.docx] : Object.values(FILES)).map((f) => path.basename(f)).join(', '));
 })();
