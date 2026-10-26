@@ -8,7 +8,7 @@
 // list, table, keys, quiz, learn.
 
 module.exports = {
-  company: `סולל בונה`,
+  company: `שיכון ובינוי סולל בונה`,
   title: `ברוכים הבאים לעולם הבטון`,
   subtitle: `חוברת הדרכה לעובדים חדשים`,
   units: `מפעלי בטון · מחצבות ומגרסות · מפעל מוספים`,

@@ -5,11 +5,27 @@ const path = require('path');
 const {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType,
   ShadingType, BorderStyle, AlignmentType, LevelFormat, Header, Footer,
-  PageNumber, HeadingLevel, VerticalAlign,
+  PageNumber, HeadingLevel, VerticalAlign, ImageRun,
 } = require('docx');
+const { execFileSync } = require('child_process');
 const procedures = require('./content');
 
-const COMPANY = `סולל בונה`;
+const COMPANY = `שיכון ובינוי סולל בונה`;
+// Same logo source as the training booklet; upscaled so small files print smoothly.
+const LOGO_SRC = ['png', 'jpg', 'jpeg'].map((e) => path.join(__dirname, '..', 'training-booklet', 'brand', `logo-source.${e}`)).find((f) => fs.existsSync(f));
+const [LOGO_PNG, LOGO_RATIO] = (() => {
+  const out = execFileSync('python3', ['-I', '-c', `
+import sys, io, base64
+from PIL import Image, ImageFilter
+im = Image.open(sys.argv[1]).convert('RGB')
+if im.width < 1600:
+    f = -(-1600 // im.width)
+    im = im.resize((im.width * f, im.height * f), Image.LANCZOS).filter(ImageFilter.UnsharpMask(radius=2, percent=60, threshold=2))
+b = io.BytesIO(); im.save(b, 'PNG')
+print(im.height / im.width); print(base64.b64encode(b.getvalue()).decode())`, LOGO_SRC], { maxBuffer: 64 << 20 }).toString().trim().split('\n');
+  return [Buffer.from(out[1], 'base64'), Number(out[0])];
+})();
+const logoRun = (h) => new ImageRun({ type: 'png', data: LOGO_PNG, transformation: { width: Math.round(h / LOGO_RATIO), height: h } });
 const EDITION = `מהדורה 1 · ${new Date().toISOString().slice(0, 10)}`;
 const FONT = 'Arial';
 const CONTENT_W = 9638; // A4 minus 2 cm margins, in DXA
@@ -103,11 +119,13 @@ function procedureBody(p) {
   return s;
 }
 
-const header = (label) => new Header({ children: [new Paragraph({
-  bidirectional: true,
-  border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: C.navy, space: 4 } },
-  children: [run(`${COMPANY} · תכנית הכשרה לעובדים חדשים · ${label}`, { size: 17, color: C.grey })],
-})] });
+const noB = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+const hcell = (w, children, align) => new TableCell({ width: { size: w, type: WidthType.DXA }, verticalAlign: VerticalAlign.BOTTOM,
+  borders: { top: noB, left: noB, right: noB, bottom: { style: BorderStyle.SINGLE, size: 6, color: C.navy } },
+  children: [new Paragraph({ bidirectional: true, alignment: align, spacing: { after: 60 }, children })] });
+const header = (label) => new Header({ children: [new Table({ width: { size: CONTENT_W, type: WidthType.DXA }, columnWidths: [7238, 2400], visuallyRightToLeft: true,
+  rows: [new TableRow({ children: [hcell(7238, [run(`${COMPANY} · תכנית הכשרה לעובדים חדשים · ${label}`, { size: 17, color: C.grey })]),
+    hcell(2400, [logoRun(26)], AlignmentType.LEFT)] })] })] });
 const footer = new Footer({ children: [new Paragraph({
   bidirectional: true, alignment: AlignmentType.CENTER,
   children: [run(`${EDITION} · עמוד `, { size: 17, color: C.grey }), new TextRun({ children: [PageNumber.CURRENT], font: FONT, size: 17, color: C.grey }),
@@ -119,7 +137,8 @@ const section = (label, children) => ({ properties: { page }, headers: { default
 // ── Front matter ──
 const cover = [
   para('', { before: 2400 }),
-  para(COMPANY, { align: AlignmentType.CENTER, size: 30, bold: true, color: C.grey }),
+  new Paragraph({ alignment: AlignmentType.CENTER, children: [logoRun(70)] }),
+  para(`סולל בונה`, { align: AlignmentType.CENTER, size: 22, bold: true, color: C.navy, before: 0, after: 500 }),
   para(`נהלי עבודה`, { align: AlignmentType.CENTER, size: 56, bold: true, color: C.navy, before: 200 }),
   para(`לתכנית ההכשרה של עובדים חדשים`, { align: AlignmentType.CENTER, size: 34, color: C.navy }),
   para(`מפעלי בטון · מחצבות ומגרסות · מפעל מוספים`, { align: AlignmentType.CENTER, size: 24, color: C.accent, before: 300 }),

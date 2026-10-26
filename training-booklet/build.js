@@ -50,6 +50,28 @@ const chapters = book.chapters.map((ch, i) => ({ ...ch, n: i + 1 }));
 const quizzes = chapters.flatMap((ch) => ch.blocks.filter((b) => b.t === 'quiz').map((b) => ({ ch, items: b.items })));
 const fig = (id) => { if (!figures[id]) throw new Error(`missing figure ${id}`); return figures[id](); };
 const edition = `מהדורה 1 · ${new Date().toISOString().slice(0, 7).split('-').reverse().join('/')}`;
+// Company logo. Drop a better file in brand/ (logo-source.png/.jpg) and
+// rebuild; small sources are upscaled with Lanczos so edges stay smooth in
+// print, which softens them but avoids visible pixel steps.
+function prepLogo() {
+  const src = ['png', 'jpg', 'jpeg'].map((e) => path.join(__dirname, 'brand', `logo-source.${e}`)).find((f) => fs.existsSync(f));
+  if (!src) throw new Error('missing brand/logo-source.(png|jpg)');
+  const out = path.join(TMP, 'logo.png');
+  execFileSync('python3', ['-I', '-c', `
+import sys
+from PIL import Image, ImageFilter
+im = Image.open(sys.argv[1]).convert('RGB')
+if im.width < 1600:
+    f = -(-1600 // im.width)
+    im = im.resize((im.width * f, im.height * f), Image.LANCZOS).filter(ImageFilter.UnsharpMask(radius=2, percent=60, threshold=2))
+im.save(sys.argv[2])
+print(im.size)`, src, out]);
+  const [w, h] = execFileSync('python3', ['-I', '-c', 'import sys;from PIL import Image;print(*Image.open(sys.argv[1]).size)', out]).toString().trim().split(' ').map(Number);
+  return { file: out, uri: `data:image/png;base64,${fs.readFileSync(out).toString('base64')}`, ratio: h / w };
+}
+const LOGO = prepLogo();
+const logo = (cls) => `<img class="${cls}" src="${LOGO.uri}" alt="${esc(book.company)}">`;
+
 const css = fs.readFileSync(path.join(__dirname, 'booklet.css'), 'utf8').replace(/FONTDIR/g, 'file://' + path.join(__dirname, 'fonts'));
 const doc = (body, extraCss = '') => `<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><style>${css}${extraCss}</style></head><body>${body}</body></html>`;
 
@@ -116,7 +138,7 @@ ${chapters.map(chapterHtml).join('\n')}
   <table class="gl"><tbody>${book.glossary.slice().sort((a, b) => a[0].localeCompare(b[0], 'he')).map(([a, b]) => `<tr><td class="first">${esc(a)}</td><td>${esc(b)}</td></tr>`).join('')}</tbody></table></section>
 <section class="appendix"><span class="mark" dir="ltr">QQCHanswersQQ</span><h1>נספח ב': תשובות לשאלות</h1>
   ${quizzes.map(({ ch, items }) => `<div class="ansblock" style="--c:${ch.color}"><h3>פרק ${ch.n}: ${esc(ch.title)}</h3><ol>${items.map((q) => `<li><b>${esc(q.q)}</b><br>${esc(q.a)}</li>`).join('')}</ol></div>`).join('')}</section>
-<section class="appendix"><span class="mark" dir="ltr">QQCHformQQ</span><h1>נספח ג': טופס אישור הדרכה</h1>
+<section class="appendix"><span class="mark" dir="ltr">QQCHformQQ</span><div class="formhead">${logo('formlogo')}<h1>נספח ג': טופס אישור הדרכה</h1></div>
   <p>אני מאשר/ת שקראתי את פרקי החוברת המסומנים, קיבלתי הסבר והדגמה בעמדה, שאלתי את מה שלא היה ברור, ואפעל לפי הנהלים.</p>
   <table class="form"><thead><tr><th>שם העובד/ת</th><th>מספר עובד</th><th>תפקיד</th></tr></thead><tbody><tr><td></td><td></td><td></td></tr></tbody></table>
   <table class="form"><thead><tr><th>פרק</th><th>נושא</th><th>תאריך</th><th>חתימת החונך</th><th>חתימת העובד/ת</th></tr></thead><tbody>${chapters.map((ch) => `<tr><td class="first">${ch.n}</td><td>${esc(ch.title)}</td><td></td><td></td><td></td></tr>`).join('')}</tbody></table>
@@ -158,7 +180,7 @@ function underlayHtml(n, chapterOf, fullNotesFrom) {
       ${ch ? `<div class="tab" style="${side}:0;top:${G.bleed + 20 + (ch.n - 1) * 15.5}mm;background:${ch.color};border-${spine === 'right' ? 'top-right' : 'top-left'}-radius:2.5mm;border-${spine === 'right' ? 'bottom-right' : 'bottom-left'}-radius:2.5mm">
         <span style="${side}:${G.bleed}mm">${ch.n}</span></div>` : ''}
       <div class="folio" style="${side}:${G.bleed + G.outer}mm;bottom:${G.bleed + 7}mm">${p}</div>
-      <div class="run" style="${spine}:${G.bleed + G.inner}mm;bottom:${G.bleed + 7}mm">${esc(book.subtitle)}${ch ? ` · ${esc(ch.title)}` : ''}</div>
+      <div class="run" style="${spine}:${G.bleed + G.inner}mm;bottom:${G.bleed + 6.2}mm">${logo('runlogo')}${esc(book.subtitle)}${ch ? ` · ${esc(ch.title)}` : ''}</div>
     </div>`);
   }
   return doc(pages.join(''), `@page { size: ${G.pw}mm ${G.ph}mm; margin: 0; }
@@ -170,7 +192,8 @@ function underlayHtml(n, chapterOf, fullNotesFrom) {
     .tab { position: absolute; width: ${G.bleed + 6}mm; height: 13mm; }
     .tab span { position: absolute; width: 6mm; top: 0; height: 13mm; line-height: 13mm; text-align: center; color: #fff; font-weight: 800; font-size: 9pt; }
     .folio { position: absolute; width: ${G.notes}mm; text-align: center; font-weight: 800; font-size: 9pt; color: var(--navy); }
-    .run { position: absolute; font-size: 7pt; color: #8A96A3; }`);
+    .run { position: absolute; font-size: 7pt; color: #8A96A3; display: flex; align-items: center; gap: 2.5mm; }
+    .runlogo { height: 4.5mm; }`);
 }
 
 // ───────────────────────── Covers ─────────────────────────
@@ -178,7 +201,7 @@ const stripe = () => `<div class="stripe">${chapters.map((ch) => `<span style="b
 const coverHtml = () => doc(`
 <section class="cv front">
   <div class="band"></div>
-  <div class="co">${esc(book.company)}</div>
+  ${logo('co')}<div class="co2">סולל בונה</div>
   <div class="t1">${esc(book.title)}</div>
   <div class="t2">${esc(book.subtitle)}</div>
   <div class="art">${fig('journey')}</div>
@@ -192,7 +215,7 @@ const coverHtml = () => doc(`
   <h3>הסמלים בחוברת</h3>
   <div class="legend">${fig('legend')}</div>
   <div class="howto"><b>איך עובדים עם החוברת?</b> קוראים פרק, מסמנים מה לא ברור, ושואלים את החונך. בצד כל עמוד יש עמודת <b>הערות</b>: כתבו בה מה שמסבירים לכם בעמדה. החוברת היא שלכם, ומותר לכתוב בה.</div>
-  <div class="ed">${edition}</div>
+  <div class="ed">${logo('edlogo')}<div>${edition}</div></div>
 </section>
 <section class="cv inside">
   <h2>טלפונים חשובים</h2>
@@ -205,7 +228,7 @@ const coverHtml = () => doc(`
   <h2>עשרת כללי הזהב</h2>
   <ol class="rules">${book.goldenRules.map((r) => `<li>${esc(r)}</li>`).join('')}</ol>
   <div class="bq">אצלנו אף אחד לא נוזף על שאלה או על דיווח.<br>הבעיה היא רק חריגה שאף אחד לא שמע עליה.</div>
-  <div class="bco">${esc(book.company)} · ${esc(book.units)}</div>
+  <div class="bco"><div class="badge">${logo('blogo')}</div>${esc(book.units)}</div>
   ${stripe()}
 </section>`, `@page { size: ${G.pw}mm ${G.ph}mm; margin: 0; }
   body { margin: 0; }
@@ -214,7 +237,8 @@ const coverHtml = () => doc(`
   .stripe { position: absolute; inset: auto 0 0 0; height: ${G.bleed + 9}mm; display: flex; }
   .stripe span { flex: 1; }
   .front { background: #fff; padding-top: ${G.bleed + 26}mm; }
-  .front .co { font-size: 13pt; font-weight: 700; color: var(--grey); }
+  .front .co { height: 15mm; display: block; margin: 0 auto; }
+  .front .co2 { font-size: 10pt; font-weight: 700; color: var(--navy); letter-spacing: 1px; margin-top: 1mm; }
   .front .t1 { font-size: 30pt; font-weight: 800; color: var(--navy); line-height: 1.15; margin-top: 5mm; }
   .front .t2 { font-size: 15pt; font-weight: 500; color: var(--orange); margin-top: 2mm; }
   .front .art { margin: 14mm -4mm 0; background: var(--light); border-radius: 14px; padding: 7mm 4mm; }
@@ -241,7 +265,10 @@ const coverHtml = () => doc(`
   .rules li { counter-increment: r; display: flex; gap: 3.5mm; align-items: center; background: #34506F; border-radius: 10px; padding: 2.2mm 4mm; margin-bottom: 2.4mm; font-size: 10pt; font-weight: 500; }
   .rules li::before { content: counter(r); flex: none; width: 7.5mm; height: 7.5mm; border-radius: 50%; background: var(--orange); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; }
   .bq { margin-top: 7mm; font-size: 10.5pt; font-weight: 700; color: #FFD9A8; text-align: center; line-height: 1.5; }
-  .bco { position: absolute; left: 0; right: 0; bottom: ${G.bleed + 14}mm; text-align: center; font-size: 8.5pt; color: #AFC0D3; }`);
+  .bco { position: absolute; left: 0; right: 0; bottom: ${G.bleed + 14}mm; text-align: center; font-size: 8.5pt; color: #AFC0D3; }
+  .badge { display: inline-block; background: #fff; border-radius: 10px; padding: 2.5mm 5mm; margin-bottom: 2.5mm; }
+  .blogo { height: 11mm; display: block; }
+  .edlogo { height: 7mm; display: block; margin: 0 auto 1.5mm; }`);
 
 // ───────────────────────── Print preparation ─────────────────────────
 // Crop marks sit in the slug, starting 2 mm outside the bleed so they never
@@ -395,7 +422,8 @@ async function rasterFigures(browser) {
 
 function buildDocx(pngs) {
   const d = require('docx');
-  const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, ShadingType, BorderStyle, AlignmentType, LevelFormat, Footer, PageNumber, ImageRun, HeadingLevel } = d;
+  const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, ShadingType, BorderStyle, AlignmentType, LevelFormat, Header, Footer, PageNumber, ImageRun, HeadingLevel } = d;
+  const logoImg = (h) => new ImageRun({ type: 'png', data: fs.readFileSync(LOGO.file), transformation: { width: Math.round(h / LOGO.ratio), height: h } });
   const FONT = 'Arial', TW = 56.693, M = 850, W = Math.round(G.w * TW) - 2 * M, hex = (c) => c.replace('#', '');
   const run = (text, o = {}) => new TextRun({ text, font: FONT, rightToLeft: true, size: o.size || 20, bold: o.bold, color: o.color });
   const para = (text, o = {}) => new Paragraph({ bidirectional: true, alignment: o.align, heading: o.heading, keepNext: o.keepNext, pageBreakBefore: o.pageBreak,
@@ -449,7 +477,8 @@ function buildDocx(pngs) {
   ];
   const H1 = (s) => para(s, { heading: HeadingLevel.HEADING_1, size: 32, bold: true, color: '1F3A5F', pageBreak: true });
   const content = [
-    para('', { before: 1200 }), para(book.company, { align: AlignmentType.CENTER, size: 26, bold: true, color: '5B6B7C' }),
+    para('', { before: 900 }), new Paragraph({ alignment: AlignmentType.CENTER, children: [logoImg(60)] }),
+    para('סולל בונה', { align: AlignmentType.CENTER, size: 20, bold: true, color: '1F3A5F', before: 0 }),
     para(book.title, { align: AlignmentType.CENTER, size: 48, bold: true, color: '1F3A5F', before: 160 }), para(book.subtitle, { align: AlignmentType.CENTER, size: 28, color: 'E8772E' }),
     img('journey'), para(book.units, { align: AlignmentType.CENTER, size: 20, color: '5B6B7C', before: 240 }),
     para('שם העובד/ת: ______________________', { align: AlignmentType.CENTER, before: 700 }),
@@ -476,6 +505,7 @@ function buildDocx(pngs) {
       { id: 'Heading2', name: 'Heading 2', basedOn: 'Normal', next: 'Normal', run: { font: FONT, bold: true }, paragraph: { outlineLevel: 1 } }] },
     numbering: { config: [{ reference: 'bul', levels: [{ level: 0, format: LevelFormat.BULLET, text: '•', alignment: AlignmentType.START, style: { paragraph: { indent: { start: 400, hanging: 260 } } } }] }] },
     sections: [{ properties: { page: { size: { width: Math.round(G.w * TW), height: Math.round(G.h * TW) }, margin: { top: 900, bottom: 900, left: M, right: M } } },
+      headers: { default: new Header({ children: [new Paragraph({ alignment: AlignmentType.LEFT, children: [logoImg(22)] })] }) },
       footers: { default: new Footer({ children: [new Paragraph({ bidirectional: true, alignment: AlignmentType.CENTER, children: [run(`${book.subtitle} · עמוד `, { size: 15, color: '7A8794' }), new TextRun({ children: [PageNumber.CURRENT], size: 15, color: '7A8794' })] })] }) },
       children: content }],
   }));

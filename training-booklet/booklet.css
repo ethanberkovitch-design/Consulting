@@ -102,3 +102,7 @@ td.first { font-weight: 700; }
 .ansblock li { margin-bottom: 1.5mm; }
 .form td { height: 8.5mm; }
 .sig { margin-top: 8mm; line-height: 2.2; }
+
+.formhead { display: flex; align-items: center; justify-content: space-between; gap: 4mm; margin-bottom: 4mm; }
+.formhead h1 { margin: 0; }
+.formlogo { height: 9mm; }
