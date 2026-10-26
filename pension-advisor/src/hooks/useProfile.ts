@@ -82,9 +82,22 @@ export function useProfile(userId: string | null) {
     [userId],
   );
 
+  const clear = useCallback(async () => {
+    if (!userId) return;
+    setSaving(true);
+    setError(null);
+    const { error: deleteError } = await supabase.from('pension_profiles').delete().eq('user_id', userId);
+    setSaving(false);
+    if (deleteError) {
+      setError(deleteError.message);
+    } else {
+      setSavedAt(null);
+    }
+  }, [userId]);
+
   useEffect(() => {
     setSavedAt(null);
   }, [userId]);
 
-  return { load, save, loading, saving, savedAt, error };
+  return { load, save, clear, loading, saving, savedAt, error };
 }

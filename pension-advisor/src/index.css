@@ -17,8 +17,8 @@
   --brand-4: #06b6d4; /* cyan */
   --brand-gradient: linear-gradient(120deg, var(--brand-1) 0%, var(--brand-2) 55%, var(--brand-3) 100%);
   --brand-gradient-soft: linear-gradient(120deg, color-mix(in srgb, var(--brand-1) 12%, transparent), color-mix(in srgb, var(--brand-2) 12%, transparent) 55%, color-mix(in srgb, var(--brand-3) 12%, transparent) 100%);
-  --shadow-card: 0 2px 8px rgba(76, 29, 149, 0.06), 0 12px 32px rgba(76, 29, 149, 0.1);
-  --shadow-pop: 0 8px 24px rgba(236, 72, 153, 0.25);
+  --shadow-card: 0 2px 8px color-mix(in srgb, var(--brand-1) 20%, transparent), 0 12px 32px color-mix(in srgb, var(--brand-1) 24%, transparent);
+  --shadow-pop: 0 8px 24px color-mix(in srgb, var(--brand-2) 45%, transparent);
 
   /* chart series — validated categorical palette, unrelated to brand chrome */
   --series-1: #2a78d6; /* מנייתי */
@@ -87,6 +87,66 @@
   --series-3: #199e70;
   --series-4: #c98500;
   --series-5: #d55181;
+}
+
+/* אקצנטים חלופיים לצבע המותג — נבחרים דרך פאנל ההגדרות */
+:root[data-accent='ocean'] {
+  --brand-1: #2563eb;
+  --brand-2: #06b6d4;
+  --brand-3: #22d3ee;
+  --brand-4: #8b5cf6;
+}
+:root[data-accent='forest'] {
+  --brand-1: #059669;
+  --brand-2: #65a30d;
+  --brand-3: #facc15;
+  --brand-4: #14b8a6;
+}
+:root[data-accent='sunset'] {
+  --brand-1: #dc2626;
+  --brand-2: #ea580c;
+  --brand-3: #f59e0b;
+  --brand-4: #ec4899;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-accent='ocean']:where(:not([data-theme='light'])) {
+    --brand-1: #60a5fa;
+    --brand-2: #22d3ee;
+    --brand-3: #67e8f9;
+    --brand-4: #a78bfa;
+  }
+  :root[data-accent='forest']:where(:not([data-theme='light'])) {
+    --brand-1: #34d399;
+    --brand-2: #a3e635;
+    --brand-3: #fde047;
+    --brand-4: #2dd4bf;
+  }
+  :root[data-accent='sunset']:where(:not([data-theme='light'])) {
+    --brand-1: #f87171;
+    --brand-2: #fb923c;
+    --brand-3: #fbbf24;
+    --brand-4: #f472b6;
+  }
+}
+
+:root[data-theme='dark'][data-accent='ocean'] {
+  --brand-1: #60a5fa;
+  --brand-2: #22d3ee;
+  --brand-3: #67e8f9;
+  --brand-4: #a78bfa;
+}
+:root[data-theme='dark'][data-accent='forest'] {
+  --brand-1: #34d399;
+  --brand-2: #a3e635;
+  --brand-3: #fde047;
+  --brand-4: #2dd4bf;
+}
+:root[data-theme='dark'][data-accent='sunset'] {
+  --brand-1: #f87171;
+  --brand-2: #fb923c;
+  --brand-3: #fbbf24;
+  --brand-4: #f472b6;
 }
 
 * {

@@ -8,6 +8,7 @@ import { FeeImpactCallout } from './components/FeeImpactCallout';
 import { MarketInsights } from './components/MarketInsights';
 import { AuthPanel } from './components/AuthPanel';
 import { DocumentUpload } from './components/DocumentUpload';
+import { SettingsPanel } from './components/SettingsPanel';
 import { investmentTracks } from './data/investmentTracks';
 import { buildTrackProjection } from './lib/calculations';
 import { formatCurrency } from './lib/format';
@@ -29,7 +30,7 @@ const defaultInputs: PlannerInputs = {
 function App() {
   const [inputs, setInputs] = useState<PlannerInputs>(defaultInputs);
   const { user } = useAuth();
-  const { load, save, saving, savedAt } = useProfile(user?.id ?? null);
+  const { load, save, clear, saving, savedAt } = useProfile(user?.id ?? null);
 
   useEffect(() => {
     if (!user) return;
@@ -68,22 +69,25 @@ function App() {
   return (
     <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-7 px-4 py-8 sm:px-6" style={{ color: 'var(--text-primary)' }}>
       <header className="flex flex-col gap-4">
-        <div className="flex items-center gap-3">
-          <span
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-lg"
-            style={{ background: 'var(--brand-gradient)', boxShadow: 'var(--shadow-pop)' }}
-            aria-hidden="true"
-          >
-            <Sprout className="h-6 w-6 text-white" />
-          </span>
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
-              <span className="brand-text">סוכן פנסיוני</span> חכם
-            </h1>
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-              בדקו איך הכסף שלכם יכול לגדול — לפי מסלולים, דמי ניהול ותרחישי שוק
-            </p>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-lg"
+              style={{ background: 'var(--brand-gradient)', boxShadow: 'var(--shadow-pop)' }}
+              aria-hidden="true"
+            >
+              <Sprout className="h-6 w-6 text-white" />
+            </span>
+            <div>
+              <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
+                <span className="brand-text">סוכן פנסיוני</span> חכם
+              </h1>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                בדקו איך הכסף שלכם יכול לגדול — לפי מסלולים, דמי ניהול ותרחישי שוק
+              </p>
+            </div>
           </div>
+          <SettingsPanel user={user} onResetData={() => setInputs(defaultInputs)} onClearSaved={clear} />
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

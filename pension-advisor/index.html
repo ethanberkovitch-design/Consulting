@@ -11,6 +11,16 @@
       rel="stylesheet"
     />
     <title>סוכן פנסיוני — כלי ניתוח והדגמה</title>
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem('pension-advisor:theme');
+          if (theme && theme !== 'system') document.documentElement.setAttribute('data-theme', theme);
+          var accent = localStorage.getItem('pension-advisor:accent');
+          if (accent && accent !== 'aurora') document.documentElement.setAttribute('data-accent', accent);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
