@@ -1,6 +1,6 @@
 // Builds the training booklet as a 17×24 cm saddle-stitched notebook:
-//   out/חוברת-הדרכה-פנים-לדפוס.pdf    interior, 3 mm bleed, page count a multiple of 4
-//   out/חוברת-הדרכה-כריכה-לדפוס.pdf   covers: front, inside front, inside back, back
+//   out/חוברת-הדרכה-פנים-לדפוס.pdf    interior: CMYK, 3 mm bleed, crop marks, pages a multiple of 4
+//   out/חוברת-הדרכה-כריכה-לדפוס.pdf   covers (front, inside front, inside back, back), same spec
 //   out/חוברת-הדרכה-לצפייה.pdf        everything in reading order, cropped to trim
 //   out/חוברת-הדרכה-עובדים-חדשים.docx  editable Word text at the same page size
 // Run: node build.js
@@ -39,7 +39,11 @@ G.breakout = G.notes + G.gap;   // how far a figure reaches into the notes colum
 // Odd pages have the outer margin on the left, even pages the spine margin.
 G.left = (odd) => G.bleed + (odd ? G.outer : G.inner);
 G.right = (odd) => G.bleed + (odd ? G.inner : G.outer);
+G.slug = 10;                    // room around the bleed for crop marks
 const MM = 72 / 25.4;
+// Photo placeholders stay in content.js for when plant photos arrive; they
+// are not printed until then.
+const SHOW_PHOTOS = false;
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const chapters = book.chapters.map((ch, i) => ({ ...ch, n: i + 1 }));
@@ -55,6 +59,12 @@ const icon = (name, size = 28) => `<svg viewBox="-20 -24 40 46" width="${size}" 
   warn: `<path d="M0,-20 L20,16 L-20,16 Z" fill="${C.orange}" stroke="${C.ink}" stroke-width="2" stroke-linejoin="round"/><rect x="-2" y="-8" width="4" height="13" fill="${C.ink}"/><circle cx="0" cy="10" r="2.4" fill="${C.ink}"/>`,
 }[name]}</svg>`;
 
+// Small inline check/cross marks; drawn rather than typed because Heebo has
+// no ✔/✘ glyphs and the fallback font embeds as Type 3, which prepress rejects.
+const mini = (k) => `<svg class="mini" viewBox="-10 -10 20 20" width="11" height="11"><circle r="10" fill="${k === 'ok' ? '#2E9E5B' : '#D64545'}"/>${k === 'ok'
+  ? '<path d="M-4.5,0 L-1.2,3.6 L5,-3.6" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'
+  : '<path d="M-3.8,-3.8 L3.8,3.8 M3.8,-3.8 L-3.8,3.8" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>'}</svg>`;
+
 let figSeq = 0;
 function blockHtml(b) {
   switch (b.t) {
@@ -62,11 +72,11 @@ function blockHtml(b) {
     case 'p': return `<p>${esc(b.text)}</p>`;
     case 'h': return `<h3>${esc(b.text)}</h3>`;
     case 'fig': { const k = ++figSeq; return `<figure><span class="mark" dir="ltr">QQFIG${k}QQ</span>${fig(b.id)}<figcaption>${esc(b.caption)}</figcaption></figure>`; }
-    case 'photo': return `<div class="photo"><svg viewBox="0 0 60 44" width="40"><rect x="2" y="8" width="56" height="34" rx="6" fill="none" stroke="${C.grey}" stroke-width="3"/><circle cx="30" cy="25" r="10" fill="none" stroke="${C.grey}" stroke-width="3"/><rect x="20" y="2" width="20" height="8" rx="2" fill="${C.grey}"/></svg><div><b>מקום לתמונה מהמפעל</b><br>${esc(b.caption)}</div></div>`;
+    case 'photo': if (!SHOW_PHOTOS) return ''; return `<div class="photo"><svg viewBox="0 0 60 44" width="40"><rect x="2" y="8" width="56" height="34" rx="6" fill="none" stroke="${C.grey}" stroke-width="3"/><circle cx="30" cy="25" r="10" fill="none" stroke="${C.grey}" stroke-width="3"/><rect x="20" y="2" width="20" height="8" rx="2" fill="${C.grey}"/></svg><div><b>מקום לתמונה מהמפעל</b><br>${esc(b.caption)}</div></div>`;
     case 'steps': return `<ol class="steps">${b.items.map((s, i) => `<li><span class="num">${i + 1}</span><div><b>${esc(s.title)}</b><br>${esc(s.text)}</div></li>`).join('')}</ol>`;
     case 'tip': return `<div class="call tip">${icon('tip')}<div><b>טיפ</b><br>${esc(b.text)}</div></div>`;
     case 'warn': return `<div class="call warn">${icon('warn')}<div><b>זהירות</b><br>${esc(b.text)}</div></div>`;
-    case 'dodont': return `<div class="dd"><div class="do"><div class="ddh">✔ ככה עושים</div><ul>${b.do.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div><div class="dont"><div class="ddh">✘ ככה לא עושים</div><ul>${b.dont.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div></div>`;
+    case 'dodont': return `<div class="dd"><div class="do"><div class="ddh">${mini('ok')} ככה עושים</div><ul>${b.do.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div><div class="dont"><div class="ddh">${mini('no')} ככה לא עושים</div><ul>${b.dont.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div></div>`;
     case 'example': return `<div class="example"><div class="tag">הדגמה</div><b>${esc(b.title.replace(/^הדגמה:\s*/, ''))}</b><p>${esc(b.text)}</p></div>`;
     case 'list': return `<ul class="list">${b.items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
     case 'table': return `<table><thead><tr>${b.head.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => `<tr>${r.map((c, i) => `<td${i === 0 ? ' class="first"' : ''}>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
@@ -100,7 +110,7 @@ function interiorHtml(pages) {
     @page :right { margin-left: ${G.left(false)}mm; margin-right: ${G.right(false)}mm; }
     section { padding-left: ${G.breakout}mm; } figure { margin-left: -${G.breakout}mm; }`;
   return doc(`<section class="toc first"><span class="mark" dir="ltr">QQCHtocQQ</span><h1>מה בחוברת</h1><ol>${toc}</ol>
-  <div class="call tip">${icon('tip')}<div><b>איך לקרוא</b><br>פרקים 1–2 לכולם. מפרק 3, התמקדו בפרקים שהחונך סימן לכם. סמנו ✔ ליד כל פרק שסיימתם, וכתבו בעמודת ההערות שבצד כל עמוד.</div></div></section>
+  <div class="call tip">${icon('tip')}<div><b>איך לקרוא</b><br>פרקים 1–2 לכולם. מפרק 3, התמקדו בפרקים שהחונך סימן לכם. סמנו V ליד כל פרק שסיימתם, וכתבו בעמודת ההערות שבצד כל עמוד.</div></div></section>
 ${chapters.map(chapterHtml).join('\n')}
 <section class="appendix"><span class="mark" dir="ltr">QQCHglossaryQQ</span><h1>נספח א': מילון מונחים</h1>
   <table class="gl"><tbody>${book.glossary.slice().sort((a, b) => a[0].localeCompare(b[0], 'he')).map(([a, b]) => `<tr><td class="first">${esc(a)}</td><td>${esc(b)}</td></tr>`).join('')}</tbody></table></section>
@@ -144,7 +154,7 @@ function underlayHtml(n, chapterOf, fullNotesFrom) {
     const lines = Math.floor((notesH - 9) / 7.5);
     pages.push(`<div class="pg">
       <div class="notes${full ? ' full' : ''}" style="left:${notesLeft}mm;top:${notesTop}mm;width:${width}mm;height:${notesH}mm">
-        <div class="nh">✎ הערות</div>${'<div class="nl"></div>'.repeat(lines)}</div>
+        <div class="nh">הערות</div>${'<div class="nl"></div>'.repeat(lines)}</div>
       ${ch ? `<div class="tab" style="${side}:0;top:${G.bleed + 20 + (ch.n - 1) * 15.5}mm;background:${ch.color};border-${spine === 'right' ? 'top-right' : 'top-left'}-radius:2.5mm;border-${spine === 'right' ? 'bottom-right' : 'bottom-left'}-radius:2.5mm">
         <span style="${side}:${G.bleed}mm">${ch.n}</span></div>` : ''}
       <div class="folio" style="${side}:${G.bleed + G.outer}mm;bottom:${G.bleed + 7}mm">${p}</div>
@@ -182,7 +192,7 @@ const coverHtml = () => doc(`
   <h3>הסמלים בחוברת</h3>
   <div class="legend">${fig('legend')}</div>
   <div class="howto"><b>איך עובדים עם החוברת?</b> קוראים פרק, מסמנים מה לא ברור, ושואלים את החונך. בצד כל עמוד יש עמודת <b>הערות</b>: כתבו בה מה שמסבירים לכם בעמדה. החוברת היא שלכם, ומותר לכתוב בה.</div>
-  <div class="ed">${edition} · טיוטה לאישור מנהל האיכות</div>
+  <div class="ed">${edition}</div>
 </section>
 <section class="cv inside">
   <h2>טלפונים חשובים</h2>
@@ -218,7 +228,7 @@ const coverHtml = () => doc(`
   .fields .f { display: grid; grid-template-columns: 34mm 1fr; align-items: end; margin-bottom: 4.5mm; font-weight: 700; }
   .legend svg { width: 100%; height: auto; }
   .howto { background: #FFF6DC; border-right: 5px solid #F2B705; border-radius: 10px; padding: 4mm 5mm; font-size: 9.5pt; margin-top: 6mm; }
-  .ed { position: absolute; bottom: ${G.bleed + 12}mm; left: 0; right: 0; text-align: center; font-size: 8pt; color: #C0392B; }
+  .ed { position: absolute; bottom: ${G.bleed + 12}mm; left: 0; right: 0; text-align: center; font-size: 8pt; color: var(--grey); }
   .inside table.form td { height: 10mm; }
   .sos { display: flex; gap: 5mm; margin-top: 10mm; }
   .sos div { flex: 1; background: #FBE5E5; border-radius: 12px; text-align: center; padding: 3mm 0; }
@@ -228,10 +238,74 @@ const coverHtml = () => doc(`
   .back { background: var(--navy); color: #fff; text-align: right; padding-top: ${G.bleed + 22}mm; }
   .back h2 { font-size: 20pt; font-weight: 800; color: #fff; margin: 0 0 6mm; }
   .rules { list-style: none; counter-reset: r; padding: 0; margin: 0; }
-  .rules li { counter-increment: r; display: flex; gap: 3.5mm; align-items: center; background: rgba(255,255,255,.08); border-radius: 10px; padding: 2.2mm 4mm; margin-bottom: 2.4mm; font-size: 10pt; font-weight: 500; }
+  .rules li { counter-increment: r; display: flex; gap: 3.5mm; align-items: center; background: #34506F; border-radius: 10px; padding: 2.2mm 4mm; margin-bottom: 2.4mm; font-size: 10pt; font-weight: 500; }
   .rules li::before { content: counter(r); flex: none; width: 7.5mm; height: 7.5mm; border-radius: 50%; background: var(--orange); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; }
   .bq { margin-top: 7mm; font-size: 10.5pt; font-weight: 700; color: #FFD9A8; text-align: center; line-height: 1.5; }
   .bco { position: absolute; left: 0; right: 0; bottom: ${G.bleed + 14}mm; text-align: center; font-size: 8.5pt; color: #AFC0D3; }`);
+
+// ───────────────────────── Print preparation ─────────────────────────
+// Crop marks sit in the slug, starting 2 mm outside the bleed so they never
+// show on the trimmed page.
+function marksHtml() {
+  const W = G.pw + 2 * G.slug, H = G.ph + 2 * G.slug, t0 = G.slug + G.bleed, gap = G.bleed + 2, len = 6;
+  const xs = [t0, W - t0], ys = [t0, H - t0], lines = [];
+  for (const x of xs) for (const y of ys) {
+    const dx = x < W / 2 ? -1 : 1, dy = y < H / 2 ? -1 : 1;
+    lines.push([x + dx * gap, y, x + dx * (gap + len), y], [x, y + dy * gap, x, y + dy * (gap + len)]);
+  }
+  return `<!doctype html><html><head><style>@page { size: ${W}mm ${H}mm; margin: 0; } html, body { margin: 0; background: transparent; }</style></head><body>
+    <svg xmlns="http://www.w3.org/2000/svg" width="${W}mm" height="${H}mm" viewBox="0 0 ${W} ${H}" style="display:block">
+    ${lines.map(([a, b, c, d]) => `<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="#000" stroke-width="0.12"/>`).join('')}</svg></body></html>`;
+}
+
+// Page on the marks sheet, turn neutral RGB greys into DeviceGray, convert to
+// CMYK, then set TrimBox/BleedBox for the RIP. Ghostscript sends DeviceGray to
+// the K plate only, so body text and black lines print in one ink with no
+// registration fringing; colours go through the default ICC conversion.
+const ON_MARKS = `
+import sys, re, pypdf
+from pypdf import Transformation
+marks, src, out, slug = sys.argv[1], sys.argv[2], sys.argv[3], float(sys.argv[4])
+w = pypdf.PdfWriter()
+for p in pypdf.PdfReader(src).pages:
+    base = pypdf.PdfReader(marks).pages[0]
+    base.merge_transformed_page(p, Transformation().translate(slug, slug))
+    w.add_page(base)
+num = rb'(-?\\d*\\.?\\d+)'
+pat = re.compile(num + rb'\\s+' + num + rb'\\s+' + num + rb'\\s+(rg|RG)\\b')
+def gray(m):
+    r, g, b, op = m.groups()
+    if float(r) == float(g) == float(b):
+        return r + (b' g' if op == b'rg' else b' G')
+    return m.group(0)
+for page in w.pages:
+    c = page.get_contents()
+    data = pat.sub(gray, c.get_data())
+    c.set_data(data)
+    page.replace_contents(c)
+w.write(out)
+`;
+const BOXES = `
+import sys, pypdf
+from pypdf.generic import RectangleObject
+src, slug, bleed = sys.argv[1], float(sys.argv[2]), float(sys.argv[3])
+r = pypdf.PdfReader(src); w = pypdf.PdfWriter()
+for p in r.pages:
+    W, H = float(p.mediabox.width), float(p.mediabox.height)
+    p.bleedbox = RectangleObject([slug, slug, W - slug, H - slug])
+    p.trimbox = RectangleObject([slug + bleed, slug + bleed, W - slug - bleed, H - slug - bleed])
+    w.add_page(p)
+w.add_metadata({'/Title': 'חוברת הדרכה לעובדים חדשים'})
+w.write(src)
+`;
+function toPrint(src, marks, out) {
+  const tmp = path.join(TMP, 'marked.pdf');
+  py(ON_MARKS, marks, src, tmp, String(G.slug * MM));
+  execFileSync('gs', ['-q', '-dNOPAUSE', '-dBATCH', '-dSAFER', '-sDEVICE=pdfwrite', '-dPDFSETTINGS=/prepress', '-dCompatibilityLevel=1.6',
+    '-sColorConversionStrategy=CMYK', '-sProcessColorModel=DeviceCMYK', '-dDeviceGrayToK=true', '-dEmbedAllFonts=true', '-dSubsetFonts=true',
+    '-dAutoRotatePages=/None', `-sOutputFile=${out}`, tmp]);
+  py(BOXES, out, String(G.slug * MM), String(G.bleed * MM));
+}
 
 // ───────────────────────── PDF assembly ─────────────────────────
 async function render(browser, html, file) {
@@ -273,17 +347,6 @@ for p in [cv.pages[0], cv.pages[1], *it.pages, cv.pages[2], cv.pages[3]]:
     w.add_page(p)
 w.write(out)
 `;
-const TRIMBOX = `
-import sys, pypdf
-from pypdf.generic import RectangleObject
-src, bleed = sys.argv[1], float(sys.argv[2])
-r = pypdf.PdfReader(src); w = pypdf.PdfWriter()
-for p in r.pages:
-    W, H = float(p.mediabox.width), float(p.mediabox.height)
-    p.trimbox = RectangleObject([bleed, bleed, W - bleed, H - bleed]); p.bleedbox = RectangleObject([0, 0, W, H])
-    w.add_page(p)
-w.write(src)
-`;
 
 async function buildPdfs(browser) {
   const content = path.join(TMP, 'content.pdf');
@@ -301,11 +364,14 @@ async function buildPdfs(browser) {
   const total = Math.ceil(p2.n / 4) * 4;
   const under = path.join(TMP, 'underlay.pdf');
   await render(browser, underlayHtml(total, chapterOf, p2.n + 1), under);
-  py(ASSEMBLE, under, content, FILES.interior, String(G.bleed * MM));
+  const interiorRgb = path.join(TMP, 'interior-rgb.pdf'), coverRgb = path.join(TMP, 'cover-rgb.pdf');
+  py(ASSEMBLE, under, content, interiorRgb, String(G.bleed * MM));
+  await render(browser, coverHtml(), coverRgb);
+  py(VIEW, coverRgb, interiorRgb, FILES.view, String(G.bleed * MM));
 
-  await render(browser, coverHtml(), FILES.cover);
-  py(TRIMBOX, FILES.cover, String(G.bleed * MM));
-  py(VIEW, FILES.cover, FILES.interior, FILES.view, String(G.bleed * MM));
+  const marks = path.join(TMP, 'marks.pdf');
+  await render(browser, marksHtml(), marks);
+  for (const [src, out] of [[interiorRgb, FILES.interior], [coverRgb, FILES.cover]]) toPrint(src, marks, out);
   return { contentPages: p2.n, total, marks: p2.marks };
 }
 
@@ -359,7 +425,7 @@ function buildDocx(pngs) {
       case 'p': return [para(b.text)];
       case 'h': return [para(b.text, { heading: HeadingLevel.HEADING_2, size: 24, bold: true, color: col, before: 220, keepNext: true })];
       case 'fig': return [img(b.id), para(b.caption, { align: AlignmentType.CENTER, size: 16, color: '6B7785', after: 140 })];
-      case 'photo': return [boxT([para('📷  מקום לתמונה מהמפעל', { bold: true, color: '6B7785', before: 500 }), para(b.caption, { color: '6B7785', after: 500 })], 'F6F7F9', '9AA5B1'), sp()];
+      case 'photo': if (!SHOW_PHOTOS) return []; return [boxT([para('📷  מקום לתמונה מהמפעל', { bold: true, color: '6B7785', before: 500 }), para(b.caption, { color: '6B7785', after: 500 })], 'F6F7F9', '9AA5B1'), sp()];
       case 'steps': return b.items.flatMap((s, i) => [para([run(`${i + 1}.  ${s.title}`, { bold: true, color: col })], { keepNext: true, before: 80, after: 10 }), para(s.text, { after: 70 })]);
       case 'tip': return [boxT([para('💡 טיפ', { bold: true, color: 'A67C00', before: 0 }), para(b.text, { after: 0 })], 'FFF4D6', 'F2B705'), sp()];
       case 'warn': return [boxT([para('⚠ זהירות', { bold: true, color: 'C0392B', before: 0 }), para(b.text, { after: 0 })], 'FDE8DC', 'E8772E'), sp()];

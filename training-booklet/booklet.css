@@ -4,7 +4,8 @@
 @font-face { font-family: Heebo; font-weight: 800; src: url(FONTDIR/Heebo-ExtraBold.ttf); }
 
 /* Sized for a 17×24 cm page with an 11 cm text column. */
-:root { --ink: #2B3440; --navy: #1F3A5F; --orange: #E8772E; --grey: #6B7785; --light: #F3F5F7; --line: #DCE2E8; }
+/* Body ink is a neutral grey so it separates to the black plate only. */
+:root { --ink: #262626; --navy: #1F3A5F; --orange: #E8772E; --grey: #6B7785; --light: #F3F5F7; --line: #DCE2E8; }
 * { box-sizing: border-box; }
 /* Transparent on purpose: the notes underlay must show through. */
 html, body { margin: 0; background: transparent; }
@@ -62,6 +63,7 @@ figcaption { text-align: center; font-size: 7.8pt; color: var(--grey); margin-to
 .do { background: #E6F4EB; border-top: 4px solid #2E9E5B; }
 .dont { background: #FBE5E5; border-top: 4px solid #D64545; }
 .ddh { font-weight: 800; font-size: 9.6pt; }
+.ddh .mini { vertical-align: -1.5px; }
 .do .ddh { color: #23804A; } .dont .ddh { color: #B83232; }
 
 .example { background: #EAF2FB; border-radius: 10px; padding: 3mm 4mm 1.5mm; margin: 3mm 0 4mm; break-inside: avoid; }
