@@ -1,6 +1,10 @@
 (function () {
   'use strict';
 
+  // גם כשהמארח עוטף את הדף בשלד משלו, המודאלים וההודעות שנוספים ל-body צריכים להיות מימין לשמאל
+  document.documentElement.setAttribute('dir', 'rtl');
+  document.documentElement.setAttribute('lang', 'he');
+
   const C = window.COURSE;
   const IMG = window.IMAGES || {};
   const CFG = window.CONFIG || {};
@@ -12,6 +16,8 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const h = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content; };
   const img = (k) => IMG[k] || '';
+  // בגרסה הניטרלית אין לוגו, ובמקומו סימן טקסט
+  const logo = (h) => IMG.img1 ? `<img src="${IMG.img1}" alt="לוגו החברה" style="height:${h}px;width:auto">` : `<span class="logo-mark" style="font-size:${Math.round(h / 2)}px">מפעלי בטון</span>`;
   const chapter = n => C.chapters.find(c => c.num === n);
   const roleById = id => C.roles.find(r => r.id === id) || C.roles[C.roles.length - 1];
   const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -128,7 +134,7 @@
     $app.appendChild(h(`
       <header class="topbar">
         <div class="topbar-in">
-          <span class="logo-pill"><img src="${img('img1')}" alt="שיכון ובינוי"></span>
+          <span class="logo-pill">${logo(28)}</span>
           <div class="brand">ברוכים הבאים לעולם הבטון<small>לומדת קליטה ורענון · מפעלי בטון, מחצבות ומוספים</small></div>
           <span class="spacer"></span>
           <div class="top-actions">
@@ -160,8 +166,16 @@
     else if (act === 'key') showAnswerKey();
     else if (act === 'home') dashboard();
     else if (act === 'mgr') managerLogin();
-    else if (act === 'logout') { if (confirm('לצאת ולהחליף משתמש? ההתקדמות נשמרת.')) { S = null; store.del('last'); login(); } }
+    else if (act === 'logout') confirmLogout();
   });
+
+  // confirm() חסום בחלק מהסביבות (למשל תצוגה מוטמעת), ולכן האישור נבנה בתוך הדף
+  function confirmLogout() {
+    const m = modal('יציאה מהלומדה', `<p style="margin-top:0">לצאת ולהחליף משתמש? ההתקדמות שלכם נשמרת, ואפשר לחזור אליה עם אותו מספר עובד.</p>
+      <div class="nav-row" style="margin-top:8px"><button class="btn ghost" id="lgNo">ביטול</button><button class="btn navy" id="lgYes">יציאה</button></div>`);
+    m.querySelector('#lgNo').addEventListener('click', () => m.remove());
+    m.querySelector('#lgYes').addEventListener('click', () => { m.remove(); S = null; store.del('last'); login(); });
+  }
 
   /* ───────── כניסה ───────── */
   function login() {
@@ -582,7 +596,7 @@
         <span>אני מאשר/ת שלמדתי את פרקי המסלול, קיבלתי הסבר והדגמה בעמדה, שאלתי את מה שלא היה ברור, ואפעל לפי הנהלים.</span></label>
         <div style="margin-top:12px"><button class="btn green" id="ackBtn" disabled>אישור והפקת תעודה</button></div></div>` : ''}
       <div class="cert" ${S.certAck ? '' : 'style="opacity:.35;filter:blur(1px)"'}>
-        <div class="top"><img src="${img('img1')}" alt="שיכון ובינוי"><div class="seal">עבר/ה<br>בהצלחה</div></div>
+        <div class="top">${logo(44)}<div class="seal">עבר/ה<br>בהצלחה</div></div>
         <h1>תעודת סיום הדרכה</h1>
         <div class="sub">ברוכים הבאים לעולם הבטון · לומדת ${p.mode === 'refresh' ? 'רענון' : 'קליטה'}</div>
         <div class="who">${esc(p.name)}</div>
@@ -592,7 +606,7 @@
         <div class="decl">העובד/ת אישר/ה שלמד/ה את פרקי המסלול, קיבל/ה הסבר והדגמה בעמדה, שאל/ה את מה שלא היה ברור, ויפעל/תפעל לפי הנהלים. תאריך סיום: <b>${fmtDate(doneTs)}</b></div>
         <div class="sign-row"><div>חתימת העובד/ת</div><div>חתימת החונך</div><div>חתימת הממונה הישיר</div></div>
       </div>
-      <div class="nav-row no-print"><button class="btn ghost" id="home">→ למסלול</button><button class="btn navy" id="print" ${S.certAck ? '' : 'disabled'}>🖨 הדפסה / שמירה כ-PDF</button></div>`);
+      <div class="nav-row no-print"><button class="btn ghost" id="home">→ למסלול</button>${CFG.noPrint ? '<span style="color:var(--muted);font-size:14px">לשמירת התעודה: צלמו מסך</span>' : `<button class="btn navy" id="print" ${S.certAck ? '' : 'disabled'}>🖨 הדפסה / שמירה כ-PDF</button>`}</div>`);
     const ack = main.querySelector('#ack');
     if (ack) {
       const btn = main.querySelector('#ackBtn');
@@ -600,7 +614,7 @@
       btn.addEventListener('click', () => { S.certAck = Date.now(); save(); sendEvent('declaration', { chapter: '', chapterTitle: 'אישור הצהרת עובד' }); confetti(); certificate(); });
     }
     main.querySelector('#home').addEventListener('click', dashboard);
-    main.querySelector('#print').addEventListener('click', () => window.print());
+    const pr = main.querySelector('#print'); if (pr) pr.addEventListener('click', () => window.print());
   }
 
   /* ───────── מילון וכללי זהב ───────── */
