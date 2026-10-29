@@ -7,6 +7,7 @@
 
 פלט:
     dist/index.html          לאחסון עצמאי (קישור רגיל)
+    dist/concrete-course-review.html   גרסת בחינה לסוקרים, עם מפתח תשובות
     apps-script/index.html   להדבקה בפרויקט Apps Script, שמגיש את הלומדה בעצמו
 """
 import argparse
@@ -25,10 +26,11 @@ def images():
     return 'window.IMAGES=' + json.dumps(data) + ';'
 
 
-def build(api_url):
+def build(api_url, review=False):
     html = (SRC / 'index.html').read_text(encoding='utf-8')
     # הסדר חשוב: ה-placeholder של ה-API מוחלף לפני שמכניסים קוד שעלול להכיל טקסט דומה
     html = html.replace('/*@API_URL@*/', api_url.replace("'", ''))
+    html = html.replace('/*@REVIEW@*/false', 'true' if review else 'false')
     html = html.replace('/*@STYLES@*/', (SRC / 'styles.css').read_text(encoding='utf-8'))
     html = html.replace('/*@IMAGES@*/', images())
     html = html.replace('/*@CONTENT@*/', (SRC / 'content.js').read_text(encoding='utf-8'))
@@ -46,4 +48,6 @@ if __name__ == '__main__':
     (ROOT / 'dist' / 'index.html').write_text(out, encoding='utf-8')
     # בתוך Apps Script הלומדה מדברת עם השרת דרך google.script.run, ולכן לא צריך כתובת
     (ROOT / 'apps-script' / 'index.html').write_text(build(''), encoding='utf-8')
+    # גרסה לסוקרים: חוויית עובד מלאה, פלוס מפתח תשובות. בלי חיבור לגיליון, כדי שבדיקות לא ייכנסו לתוצאות
+    (ROOT / 'dist' / 'concrete-course-review.html').write_text(build('', review=True), encoding='utf-8')
     print(f'dist/index.html: {len(out.encode()) / 1024:.0f} KB')

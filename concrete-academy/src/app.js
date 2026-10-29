@@ -134,14 +134,16 @@
           <div class="top-actions">
             <button class="icon-btn" data-act="gloss" title="מילון מונחים">📖<span class="lbl">מילון</span></button>
             <button class="icon-btn" data-act="rules" title="עשרת כללי הזהב">⭐<span class="lbl">כללי הזהב</span></button>
+            ${CFG.review ? '<button class="icon-btn" data-act="key" title="מפתח תשובות" style="background:var(--yellow);color:var(--navy)">🔑<span class="lbl">מפתח תשובות</span></button>' : ''}
             ${logged ? `<button class="icon-btn" data-act="home" title="המסלול שלי">🏠<span class="lbl">המסלול שלי</span></button>
             <button class="icon-btn" data-act="logout" title="החלפת משתמש">⎋<span class="lbl">יציאה</span></button>` : ''}
           </div>
         </div>
       </header>
+      ${CFG.review ? '<div class="review-bar no-print">גרסת בחינה · התוצאות לא נשמרות במערכת · מפתח התשובות (🔑) זמין לסוקרים בלבד</div>' : ''}
       <main id="main"></main>
       <footer class="footer no-print">
-        ${opts.hideMgr ? '' : '<button data-act="mgr">כניסת מנהלים</button> · '}נבנה על בסיס חוברת ההדרכה לעובדים חדשים. הנוהל המלא נמצא אצל מנהל האיכות.
+        ${opts.hideMgr || CFG.review ? '' : '<button data-act="mgr">כניסת מנהלים</button> · '}נבנה על בסיס חוברת ההדרכה לעובדים חדשים. הנוהל המלא נמצא אצל מנהל האיכות.
       </footer>`));
     const main = document.getElementById('main');
     if (typeof inner === 'string') main.appendChild(h(inner)); else main.appendChild(inner);
@@ -155,6 +157,7 @@
     const act = b.dataset.act;
     if (act === 'gloss') showGlossary();
     else if (act === 'rules') showRules();
+    else if (act === 'key') showAnswerKey();
     else if (act === 'home') dashboard();
     else if (act === 'mgr') managerLogin();
     else if (act === 'logout') { if (confirm('לצאת ולהחליף משתמש? ההתקדמות נשמרת.')) { S = null; store.del('last'); login(); } }
@@ -628,6 +631,26 @@
 
   function showRules() {
     modal('⭐ עשרת כללי הזהב', `<ol class="rules">${C.goldenRules.map(r => `<li>${esc(r)}</li>`).join('')}</ol>`);
+  }
+
+  function showAnswerKey() {
+    const tabs = C.chapters.map(c => `<button class="key-tab" data-k="${c.num}" style="--c:${c.color}">${c.num}</button>`).join('');
+    const body = n => {
+      const c = chapter(n);
+      const roles = C.roles.filter(r => r.chapters.includes(n) && r.id !== 'all').map(r => r.label).join(' · ');
+      return `<h3 style="color:var(--navy);margin:4px 0 2px">${n}. ${esc(c.title)}</h3>
+        <div style="color:var(--muted);font-size:14px;margin-bottom:10px">${c.quiz.length} שאלות · ${c.quiz.filter(q => q.critical).length} קריטיות · במסלול של: ${esc(roles)}</div>
+        ${c.quiz.map((q, i) => `<div class="key-q"><div class="kq">${i + 1}. ${esc(q.q)} ${q.critical ? '<span class="crit">⚠ קריטית</span>' : ''}</div>
+          <ol class="key-opts">${q.o.map((o, j) => `<li class="${j === q.a ? 'ok' : ''}">${j === q.a ? '✔ ' : ''}${esc(o)}</li>`).join('')}</ol>
+          <div class="ke">💬 ${esc(q.e)}</div></div>`).join('')}`;
+    };
+    const m = modal('🔑 מפתח תשובות', `<div class="key-tabs">${tabs}</div><div id="kb"></div>`);
+    const show = n => {
+      m.querySelector('#kb').innerHTML = body(n);
+      m.querySelectorAll('.key-tab').forEach(t => t.classList.toggle('on', +t.dataset.k === n));
+    };
+    m.querySelector('.key-tabs').addEventListener('click', e => { const t = e.target.closest('.key-tab'); if (t) show(+t.dataset.k); });
+    show(P ? P.n : 1);
   }
 
   /* ───────── מנהלים ───────── */

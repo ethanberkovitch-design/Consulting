@@ -325,6 +325,18 @@ table.t td:first-child { font-weight: 700; color: var(--navy); }
 .rules li { counter-increment: r; display: flex; gap: 12px; align-items: center; background: #F7F9FC; border-radius: 12px; padding: 10px 12px; font-weight: 700; }
 .rules li::before { content: counter(r); flex: 0 0 34px; height: 34px; border-radius: 10px; background: var(--yellow); color: var(--navy); font-weight: 900; display: grid; place-items: center; }
 
+/* ── גרסת בחינה ── */
+.review-bar { background: var(--yellow); color: var(--navy); text-align: center; font-weight: 700; font-size: 14px; padding: 6px 16px; }
+.key-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.key-tab { width: 40px; height: 40px; border-radius: 10px; border: 2px solid var(--c); background: #fff; color: var(--c); font-weight: 900; cursor: pointer; }
+.key-tab.on { background: var(--c); color: #fff; }
+.key-q { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+.kq { font-weight: 800; color: var(--navy); margin-bottom: 6px; }
+.key-opts { margin: 0 0 6px; padding-right: 22px; list-style-type: hebrew; }
+.key-opts li { padding: 1px 4px; border-radius: 6px; }
+.key-opts li.ok { background: #DDF3E5; color: #1D6E3D; font-weight: 700; }
+.ke { font-size: 14px; color: var(--muted); }
+
 /* ── תעודה ── */
 .cert {
   background: #fff; border-radius: 10px; padding: 36px 34px; position: relative;
