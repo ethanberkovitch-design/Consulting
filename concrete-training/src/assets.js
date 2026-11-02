@@ -22,6 +22,8 @@ const ICONS = [
   "FaCertificate", "FaWarehouse", "FaLink", "FaHandPaper", "FaTools", "FaEye", "FaBan",
   "FaSnowflake", "FaArrowDown", "FaArrowUp", "FaUserCheck", "FaGem", "FaDollarSign",
   "FaRulerHorizontal", "FaVials", "FaSyncAlt", "FaListOl", "FaLeaf", "FaTrashAlt", "FaMapMarkedAlt", "FaHome",
+  "FaPenFancy", "FaComments", "FaProjectDiagram", "FaCalculator", "FaRoute", "FaTemperatureHigh",
+  "FaPumpSoap", "FaCrosshairs", "FaHandshake", "FaFileAlt", "FaSitemap", "FaPercent",
 ];
 const COLORS = { w: "#FFFFFF", n: "#003973", b: "#0081C8", g: "#6B6B6B", r: "#C62828", k: "#2E7D32" };
 
@@ -38,6 +40,7 @@ const ILLUSTRATIONS = {
   tile_organic: S.tile("organic"), tile_phase: S.tile("phase"),
   sampling: S.sampling(), sand_eq: S.sandEquivalent(), la_drum: S.laDrum(),
   water_plant: S.waterPlant().svg, rca: S.rcaParticles(), rebound: S.reboundHammer(),
+  bell: S.bellCurve(), fishbone: S.fishbone(), slump_flow: S.slumpFlow(),
 };
 
 (async () => {

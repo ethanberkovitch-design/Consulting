@@ -1,0 +1,1048 @@
+"""Builds the advanced technologists' deck on the corporate template.
+
+Usage: python3 build_adv.py <template.pptx> <assets_dir> <out.pptx>
+Worked examples use the same sample data as the exercise workbook, so the numbers
+on the slides match what trainees see in Excel.
+"""
+import math
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+from deckkit import *  # noqa: E402,F401,F403
+from deckkit import _para_fmt  # noqa: E402
+from pptx.enum.chart import XL_TICK_LABEL_POSITION  # noqa: E402
+
+# ---------------------------------------------------------------- shared sample data (= workbook)
+A_CURVE, B_CURVE = 143.452, 12.390  # plant curve fitted on the workbook's trial mixes
+WATER, FCK, K = 185, 30, 1.64
+PRICE = {"cement": 460, "admix": 6.5, "sand": 55, "fine": 60, "coarse": 58, "water": 8}
+MIX = {"cement": 340.6, "admix": 2.72, "sand": 811, "fine": 369, "coarse": 650, "water": 185}
+ANNUAL = 150000
+
+
+def wc_for(fm):
+    return math.log(A_CURVE / fm) / math.log(B_CURVE)
+
+
+def cement_for(sigma):
+    return WATER / wc_for(FCK + K * sigma)
+
+
+def flow(s, steps, y, h=0.95, x0=12.55, w_total=11.65, gap=0.22, fills=None, size=13):
+    """A right-to-left chain of rounded steps joined by arrows."""
+    n = len(steps)
+    w = (w_total - gap * (n - 1)) / n
+    for i, st in enumerate(steps):
+        x = x0 - (i + 1) * w - i * gap
+        fill = fills[i] if fills else (NAVY if i in (0, n - 1) else TINT)
+        r = box(s, x, y, w, h, fill=fill)
+        shape_text(r, st, size=size, color=WHITE if fill == NAVY else NAVY, margin=0.06)
+        if i < n - 1:
+            line(s, x - 0.01, y + h / 2, x - gap + 0.02, y + h / 2, color=BLUE, w=2.5)
+
+
+def workshop(title, sheet_name, steps, output, minutes):
+    s = content_slide(title)
+    box(s, 0.9, 1.2, 11.65, 1.0, fill=NAVY)
+    icon(s, "FaCalculator", 12.0, 1.7, 0.7, fill=LIME, color="n")
+    text(s, 1.1, 1.25, 10.3, 0.9, [[("סדנה  ", {"color": LIME, "size": 20}),
+                                    (f"{minutes} דקות · חוברת התרגילים, גיליון \"{sheet_name}\"",
+                                     {"color": WHITE, "size": 18})]], bold=True, anchor="m")
+    for i, st in enumerate(steps):
+        y = 2.45 + i * 0.68
+        badge(s, i + 1, 12.25, y + 0.28, 0.48, fill=BLUE)
+        text(s, 4.9, y, 7.05, 0.6, st, size=15, anchor="m")
+    box(s, 0.9, 2.45, 3.7, 3.25, fill=LIME_T)
+    icon(s, "FaCheckCircle", 4.15, 2.9, 0.55, fill=GREEN)
+    text(s, 1.1, 2.65, 2.6, 0.45, "התוצר", size=18, bold=True, color=GREEN)
+    text(s, 1.1, 3.25, 3.3, 2.4, output, size=14)
+    return s
+
+
+# ================================================================ cover
+s = clone(TPL[0])
+t = find(s, "TextBox 4")
+t.left, t.top, t.width, t.height = I(1.17), I(3.78), I(11.0), I(0.8)
+retext(t, "תורת הבטון — רמה מתקדמת", size=38, align="ctr")
+d = find(s, "מציין מיקום תוכן 2")
+d.left, d.width = I(0.32), I(2.6)
+retext(d, "נובמבר 2026", size=12)
+for p in d.text_frame.paragraphs:
+    _para_fmt(p, "l")
+    for r in p.runs:
+        set_font(r, 12, MUTED)
+text(s, 1.67, 4.6, 10.0, 0.45, "תוכנית לטכנולוגים: תכן, בקרה, כלכליות ולקוח", size=22, color=NAVY, align="c")
+text(s, 1.67, 5.06, 10.0, 0.35, "4 ימים · 10 מודולים · אקדמיית טכנולוגיה ואיכות", size=13, color=MUTED, align="c")
+pic(s, "skyline", 2.05, 5.55, w=9.2)
+
+# ================================================================ opening
+s = content_slide("מטרות התוכנית")
+text(s, 0.9, 1.1, 11.65, 0.5, "מהבנת החומר לניהולו: בסיום התוכנית הטכנולוג יודע —", size=17, color=MUTED)
+objs = [("FaFlask", "לתכנן תערובת מאפס", "לפי דרגת חוזק, דרגת חשיפה ודרישות ביצוע"),
+        ("FaChartLine", "לבנות עקומה מפעלית", "מתערובות ניסיון ועד אישור תערובת"),
+        ("FaSearch", "לאבחן ולתקן", "על בסיס נתונים, שינוי אחד בכל פעם"),
+        ("FaCoins", "להוריד עלות למ\"ק", "בלי לפגוע באיכות — ולכמת את החיסכון"),
+        ("FaBalanceScale", "לנהל בקרה סטטיסטית", "לזהות מגמה לפני שהיא הופכת לכשל"),
+        ("FaTemperatureHigh", "לתכנן בטונים מיוחדים", "ויציקות בחום, בקור ובהובלה ארוכה"),
+        ("FaHandshake", "לטפל בתלונת לקוח", "עד גורם השורש — ולכתוב חוות דעת")]
+for i, (ic, t1, t2) in enumerate(objs):
+    col_, row_ = i % 2, i // 2
+    x = 6.85 - col_ * 5.95
+    y = 1.75 + row_ * 1.05
+    icon(s, ic, x + 5.35, y + 0.42, 0.66)
+    text(s, x, y + 0.05, 4.9, 0.4, t1, size=18, bold=True, color=NAVY)
+    text(s, x, y + 0.47, 4.9, 0.4, t2, size=14, color=MUTED)
+
+s = content_slide("מבנה התוכנית")
+days = [("יום 1", "תכן", ["מודול 1: חומרי גלם מתקדמים", "מודול 2: תכן תערובות"]),
+        ("יום 2", "תיקון וכלכליות", ["מודול 3: תערובות ניסיון", "מודול 4: אבחון ותיקון", "מודול 5: אופטימיזציה"]),
+        ("יום 3", "בקרה ויישום", ["מודול 6: בקרה סטטיסטית", "מודול 7: בטונים מיוחדים"]),
+        ("יום 4", "לקוח והסמכה", ["מודול 8: תלונות", "מודול 9: חוות דעת", "מודול 10: מבחן וגמר"])]
+dw = (11.65 - 3 * 0.2) / 4
+for i, (dn, theme, mods) in enumerate(days):
+    x = 12.55 - (i + 1) * dw - i * 0.2
+    r = box(s, x, 1.2, dw, 0.95, fill=NAVY)
+    shape_text(r, [[(dn, {"size": 20, "color": LIME})], [(theme, {"size": 14, "color": WHITE, "bold": False})]])
+    for k, m in enumerate(mods):
+        rr = box(s, x, 2.35 + k * 0.9, dw, 0.75, fill=TINT)
+        shape_text(rr, m, size=14, color=NAVY, bold=False)
+box(s, 0.9, 5.2, 8.95, 0.55, fill=LIME_T)
+text(s, 1.1, 5.2, 8.6, 0.55, "32 שעות · 42% סדנאות על נתוני המפעל · משימת גמר במפעל תוך 8 שבועות", size=15, bold=True,
+     color=NAVY, anchor="m")
+text(s, 0.9, 5.9, 8.95, 0.5, "כל התקנים בתוכנית — ישראליים: ת\"י 118, ת\"י 26, ת\"י 3, ת\"י 1, ת\"י 466, ת\"י 467", size=13,
+     color=MUTED)
+
+s = content_slide("כללי העבודה בתוכנית")
+rules = [("FaIndustry", "הנתונים שלכם", "סדנאות מודולים 6 ו-8 עובדות על נתוני המפעל של כל משתתף"),
+         ("FaCalculator", "חוברת תרגילים חיה", "כל חישוב בשקפים קיים כגיליון; הכלים נשארים לשימוש במפעל"),
+         ("FaBook", "תקינה ישראלית", "ערכים שלא אומתו מול נוסח התקן מסומנים \"לאימות מול התקן\""),
+         ("FaUserCheck", "הסמכה על שינוי", "ההסמכה ניתנת על שיפור מדיד במפעל, לא על נוכחות")]
+for i, (ic, t1, t2) in enumerate(rules):
+    col_, row_ = i % 2, i // 2
+    x = 6.85 - col_ * 5.95
+    y = 1.25 + row_ * 2.05
+    box(s, x, y, 5.7, 1.85, fill=TINT)
+    icon(s, ic, x + 5.05, y + 0.6, 0.8)
+    text(s, x + 0.25, y + 0.3, 4.3, 0.45, t1, size=20, bold=True, color=NAVY)
+    text(s, x + 0.25, y + 0.85, 4.3, 0.9, t2, size=15)
+verify(s, 0.9, 5.5, w=2.6, t="דוגמה: לאימות מול התקן")
+text(s, 3.65, 5.48, 6.2, 0.4, "כך מסומן ערך שמקורו בפרקטיקה מקובלת ולא בנוסח התקן", size=13, color=MUTED)
+
+# ================================================================ module 1 — raw materials
+divider(1, "חומרי גלם ברמה מתקדמת", ["אגרגטים בישראל", "צמנטים", "תוספים", "כימיה של מוספים", "תאימות"])
+
+s = content_slide("אגרגטים בישראל: הסלע קובע את התערובת")
+rows = [["סוג", "צפיפות (ק\"ג/ל')", "ספיגות", "השפעה על התערובת"],
+        ["גיר", "2.60-2.70", "0.5-2%", "נפוץ ביותר; דרישת מים בינונית; שונות בין שכבות במחצבה"],
+        ["דולומיט", "2.75-2.85", "0.5-1.5%", "צפוף וחזק; מתאים לחוזק גבוה ולשחיקה"],
+        ["בזלת", "2.80-3.00", "1-3%", "כבד; בבזלת נקבובית — ספיגות גבוהה ודרישת מים"],
+        ["חול גרוס", "לפי הסלע", "לפי הסלע", "זוויתי ועשיר בדקים: דרישת מים ומוסף גבוהה יותר"],
+        ["חול טבעי", "2.60-2.65", "נמוכה", "מעוגל: עבידות טובה במעט מים; לבדוק חרסית ומלחים"]]
+table(s, 0.9, 1.2, 11.65, rows, [1.6, 2.0, 1.4, 6.65], size=14, row_h=0.6, header_h=0.5,
+      align=["r", "c", "c", "r"], cell_fill=lambda i, j: TINT if j == 0 else None)
+verify(s, 0.9, 4.95, w=3.3, t="ערכים טיפוסיים — לאימות מול נתוני המחצבה")
+message(s, "שינוי מחצבה או שכבה = תערובת חדשה: חוזרים לתערובות ניסיון", y=5.55, h=0.7, ic="FaMountain")
+
+s = content_slide("צמנטים לפי ת\"י 1: מה בוחרים ולמה")
+rows = [["צמנט", "חוזק מוקדם", "חום הידרציה", "עמידות כימית", "מתי משתמשים"],
+        ["CEM I 52.5R", "גבוה מאוד", "גבוה", "בינונית", "טרום, פירוק תבניות מוקדם, חורף"],
+        ["CEM I 42.5", "גבוה", "גבוה", "בינונית", "בטון מבני כללי"],
+        ["CEM II (מעורב)", "בינוני", "בינוני", "טובה", "רוב הבטון המובא; איזון עלות-ביצועים"],
+        ["CEM III (סיגים)", "נמוך", "נמוך", "גבוהה מאוד", "יציקות מסיביות, סביבה ימית וכימית"]]
+table(s, 0.9, 1.2, 11.65, rows, [2.2, 1.7, 1.7, 1.8, 4.25], size=14, row_h=0.62, header_h=0.5,
+      align=["c", "c", "c", "c", "r"], cell_fill=lambda i, j: TINT if j == 0 else None)
+box(s, 0.9, 4.55, 11.65, 1.0, fill=TINT2)
+text(s, 1.1, 4.6, 11.25, 0.9, [{"t": "החלפת סוג צמנט משנה את עקומת התפתחות החוזק: יחס 7/28 של CEM III נמוך בהרבה משל CEM I.",
+                               "bullet": True},
+                              {"t": "לכן עקומת המפעל וחיזוי 28 מ-7 נבנים לכל סוג צמנט בנפרד.", "bullet": True}], size=14)
+message(s, "הצמנט הוא כ-55% מעלות החומרים — כל החלטה עליו היא גם החלטה כלכלית", y=5.75, h=0.65, ic="FaCoins")
+
+s = content_slide("תוספים מינרליים")
+adds = [("אפר פחם", "15-30%", "פוצולני: עבידות, צפיפות לאורך זמן, חום נמוך", "חוזק מוקדם נמוך; אשפרה ארוכה; שונות בין משלוחים"),
+        ("סיגים טחונים", "30-70%", "עמידות לכלורידים ולסולפטים, חום נמוך מאוד", "התקשרות איטית בקור; גוון בהיר"),
+        ("מיקרוסיליקה", "5-10%", "צפיפות וחוזק גבוהים מאוד, ITZ משופר", "דורשת סופר-פלסטיצייזר; דבקות; אשפרה מיידית")]
+for i, (t1, dose, plus, minus) in enumerate(adds):
+    x = 12.55 - (i + 1) * 3.88 + 0.08
+    box(s, x, 1.2, 3.8, 4.3, fill=TINT)
+    text(s, x + 0.2, 1.35, 3.4, 0.45, t1, size=20, bold=True, color=NAVY, align="c")
+    r = box(s, x + 0.9, 1.9, 2.0, 0.55, fill=NAVY, radius=0.5)
+    shape_text(r, dose, size=16, color=LIME)
+    text(s, x + 0.2, 2.65, 3.4, 0.35, "תרומה", size=14, bold=True, color=GREEN)
+    text(s, x + 0.2, 3.0, 3.4, 1.0, plus, size=13)
+    text(s, x + 0.2, 4.0, 3.4, 0.35, "זהירות", size=14, bold=True, color=AMBER)
+    text(s, x + 0.2, 4.35, 3.4, 1.1, minus, size=13)
+caption(s, 0.9, 5.55, 11.65, "טווחי מינון טיפוסיים מהחומר המלכד. השימוש והמגבלות לפי ת\"י 118 ודרגת החשיפה")
+verify(s, 0.9, 5.95)
+
+s = content_slide("כימיה של מוספים: איך הם עובדים")
+rows = [["משפחה", "מנגנון", "הפחתת מים טיפוסית", "שימור סומך", "הערות"],
+        ["ליגנוסולפונט", "דחייה חשמלית חלשה", "5-12%", "נמוך", "זול; עלול לעכב בעודף"],
+        ["נפתלן / מלמין", "דחייה חשמלית", "15-25%", "בינוני", "יציב, פחות רגיש לחרסית"],
+        ["פוליקרבוקסילט (PCE)", "דחייה מרחבית (שרשראות צד)", "25-40%", "גבוה, ניתן לתכנון", "רגיש מאוד לחרסית"],
+        ["מעכב", "האטת ההידרציה", "—", "מאריך חלון עבודה", "מינון עונתי; עודף = התקשרות ממושכת"],
+        ["מאיץ", "זירוז ההידרציה", "—", "—", "חורף וטרום; ללא כלורידים בבטון מזוין"]]
+table(s, 0.9, 1.2, 11.65, rows, [2.4, 2.8, 1.9, 1.9, 2.65], size=13, row_h=0.6, header_h=0.5,
+      align=["r", "r", "c", "c", "r"], cell_fill=lambda i, j: TINT if j == 0 else None)
+message(s, "חרסית בחול \"בולעת\" PCE: המינון עולה, הסומך נעלם — והחשד נופל בטעות על המוסף", y=5.1, h=0.75,
+        ic="FaExclamationTriangle")
+
+s = content_slide("תאימות צמנט-מוסף: נקודת הרוויה")
+cd = CategoryChartData()
+doses = ["0.2", "0.4", "0.6", "0.8", "1.0", "1.2", "1.4", "1.6"]
+cd.categories = doses
+cd.add_series(rl("התפשטות משחה (מ\"מ)"), [120, 160, 195, 220, 235, 242, 245, 246])
+gf = s.shapes.add_chart(XL_CHART_TYPE.LINE_MARKERS, I(0.9), I(1.15), I(6.6), I(4.5), cd)
+ch = gf.chart
+style_chart(ch)
+ch.has_legend = False
+ch.has_title = False
+series_line(ch.plots[0].series[0], BLUE, w=3)
+axis_fmt(ch.value_axis, rl("התפשטות (מ\"מ)"))
+ch.value_axis.minimum_scale, ch.value_axis.maximum_scale = 100, 260
+axis_fmt(ch.category_axis, rl("מינון מוסף (% מהצמנט)"), gridlines=False)
+caption(s, 0.9, 5.7, 6.6, "בדיקת משחה במיני-סומך — עקומה להמחשה", align="c")
+text(s, 7.8, 1.2, 4.75, 0.45, "מה העקומה אומרת", size=18, bold=True, color=NAVY)
+text(s, 7.8, 1.75, 4.75, 2.4, [{"t": "עד נקודת הרוויה — כל תוספת מוסף משפרת", "bullet": True},
+                               {"t": "אחריה — כסף מבוזבז, ודימום וסגרגציה", "bullet": True},
+                               {"t": "נקודת רוויה שזזה = שינוי בצמנט או בדקים", "bullet": True}], size=15)
+box(s, 7.8, 4.25, 4.75, 1.35, fill=TINT)
+text(s, 8.0, 4.3, 4.35, 1.25, [{"t": "בדיקה מהירה במעבדת המפעל", "bold": True, "color": NAVY},
+                               {"t": "מריצים את העקומה בכל החלפת ספק צמנט או מוסף — 30 דקות עבודה"}], size=14,
+     anchor="m")
+
+# ================================================================ module 2 — mix design
+divider(2, "תכן תערובות", ["חוזק יעד", "בחירת W/C", "דרישת מים", "נפחים מוחלטים", "שילוב אגרגטים"])
+
+s = content_slide("תהליך התכן: מדרישה לתערובת")
+flow(s, ["דרישות הלקוח והתקן", "חוזק יעד", "W/C", "דרישת מים", "צמנט ותוספים", "נפחים מוחלטים",
+         "חלוקת אגרגטים", "תערובת ניסיון"], 1.4, h=1.1, size=13)
+inputs = [("FaWeightHanging", "דרגת חוזק", "ב-XX לפי ת\"י 118"), ("FaMapMarkedAlt", "דרגת חשיפה", "W/C מרבי, צמנט מזערי"),
+          ("FaRulerVertical", "סומך / זרימה", "לפי שיטת היציקה"), ("FaCubes", "גודל אגרגט מרבי", "לפי צפיפות הזיון"),
+          ("FaClock", "זמן ומזג אוויר", "הובלה, עונה, שעה")]
+text(s, 0.9, 2.85, 11.65, 0.4, "מה צריך לדעת לפני שמתחילים", size=17, bold=True, color=NAVY)
+for i, (ic, t1, t2) in enumerate(inputs):
+    x = 12.55 - (i + 1) * 2.33 + 0.05
+    box(s, x, 3.35, 2.23, 1.75, fill=TINT)
+    icon(s, ic, x + 1.115, 3.85, 0.62)
+    text(s, x + 0.1, 4.25, 2.03, 0.4, t1, size=15, bold=True, color=NAVY, align="c")
+    text(s, x + 0.1, 4.62, 2.03, 0.45, t2, size=12, align="c")
+message(s, "תערובת לא \"עוברת\" עד שתערובת הניסיון במפעל אישרה אותה", y=5.55, h=0.7, ic="FaFlask")
+
+s = content_slide("חוזק יעד: המרווח הוא מחיר אי-הוודאות")
+pic_fit(s, "bell", 0.9, 1.2, 6.4, 3.0)
+box(s, 0.9, 4.35, 6.4, 0.8, fill=NAVY)
+text(s, 1.0, 4.38, 6.2, 0.75, [{"t": "fm = fck + k · σ", "rtl": False, "size": 24, "bold": True, "color": WHITE}],
+     align="c", anchor="m")
+verify(s, 0.9, 5.3, w=2.8, t="ערך k — לאימות מול ת\"י 118")
+rows = [["σ (MPa)", "חוזק יעד", "W/C", "צמנט (ק\"ג/מ\"ק)"]]
+for sg in (3, 4, 5, 6):
+    fm = FCK + K * sg
+    rows.append([f"{sg:.0f}", f"{fm:.1f}", f"{wc_for(fm):.2f}", f"{WATER / wc_for(fm):.0f}"])
+text(s, 7.6, 1.2, 4.95, 0.45, "ב-30, אותם חומרים, σ שונה", size=17, bold=True, color=NAVY)
+table(s, 7.6, 1.75, 4.95, rows, [1.1, 1.3, 1.1, 1.45], size=15, row_h=0.5, header_h=0.5, align=["c"] * 4,
+      cell_fill=lambda i, j: LIME_T if i == 2 else None)
+text(s, 7.6, 4.5, 4.95, 1.1, [{"t": "כל 1 MPa בסטיית התקן ≈ 11-12 ק\"ג צמנט למ\"ק", "bold": True, "color": NAVY},
+                              {"t": "מפעל עם σ נמוך מוכר אותה דרגה בפחות צמנט"}], size=14)
+caption(s, 7.6, 5.65, 4.95, "k = 1.64, מים 185 ל', עקומת המפעל מהחוברת")
+
+s = content_slide("בחירת W/C: הנמוך מבין שתי דרישות")
+cd = XyChartData()
+s1 = cd.add_series(rl("עקומת המפעל"))
+for wcv in [0.38, 0.42, 0.46, 0.50, 0.54, 0.58, 0.62, 0.66]:
+    s1.add_data_point(wcv, A_CURVE * B_CURVE ** (-wcv))
+fm4 = FCK + K * 4
+s2 = cd.add_series(rl("חוזק יעד"))
+s2.add_data_point(0.38, fm4)
+s2.add_data_point(0.66, fm4)
+s3 = cd.add_series(rl("W/C מרבי לחשיפה"))
+s3.add_data_point(0.60, 20)
+s3.add_data_point(0.60, 60)
+gf = s.shapes.add_chart(XL_CHART_TYPE.XY_SCATTER_SMOOTH_NO_MARKERS, I(0.9), I(1.15), I(7.3), I(4.6), cd)
+ch = gf.chart
+style_chart(ch)
+ch.has_legend = True
+ch.legend.position = XL_LEGEND_POSITION.BOTTOM
+ch.legend.include_in_layout = False
+sr = ch.plots[0].series
+series_line(sr[0], BLUE, w=3.5, marker=False, smooth=True)
+series_line(sr[1], NAVY, w=2, marker=False, dash=True)
+series_line(sr[2], RED, w=2, marker=False, dash=True)
+axis_fmt(ch.value_axis, rl("חוזק קובייה (MPa)"))
+ch.value_axis.minimum_scale, ch.value_axis.maximum_scale, ch.value_axis.major_unit = 20, 60, 10
+axis_fmt(ch.category_axis, "W/C", gridlines=False, fmt="0.00")
+ch.category_axis.minimum_scale, ch.category_axis.maximum_scale, ch.category_axis.major_unit = 0.35, 0.70, 0.05
+box(s, 8.5, 1.25, 4.05, 1.55, fill=TINT)
+text(s, 8.65, 1.3, 3.75, 1.45, [{"t": "דרישת החוזק", "bold": True, "color": NAVY},
+                                {"t": f"החיתוך עם חוזק היעד: W/C = {wc_for(fm4):.2f}"}], size=15, anchor="m")
+box(s, 8.5, 2.95, 4.05, 1.55, fill=RED_T)
+text(s, 8.65, 3.0, 3.75, 1.45, [{"t": "דרישת העמידות", "bold": True, "color": RED},
+                                {"t": "W/C מרבי לדרגת החשיפה — מטבלת ת\"י 118"}], size=15, anchor="m")
+box(s, 8.5, 4.65, 4.05, 1.0, fill=NAVY)
+text(s, 8.65, 4.68, 3.75, 0.95, [{"t": "W/C לתכן = הנמוך מביניהם", "bold": True, "color": WHITE}], size=16,
+     anchor="m", align="c")
+caption(s, 0.9, 5.85, 7.3, "בדרגות חשיפה חמורות דרישת העמידות היא שקובעת — והחוזק בפועל גבוה מהנדרש")
+
+s = content_slide("דרישת מים: מה מזיז אותה")
+rows = [["גורם", "כיוון", "למה"],
+        ["גודל אגרגט מרבי גדול יותר", "↓ פחות מים", "פחות שטח פנים לעטיפה"],
+        ["אגרגט גרוס וזוויתי", "↑ יותר מים", "חיכוך בין גרגרים"],
+        ["סומך גבוה יותר", "↑ יותר מים", "או יותר מוסף — עדיף"],
+        ["טמפרטורה גבוהה", "↑ יותר מים", "התאדות והידרציה מהירה"],
+        ["דקים וחרסית בחול", "↑ יותר מים", "שטח פנים וספיגה"],
+        ["מוסף מפחית מים", "↓ פחות מים", "פיזור גרגרי הצמנט"]]
+table(s, 0.9, 1.2, 11.65, rows, [4.2, 2.3, 5.15], size=15, row_h=0.56, header_h=0.5, align=["r", "c", "r"],
+      cell_fill=lambda i, j: (RED_T if "↑" in rows[i][1] else GREEN_T) if j == 1 else None)
+message(s, "דרישת המים נלקחת מתערובות קיימות במפעל — לא מטבלה כללית", y=5.45, h=0.7, ic="FaTint")
+
+s = content_slide("שיטת הנפחים המוחלטים: דוגמה מלאה")
+text(s, 6.85, 1.15, 5.7, 0.45, "ב-30 · σ = 4 · W/C 0.54 · מים 185 ל'", size=17, bold=True, color=NAVY)
+mixrows = [["רכיב", "ק\"ג/מ\"ק", "צפיפות", "נפח (ליטר)"],
+           ["צמנט", "341", "3.10", "110"], ["מים", "185", "1.00", "185"], ["מוסף", "2.7", "1.08", "3"],
+           ["אוויר (1.5%)", "—", "—", "15"], ["חול (45%)", "811", "2.62", "309"],
+           ["חצץ דק (20%)", "369", "2.68", "138"], ["חצץ גס (35%)", "650", "2.70", "241"],
+           ["סה\"כ", "2,357", "", "1,000"]]
+table(s, 6.85, 1.7, 5.7, mixrows, [1.9, 1.3, 1.1, 1.4], size=14, row_h=0.44, header_h=0.46,
+      align=["r", "c", "c", "c"], cell_fill=lambda i, j: LIME_T if i == 8 else None)
+steps = ["צמנט = מים ÷ W/C = 185 ÷ 0.54", "נפחי צמנט, מים, מוסף ואוויר = 312 ליטר",
+         "לאגרגטים נשארים 1,000 − 312 = 688 ליטר", "חלוקה לפי אחוזי נפח × צפיפות SSD",
+         "בדיקה: סה\"כ 1,000 ליטר; צפיפות 2,357"]
+for i, st in enumerate(steps):
+    y = 1.3 + i * 0.82
+    badge(s, i + 1, 6.25, y + 0.3, 0.48, fill=BLUE)
+    text(s, 0.9, y, 5.0, 0.65, st, size=15, anchor="m")
+message(s, "המספרים כאן = גיליון \"תכן תערובת\" בחוברת", y=5.75, h=0.62, ic="FaCalculator")
+
+s = content_slide("שילוב אגרגטים: עקום דירוג משולב")
+sieves = ["0.125", "0.25", "0.5", "1", "2", "4", "8", "16", "22.4"]
+sand = [8, 20, 40, 60, 78, 97, 100, 100, 100]
+fine = [1, 1, 1, 1, 2, 10, 85, 100, 100]
+coarse = [0, 0, 0, 0, 1, 2, 8, 90, 100]
+comb = [round(0.45 * a + 0.20 * b + 0.35 * c, 1) for a, b, c in zip(sand, fine, coarse)]
+cd = CategoryChartData()
+cd.categories = sieves
+cd.add_series(rl("גבול תחתון"), [2, 5, 10, 18, 28, 38, 55, 80, 95])
+cd.add_series(rl("גבול עליון"), [8, 15, 25, 38, 50, 62, 77, 98, 100])
+cd.add_series(rl("משולב"), comb)
+gf = s.shapes.add_chart(XL_CHART_TYPE.LINE_MARKERS, I(0.9), I(1.15), I(6.6), I(4.6), cd)
+ch = gf.chart
+style_chart(ch)
+ch.has_legend = True
+ch.legend.position = XL_LEGEND_POSITION.BOTTOM
+ch.legend.include_in_layout = False
+sr = ch.plots[0].series
+series_line(sr[0], GRAY, w=2, marker=False, dash=True)
+series_line(sr[1], GRAY, w=2, marker=False, dash=True)
+series_line(sr[2], BLUE, w=3)
+axis_fmt(ch.value_axis, rl("% עובר"))
+ch.value_axis.minimum_scale, ch.value_axis.maximum_scale, ch.value_axis.major_unit = 0, 100, 20
+axis_fmt(ch.category_axis, rl("פתח נפה (מ\"מ)"), gridlines=False)
+caption(s, 0.9, 5.8, 6.6, "45% חול · 20% חצץ דק · 35% חצץ גס — מעטפת להמחשה", align="c")
+for k, (hdr, items, col, bg) in enumerate((("יותר מדי חול", ["דרישת מים ומוסף עולה", "צמנט עולה כדי לשמור W/C"], AMBER, AMBER_T),
+                                          ("מעט מדי חול", ["תערובת \"קשה\", סגרגציה ודימום", "שאיבה והחלקה קשות"], RED, RED_T),
+                                          ("שילוב צפוף", ["פחות חללים = פחות משחה", "אותו חוזק בפחות צמנט"], GREEN, GREEN_T))):
+    y = 1.2 + k * 1.5
+    box(s, 7.8, y, 4.75, 1.35, fill=bg)
+    text(s, 8.0, y + 0.1, 4.35, 0.4, hdr, size=16, bold=True, color=col)
+    text(s, 8.0, y + 0.52, 4.35, 0.8, [{"t": it, "bullet": True} for it in items], size=13)
+
+workshop("סדנה: תכן שתי תערובות", "תכן תערובת",
+         ["תכן ב-30 לרצפה, דרגת חשיפה 3: הזינו σ מפעלית ודרישת מים", "בדקו מה קובע את W/C: החוזק או החשיפה",
+          "תכן ב-40 לסביבה ימית: מה השתנה ולמה", "העבירו את הכמויות לגיליון \"תיקון לחות\" עם הלחות של היום",
+          "השוו לתערובות הקיימות במפעל והסבירו את ההפרשים"],
+         "שתי תערובות מתוכננות, מנה לשקילה עם תיקון לחות, והסבר בכתב לכל הפרש מהתערובת הקיימת", 180)
+
+# ================================================================ module 3+4 — trials & diagnosis
+divider(3, "תערובות ניסיון, אבחון ותיקון", ["תכנית ניסוי", "עקומת המפעל", "אישור תערובת", "עץ אבחון", "תיקון"])
+
+s = content_slide("תכנון תערובות ניסיון")
+pr = [("FaCrosshairs", "משתנה אחד", "רק W/C משתנה; שאר המרכיבים קבועים"),
+      ("FaListOl", "3-5 נקודות", "טווח שמקיף את התערובות שתייצרו"),
+      ("FaSyncAlt", "חזרות", "לפחות 2 מנות לנקודה; 3 קוביות לכל גיל"),
+      ("FaIndustry", "חומרי המפעל", "אותם צמנט, אגרגט ומוסף שבייצור")]
+for i, (ic, t1, t2) in enumerate(pr):
+    x = 12.55 - (i + 1) * 2.92 + 0.07
+    box(s, x, 1.2, 2.78, 2.15, fill=TINT)
+    icon(s, ic, x + 1.39, 1.75, 0.7)
+    text(s, x + 0.1, 2.25, 2.58, 0.4, t1, size=17, bold=True, color=NAVY, align="c")
+    text(s, x + 0.15, 2.65, 2.48, 0.65, t2, size=13, align="c")
+rows = [["תערובת", "1", "2", "3", "4", "5"], ["W/C", "0.40", "0.45", "0.50", "0.55", "0.60"],
+        ["בודקים", "סומך, צפיפות, טמפרטורה, אוויר · קוביות 7 ו-28 יום", "", "", "", ""]]
+table(s, 0.9, 3.6, 11.65, rows[:2], [2.15, 1.9, 1.9, 1.9, 1.9, 1.9], size=15, row_h=0.5, header_h=0.5,
+      align=["r"] + ["c"] * 5)
+text(s, 0.9, 4.75, 11.65, 0.45, "בכל נקודה בודקים: סומך, צפיפות, טמפרטורה ואוויר (ת\"י 26 חלק 2) · קוביות 7 ו-28 יום (חלקים 1 ו-4)",
+     size=14, color=MUTED)
+message(s, "שינוי של שני משתנים יחד = תוצאה שאי אפשר לפרש", y=5.55, h=0.7, ic="FaExclamationTriangle")
+
+s = content_slide("עקומת המפעל: מתוצאות לנוסחה")
+trials = [(0.40, 52.0), (0.45, 46.5), (0.50, 41.0), (0.55, 36.0), (0.60, 31.5)]
+cd = CategoryChartData()
+cd.categories = [f"{w_:.2f}" for w_, _ in trials]
+cd.add_series(rl("תוצאות ניסיון"), [f for _, f in trials])
+cd.add_series(rl("עקומה מותאמת"), [round(A_CURVE * B_CURVE ** (-w_), 1) for w_, _ in trials])
+gf = s.shapes.add_chart(XL_CHART_TYPE.LINE_MARKERS, I(0.9), I(1.15), I(7.0), I(4.6), cd)
+ch = gf.chart
+style_chart(ch)
+ch.has_legend = True
+ch.legend.position = XL_LEGEND_POSITION.BOTTOM
+ch.legend.include_in_layout = False
+sr = ch.plots[0].series
+series_line(sr[0], NAVY, w=0.75, marker=True, dash=True)
+sr[0].marker.size = 11
+series_line(sr[1], BLUE, w=2.5, marker=False, smooth=True)
+axis_fmt(ch.value_axis, rl("חוזק 28 יום (MPa)"))
+ch.value_axis.minimum_scale, ch.value_axis.maximum_scale, ch.value_axis.major_unit = 25, 55, 5
+axis_fmt(ch.category_axis, "W/C", gridlines=False)
+box(s, 8.2, 1.2, 4.35, 1.0, fill=NAVY)
+text(s, 8.3, 1.22, 4.15, 0.95, [{"t": "f = A / B^(W/C)", "rtl": False, "size": 22, "bold": True, "color": WHITE}],
+     align="c", anchor="m")
+stats = [("A", "143.5", "MPa"), ("B", "12.39", ""), ("R²", "0.999", "התאמה מצוינת"), ("7/28", "72%", "יחס ממוצע")]
+for i, (k_, v, u) in enumerate(stats):
+    col_, row_ = i % 2, i // 2
+    x = 10.45 - col_ * 2.25
+    y = 2.4 + row_ * 1.35
+    box(s, x, y, 2.1, 1.2, fill=TINT)
+    text(s, x, y + 0.05, 2.1, 1.1, [{"t": k_, "size": 13, "color": MUTED}, {"t": v, "size": 24, "bold": True, "color": BLUE},
+                                    {"t": u, "size": 11, "color": MUTED}], align="c", anchor="m", space_after=0)
+caption(s, 0.9, 5.85, 7.0, "נתוני הדוגמה של גיליון \"תערובות ניסיון\" — רגרסיה על ln(f)")
+text(s, 8.2, 5.2, 4.35, 0.6, "העקומה מזינה אוטומטית את גיליון התכן", size=13, color=NAVY, bold=True)
+
+s = content_slide("ממעבדה למפעל: למה התוצאות לא זהות")
+diffs = [("FaCogs", "יעילות ערבוב", "מערבל מפעל ומשאית מול מערבל מעבדה"),
+         ("FaTint", "לחות אגרגט", "במעבדה מדויקת; בייצור — חיישן ונוהל"),
+         ("FaThermometerHalf", "טמפרטורה", "חומרים חמים בקיץ, זמן הובלה"),
+         ("FaClock", "זמן עד יציקה", "איבוד סומך ותוספת מוסף באתר")]
+for i, (ic, t1, t2) in enumerate(diffs):
+    y = 1.2 + i * 1.08
+    icon(s, ic, 12.2, y + 0.4, 0.62)
+    text(s, 7.2, y + 0.02, 4.5, 0.4, t1, size=17, bold=True, color=NAVY)
+    text(s, 7.2, y + 0.45, 4.5, 0.45, t2, size=14)
+box(s, 0.9, 1.2, 5.95, 3.2, fill=TINT2)
+text(s, 1.1, 1.3, 5.55, 0.45, "תפוקה (Yield): האם הלקוח קיבל מ\"ק?", size=17, bold=True, color=NAVY)
+rows = [["", "ערך"], ["מסת המנה", "19,000 ק\"ג"], ["צפיפות שנמדדה", "2,360 ק\"ג/מ\"ק"], ["נפח בפועל", "8.05 מ\"ק"],
+        ["תפוקה (מול 8 מ\"ק)", "100.6%"]]
+table(s, 1.1, 1.85, 5.55, rows, [2.9, 2.65], size=14, row_h=0.46, header_h=0.42, align=["r", "c"],
+      cell_fill=lambda i, j: LIME_T if i == 4 else None)
+text(s, 0.9, 4.55, 5.95, 0.6, "תפוקה מתחת ל-100% = הלקוח קיבל פחות — ותלונת \"חסר בטון\" מוצדקת", size=14,
+     color=RED, bold=True)
+message(s, "מאשרים תערובת רק אחרי ניסיון במפעל, במשאית, בזמן הובלה אמיתי", y=5.5, h=0.75, ic="FaTruck")
+
+s = content_slide("נוהל אישור תערובת חדשה")
+flow(s, ["בקשה ודרישות", "תכן", "ניסיון מעבדה", "ניסיון מפעל", "אישור מנהל טכנולוגיה", "קוד תערובת במערכת",
+         "מעקב 30 יציקות"], 1.4, h=1.15, size=13)
+docs = [("מה מתעדים", ["דרישות ודרגת חשיפה", "חישוב התכן", "תוצאות טרי וקשוי", "תפוקה וטמפרטורה"]),
+        ("מי חותם", ["הטכנולוג שתכנן", "מנהל הטכנולוגיה", "מנהל המפעל — לתערובות חדשות לשוק"]),
+        ("מתי פותחים מחדש", ["החלפת ספק או מקור", "חריגה במעקב", "תלונה שקשורה לתערובת"])]
+for i, (hdr, items) in enumerate(docs):
+    x = 12.55 - (i + 1) * 3.88 + 0.08
+    box(s, x, 2.85, 3.8, 2.6, fill=TINT)
+    text(s, x + 0.2, 2.95, 3.4, 0.45, hdr, size=17, bold=True, color=NAVY)
+    text(s, x + 0.2, 3.45, 3.4, 1.95, [{"t": it, "bullet": True} for it in items], size=14)
+message(s, "תערובת בלי תיק אישור היא תערובת שאי אפשר להגן עליה מול לקוח", y=5.65, h=0.7, ic="FaFileAlt")
+
+s = content_slide("עץ אבחון: חוזק נמוך")
+qs = [("1", "הדגימה והבדיקה תקינות?", "הכנה, אשפרה ראשונית, מכונה, צורת שבר", "לא → תיקון בדיקה, לא תערובת"),
+      ("2", "W/C בפועל כמתוכנן?", "לחות אגרגט, מים שנוספו באתר, מד מים", "לא → תיקון ייצור / אתר"),
+      ("3", "חומרי הגלם כמו תמיד?", "צמנט, דקים וחרסית, מוסף, ספק חדש", "לא → בדיקות קבלה והסגר"),
+      ("4", "הייצור תקין?", "כיול מאזניים, זמן ערבוב, רצף שקילה", "לא → כיול ונוהל"),
+      ("5", "הבטון במבנה נמוך?", "קרוטים (ת\"י 26 חלק 6), הידוק, אשפרה", "כן → תחקור תלונה (מודול 8)")]
+for i, (n, q, chk, out) in enumerate(qs):
+    y = 1.2 + i * 0.92
+    badge(s, n, 12.25, y + 0.38, 0.52, fill=NAVY)
+    r = box(s, 8.5, y, 3.4, 0.76, fill=TINT)
+    shape_text(r, q, size=14, color=NAVY)
+    text(s, 4.6, y, 3.7, 0.76, chk, size=13, anchor="m")
+    r2 = box(s, 0.9, y + 0.08, 3.5, 0.6, fill=AMBER_T)
+    shape_text(r2, out, size=12, color=AMBER, bold=True)
+    if i < 4:
+        line(s, 12.25, y + 0.66, 12.25, y + 1.02, color=GRAY, w=2)
+caption(s, 0.9, 5.85, 11.65, "עוברים לשלב הבא רק כשהקודם נשלל — עם ראיה")
+
+s = content_slide("מטריצת תסמין-גורם")
+rows = [["תסמין", "חשוד מוביל", "בדיקה ראשונה", "תיקון אופייני"],
+        ["חוזק נמוך ויציב", "W/C גבוה מהתכנון", "לחות אגרגט ומד מים", "תיקון לחות, כיול"],
+        ["חוזק נמוך ומתדרדר", "שינוי בחומר גלם", "שווה חול, כחול מתילן, צמנט", "הסגר, מקור חלופי"],
+        ["סומך לא יציב", "חיישן לחות / שקילה", "השוואה לבדיקה ידנית", "כיול, נוהל יומי"],
+        ["איבוד סומך בהובלה", "חום וזמן", "טמפרטורת בטון, זמני הובלה", "מעכב, מים קרים, תזמון"],
+        ["דימום ואבקיות", "מחסור בדקים", "עקום דירוג, דקים", "יותר חול / תוסף"],
+        ["התקשרות ממושכת", "עודף מעכב, קור", "מינון, טמפרטורה", "מינון עונתי"]]
+table(s, 0.9, 1.2, 11.65, rows, [2.6, 2.6, 3.4, 3.05], size=14, row_h=0.6, header_h=0.5,
+      cell_fill=lambda i, j: TINT if j == 0 else None)
+message(s, "המטריצה מכוונת — הנתונים מכריעים", y=5.65, h=0.65, ic="FaSearch")
+
+s = content_slide("המים הנסתרים: תיקון לחות שלא בוצע")
+stats = [("23.5", "ליטר מים חופשיים למ\"ק", "חול ב-5% לחות מול 1.5% ספיגות"),
+         ("0.54 → 0.61", "W/C בפועל", "במקום 0.54 המתוכנן"),
+         ("−16%", "ירידת חוזק צפויה", "מ-36.6 ל-30.7 MPa לפי עקומת המפעל")]
+for i, (v, t1, t2) in enumerate(stats):
+    x = 12.55 - (i + 1) * 3.88 + 0.08
+    box(s, x, 1.3, 3.8, 3.0, fill=NAVY if i == 2 else TINT)
+    text(s, x + 0.1, 1.5, 3.6, 1.1, v, size=40, bold=True, color=LIME if i == 2 else BLUE, align="c", anchor="m",
+         rtl=False)
+    text(s, x + 0.2, 2.75, 3.4, 0.45, t1, size=17, bold=True, color=WHITE if i == 2 else NAVY, align="c")
+    text(s, x + 0.2, 3.25, 3.4, 0.9, t2, size=14, color=WHITE if i == 2 else TEXT, align="c")
+text(s, 0.9, 4.5, 11.65, 0.5, "אותה תערובת, אותו צמנט — רק בלי תיקון לחות, והבטון נכשל בדרגת החוזק שלו", size=17,
+     bold=True, color=NAVY)
+message(s, "לחות נמדדת כל יום ובכל שינוי — זו הבדיקה הזולה ביותר במפעל", y=5.4, h=0.75, ic="FaTint")
+
+s = content_slide("כללי התיקון")
+dos = ["שינוי אחד בכל פעם — ומדידה לפני הבא", "כל תיקון מתועד: מה, למה, מי ומתי", "מגדירים מראש איך נדע שהתיקון עבד",
+       "בודקים השפעה על עמידות, לא רק על חוזק"]
+donts = ["\"מוסיפים צמנט ליתר ביטחון\" בלי לאבחן", "משנים מוסף וגרדציה באותו יום", "מתקנים לפי תוצאה בודדת",
+         "מאשרים מים באתר במקום מוסף"]
+for k, (hdr, items, col, bg, ic) in enumerate((("עושים", dos, GREEN, GREEN_T, "FaCheckCircle"),
+                                                ("לא עושים", donts, RED, RED_T, "FaTimesCircle"))):
+    x = 6.85 - k * 5.95
+    box(s, x, 1.2, 5.7, 4.2, fill=bg)
+    icon(s, ic, x + 5.2, 1.7, 0.6, fill=col)
+    text(s, x + 0.25, 1.45, 4.5, 0.45, hdr, size=20, bold=True, color=col)
+    text(s, x + 0.25, 2.2, 5.2, 3.1, [{"t": it, "bullet": True} for it in items], size=16, space_after=8)
+message(s, "\"עוד צמנט\" מסתיר את הבעיה, עולה כסף — ולא מתקן את הגורם", y=5.65, h=0.7, ic="FaCoins")
+
+workshop("סדנה: ארבעה מקרי אבחון", "אבחון ותיקון",
+         ["קוראים את נתוני המקרה — בלי לקפוץ למסקנה", "עוברים על עץ האבחון ומסמנים מה נשלל ועל סמך מה",
+          "כותבים אבחנה ותיקון מוצע בעמודות הצהובות", "מגדירים מדד הצלחה ותוך כמה זמן נדע",
+          "כל קבוצה מציגה מקרה אחד בחמש דקות"],
+         "ארבע אבחנות מנומקות, תיקון ומדד הצלחה לכל מקרה; דיון מול מפתח המנחה", 90)
+
+# ================================================================ module 5 — economics
+divider(4, "אופטימיזציה וכלכליות", ["עלות למ\"ק", "סטיית תקן", "מנופי חיסכון", "הקו האדום"])
+
+s = content_slide("מבנה העלות של מ\"ק בטון")
+costs = [("צמנט", MIX["cement"] * PRICE["cement"] / 1000, NAVY), ("חול", MIX["sand"] * PRICE["sand"] / 1000, BLUE),
+         ("חצץ גס", MIX["coarse"] * PRICE["coarse"] / 1000, "7FC3EA"), ("חצץ דק", MIX["fine"] * PRICE["fine"] / 1000, GRAY),
+         ("מוסף", MIX["admix"] * PRICE["admix"], LIME), ("מים", MIX["water"] * PRICE["water"] / 1000, "DCE6F1")]
+total = sum(c[1] for c in costs)
+cd = CategoryChartData()
+cd.categories = [c[0] for c in costs]
+cd.add_series("עלות", [round(c[1], 1) for c in costs])
+gf = s.shapes.add_chart(XL_CHART_TYPE.DOUGHNUT, I(0.9), I(1.15), I(5.0), I(4.5), cd)
+ch = gf.chart
+style_chart(ch, 13)
+ch.has_legend = False
+ch.has_title = False
+ch.has_title = False
+plot = ch.plots[0]
+for i, c in enumerate(costs):
+    pt = plot.series[0].points[i]
+    pt.format.fill.solid()
+    pt.format.fill.fore_color.rgb = rgb(c[2])
+    pt.format.line.color.rgb = rgb(WHITE)
+hole = ch._chartSpace.find(".//" + qn("c:holeSize"))
+if hole is not None:
+    hole.set("val", "55")
+text(s, 2.4, 2.95, 2.0, 0.9, [{"t": f"₪{total:.0f}", "size": 26, "bold": True, "color": NAVY},
+                              {"t": "חומרים למ\"ק", "size": 13, "color": MUTED}], align="c", space_after=0)
+rows = [["רכיב", "₪/מ\"ק", "חלק"]] + [[c[0], f"{c[1]:.1f}", f"{c[1] / total:.0%}"] for c in costs]
+table(s, 6.4, 1.2, 6.15, rows, [2.4, 1.9, 1.85], size=15, row_h=0.47, header_h=0.47, align=["r", "c", "c"],
+      cell_fill=lambda i, j: LIME_T if i == 1 else None)
+caption(s, 6.4, 4.65, 6.15, "מחירים לדוגמה מגיליון \"עלות ותרחישים\" — להחליף במחירי רכש")
+message(s, "הצמנט הוא יותר מחצי מהעלות: כל קילוגרם שנחסך בתכנון נכון — נספר", y=5.6, h=0.75, ic="FaCoins")
+
+s = content_slide("סטיית תקן שווה כסף")
+sig = [3, 4, 5, 6]
+base_c = cement_for(4)
+delta = [round((base_c - cement_for(sg)) * PRICE["cement"] / 1000 * ANNUAL / 1000) for sg in sig]
+cd = CategoryChartData()
+cd.categories = [f"σ = {sg}" for sg in sig]
+cd.add_series(rl("חיסכון שנתי (אלפי ₪)"), delta)
+gf = s.shapes.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, I(0.9), I(1.15), I(7.0), I(4.5), cd)
+ch = gf.chart
+style_chart(ch)
+ch.has_legend = False
+ch.has_title = False
+pl = ch.plots[0]
+pl.gap_width = 70
+pl.vary_by_categories = False
+ser = pl.series[0]
+ser.format.fill.solid()
+ser.format.fill.fore_color.rgb = rgb(BLUE)
+ser.invert_if_negative = False
+for i, v in enumerate(delta):
+    pt = ser.points[i]
+    pt.format.fill.solid()
+    pt.format.fill.fore_color.rgb = rgb(GREEN if v > 0 else RED if v < 0 else GRAY)
+pl.has_data_labels = True
+pl.data_labels.number_format = '#,##0;-#,##0;0'
+pl.data_labels.number_format_is_linked = False
+pl.data_labels.position = XL_LABEL_POSITION.OUTSIDE_END
+pl.data_labels.font.size = Pt(13)
+pl.data_labels.font.bold = True
+axis_fmt(ch.value_axis, rl("אלפי ₪ בשנה, מול σ = 4"))
+axis_fmt(ch.category_axis, gridlines=False)
+ch.category_axis.tick_label_position = XL_TICK_LABEL_POSITION.LOW
+caption(s, 0.9, 5.7, 7.0, "ב-30, 150,000 מ\"ק בשנה, צמנט ₪460 לטון — דוגמה מהחוברת")
+box(s, 8.2, 1.2, 4.35, 2.1, fill=NAVY)
+text(s, 8.35, 1.25, 4.05, 2.0, [{"t": "σ 4 ← 3", "size": 20, "bold": True, "color": LIME, "rtl": False},
+                                {"t": f"≈ {base_c - cement_for(3):.0f} ק\"ג צמנט פחות למ\"ק", "size": 16, "color": WHITE},
+                                {"t": f"≈ ₪{delta[0] * 1000:,.0f} בשנה", "size": 18, "bold": True, "color": WHITE}],
+     align="c", anchor="m")
+text(s, 8.2, 3.5, 4.35, 2.0, [{"t": "איך מקטינים σ", "bold": True, "color": NAVY},
+                              {"t": "תיקון לחות יומי", "bullet": True}, {"t": "כיול מאזניים וחיישנים", "bullet": True},
+                              {"t": "חומרי גלם אחידים", "bullet": True}, {"t": "דגימה ובדיקה נכונות", "bullet": True}],
+     size=14)
+
+s = content_slide("מנופי חיסכון")
+rows = [["מנוף", "איך", "השפעה בדוגמה", "סיכון"],
+        ["הקטנת σ", "בקרה, כיול, לחות", "₪5.1 למ\"ק (σ 4 ← 3)", "נמוך — רק יתרונות"],
+        ["מוסף יעיל יותר", "−10 ל' מים, אותו W/C", "₪5.6 למ\"ק", "תאימות; לבדוק נקודת רוויה"],
+        ["אופטימיזציית גרדציה", "שילוב צפוף, פחות משחה", "תלוי באגרגט", "עבידות ושאיבה"],
+        ["החלפת צמנט בתוסף", "אפר פחם / סיגים", "₪0.3 למ\"ק (k = 0.4)", "חוזק מוקדם, אשפרה, צמנט מזערי"],
+        ["צמצום מספר התערובות", "משפחות תערובות", "פחות טעויות ומלאי", "נמוך"]]
+table(s, 0.9, 1.2, 11.65, rows, [2.7, 3.0, 2.75, 3.2], size=14, row_h=0.6, header_h=0.5,
+      cell_fill=lambda i, j: TINT if j == 0 else None)
+message(s, "המנוף הזול והבטוח ביותר הוא הבקרה — לא הורדת צמנט", y=5.25, h=0.75, ic="FaBalanceScale")
+
+s = content_slide("הקו האדום: מה אינו חיסכון")
+reds = [("FaTint", "W/C מעל המרבי לדרגת החשיפה", "חיסכון היום, תביעה בעוד עשר שנים"),
+        ("FaWarehouse", "צמנט מתחת למזערי בת\"י 118", "אי-התאמה לתקן — גם אם החוזק עובר"),
+        ("FaShieldAlt", "\"חיסכון\" באשפרה ובבקרה", "הכשל יופיע אצל הלקוח"),
+        ("FaRecycle", "תוסף בלי תערובת ניסיון", "חוזק מוקדם ופירוק תבניות בסיכון")]
+for i, (ic, t1, t2) in enumerate(reds):
+    col_, row_ = i % 2, i // 2
+    x = 6.85 - col_ * 5.95
+    y = 1.25 + row_ * 2.0
+    box(s, x, y, 5.7, 1.8, fill=RED_T)
+    icon(s, ic, x + 5.05, y + 0.6, 0.75, fill=RED)
+    text(s, x + 0.25, y + 0.3, 4.35, 0.55, t1, size=18, bold=True, color=RED)
+    text(s, x + 0.25, y + 0.95, 4.35, 0.7, t2, size=15)
+message(s, "חיסכון אמיתי שומר על כל דרישות התקן ומוריד עלות — אחרת זה רק העברת סיכון ללקוח", y=5.45, h=0.8,
+        ic="FaExclamationTriangle")
+
+workshop("סדנה: עלות ותרחישי חיסכון", "עלות ותרחישים",
+         ["הזינו מחירי רכש עדכניים של המפעל", "חשבו עלות למ\"ק לתערובת הנפוצה ביותר",
+          "הריצו את שלושת התרחישים והשוו", "בחרו תרחיש אחד ובדקו אותו מול הקו האדום",
+          "חשבו חיסכון שנתי לפי היקף הייצור במפעל"],
+         "עלות למ\"ק, שלושה תרחישים מכומתים, והמלצה אחת עם חיסכון שנתי — בסיס אפשרי למשימת הגמר", 60)
+
+# ================================================================ module 6 — statistical & production control
+divider(5, "בקרה סטטיסטית ובקרת ייצור", ["התפלגות", "תרשים בקרה", "CUSUM", "בקרת ייצור", "ביקורת פנימית"])
+
+s = content_slide("התפלגות התוצאות וחוזק אופייני")
+pic_fit(s, "bell", 0.9, 1.2, 6.4, 3.0)
+caption(s, 0.9, 4.25, 6.4, "השטח האדום = התוצאות הצפויות מתחת לחוזק האופייני", align="c")
+defs = [("ממוצע (fm)", "מרכז ההתפלגות — מה שהמפעל מייצר בפועל"),
+        ("סטיית תקן (σ)", "רוחב ההתפלגות — מידת האחידות של המפעל"),
+        ("מקדם שונות", "σ ÷ ממוצע; מאפשר השוואה בין דרגות"),
+        ("חוזק אופייני", "הערך שרוב התוצאות מעליו; מוגדר בת\"י 118")]
+for i, (t1, t2) in enumerate(defs):
+    y = 1.25 + i * 1.1
+    box(s, 7.6, y, 4.95, 0.95, fill=TINT)
+    text(s, 7.8, y + 0.05, 4.55, 0.4, t1, size=16, bold=True, color=NAVY)
+    text(s, 7.8, y + 0.47, 4.55, 0.45, t2, size=13)
+message(s, "אותו ממוצע, σ שונה — סיכון שונה לחלוטין לתוצאה מתחת לדרגה", y=5.55, h=0.7, ic="FaChartLine")
+
+res = [37.1, 35.5, 37.8, 35.2, 36.7, 38.2, 35.9, 36.4, 35.1, 37.5, 36.3, 35.7, 37.4, 36.2, 36.6,
+       35.6, 36.0, 34.9, 35.8, 35.1, 34.6, 35.3, 34.2, 35.7, 34.4, 33.8, 35.0, 33.9, 34.5, 33.4,
+       34.1, 33.2, 34.6, 33.0, 33.7, 32.8, 33.9, 32.6, 33.4, 32.9]
+target = FCK + K * 4
+s = content_slide("תרשים בקרה: 40 תוצאות")
+mov = [None, None] + [round(sum(res[i - 2:i + 1]) / 3, 1) for i in range(2, len(res))]
+cd = CategoryChartData()
+cd.categories = [str(i + 1) for i in range(len(res))]
+cd.add_series(rl("תוצאה"), res)
+cd.add_series(rl("ממוצע נע (3)"), mov)
+cd.add_series(rl("יעד"), [round(target, 1)] * len(res))
+cd.add_series(rl("ב-30"), [FCK] * len(res))
+gf = s.shapes.add_chart(XL_CHART_TYPE.LINE_MARKERS, I(0.9), I(1.15), I(8.0), I(4.6), cd)
+ch = gf.chart
+style_chart(ch)
+ch.has_legend = True
+ch.legend.position = XL_LEGEND_POSITION.BOTTOM
+ch.legend.include_in_layout = False
+sr = ch.plots[0].series
+series_line(sr[0], BLUE, w=1.5)
+sr[0].marker.size = 5
+series_line(sr[1], NAVY, w=3, marker=False)
+series_line(sr[2], GREEN, w=2, marker=False, dash=True)
+series_line(sr[3], RED, w=2, marker=False, dash=True)
+axis_fmt(ch.value_axis, rl("MPa"))
+ch.value_axis.minimum_scale, ch.value_axis.maximum_scale, ch.value_axis.major_unit = 28, 40, 2
+axis_fmt(ch.category_axis, rl("מס' דגימה"), gridlines=False)
+caption(s, 0.9, 5.85, 8.0, "נתוני הדוגמה של גיליון \"בקרה סטטיסטית\"")
+qa = [("כל התוצאות מעל ב-30", "אז הכל בסדר?"), ("הממוצע הנע יורד מדגימה 16", "מגמה — לא רעש"),
+      ("10 אחרונות: 33.4 בממוצע", "מתחת ליעד 36.6")]
+for i, (t1, t2) in enumerate(qa):
+    y = 1.25 + i * 1.45
+    box(s, 9.15, y, 3.4, 1.25, fill=TINT if i == 0 else AMBER_T)
+    text(s, 9.3, y + 0.1, 3.1, 1.1, [{"t": t1, "bold": True, "color": NAVY}, {"t": t2}], size=14, anchor="m")
+
+s = content_slide("CUSUM: לגלות מגמה לפני שהיא כשל")
+cus, acc = [], 0.0
+for v in res:
+    acc += v - target
+    cus.append(round(acc, 1))
+cd = CategoryChartData()
+cd.categories = [str(i + 1) for i in range(len(res))]
+cd.add_series(rl("CUSUM"), cus)
+cd.add_series(rl("סף התראה (−2σ)"), [-8] * len(res))
+gf = s.shapes.add_chart(XL_CHART_TYPE.LINE_MARKERS, I(0.9), I(1.15), I(8.0), I(4.6), cd)
+ch = gf.chart
+style_chart(ch)
+ch.has_legend = True
+ch.legend.position = XL_LEGEND_POSITION.BOTTOM
+ch.legend.include_in_layout = False
+sr = ch.plots[0].series
+series_line(sr[0], NAVY, w=2.5)
+sr[0].marker.size = 5
+series_line(sr[1], RED, w=2, marker=False, dash=True)
+first = next(i for i, c in enumerate(cus) if c < -8)
+pt = sr[0].points[first]
+pt.marker.format.fill.solid()
+pt.marker.format.fill.fore_color.rgb = rgb(RED)
+pt.marker.size = 12
+axis_fmt(ch.value_axis, rl("סכום מצטבר של סטיות (MPa)"))
+axis_fmt(ch.category_axis, rl("מס' דגימה"), gridlines=False)
+ch.category_axis.tick_label_position = XL_TICK_LABEL_POSITION.LOW
+box(s, 9.15, 1.2, 3.4, 1.0, fill=NAVY)
+text(s, 9.25, 1.22, 3.2, 0.95, [{"t": "CUSUM = Σ (תוצאה − יעד)", "bold": True, "color": WHITE, "size": 15}],
+     align="c", anchor="m")
+mav = round(sum(res[first - 2:first + 1]) / 3, 1)
+text(s, 9.15, 2.4, 3.4, 2.4, [{"t": f"התראה בדגימה {first + 1}", "bold": True, "color": RED, "size": 18},
+                              {"t": f"הממוצע הנע שם: {mav} — עדיין \"נראה סביר\"", "size": 14},
+                              {"t": "שיפוע יורד ויציב = שינוי אמיתי בתהליך", "size": 14}], space_after=6)
+verify(s, 9.15, 4.95, w=3.4, t="סף ההתראה — לפי נוהל המפעל")
+caption(s, 0.9, 5.85, 8.0, "CUSUM הוא כלי בקרה מקובל; הוא לא מחליף את קריטריוני ההתאמה של ת\"י 118")
+
+s = content_slide("חיזוי חוזק 28 יום מקוביות 7 ימים")
+box(s, 6.85, 1.2, 5.7, 1.4, fill=NAVY)
+text(s, 7.0, 1.22, 5.4, 1.35, [{"t": "חוזק 28 ≈ חוזק 7 ÷ יחס 7/28 של המפעל", "bold": True, "color": WHITE, "size": 20},
+                               {"t": "בדוגמה: 72% → קובייה 7 של 26.5 MPa ≈ 36.8 ב-28", "color": WHITE, "size": 14}],
+     align="c", anchor="m")
+rules = ["היחס נבנה מנתוני המפעל — לכל צמנט ותוסף בנפרד", "CEM III ותוספים: יחס נמוך יותר וממשיך לעלות אחרי 28",
+         "בקיץ היחס עולה, בחורף יורד", "חיזוי = התראה מוקדמת, לא תחליף לבדיקת 28"]
+text(s, 6.85, 2.85, 5.7, 2.6, [{"t": r, "bullet": True} for r in rules], size=15, space_after=6)
+cd = CategoryChartData()
+cd.categories = ["CEM I 52.5R", "CEM I 42.5", "CEM II", "CEM III"]
+cd.add_series(rl("יחס 7/28 טיפוסי"), [80, 70, 62, 50])
+gf = s.shapes.add_chart(XL_CHART_TYPE.BAR_CLUSTERED, I(0.9), I(1.2), I(5.6), I(3.9), cd)
+ch = gf.chart
+style_chart(ch)
+ch.has_legend = False
+ch.has_title = False
+pl = ch.plots[0]
+pl.gap_width = 60
+pl.series[0].format.fill.solid()
+pl.series[0].format.fill.fore_color.rgb = rgb(BLUE)
+pl.has_data_labels = True
+pl.data_labels.number_format = '0"%"'
+pl.data_labels.number_format_is_linked = False
+pl.data_labels.position = XL_LABEL_POSITION.OUTSIDE_END
+pl.data_labels.font.size = Pt(13)
+ch.value_axis.visible = False
+ch.value_axis.minimum_scale, ch.value_axis.maximum_scale = 0, 100
+axis_fmt(ch.value_axis, gridlines=False)
+axis_fmt(ch.category_axis, gridlines=False)
+caption(s, 0.9, 5.15, 5.6, "ערכים טיפוסיים להמחשה — היחס בפועל מחושב מנתוני המפעל", align="c")
+message(s, "תוצאת 7 נמוכה = מתחילים לחקור היום, לא בעוד שלושה שבועות", y=5.65, h=0.65, ic="FaClock")
+
+s = content_slide("בקרת ייצור במפעל")
+rows = [["מה", "איך", "תדירות מומלצת"],
+        ["מאזני צמנט, אגרגט ומים", "כיול במשקולות תקניות", "לפי נוהל המפעל ות\"י 118"],
+        ["מד מוסף", "בדיקת נפח מול מיכל מכויל", "חודשי"],
+        ["חיישני לחות", "השוואה לייבוש דוגמה", "שבועי, ובכל החלפת ערמה"],
+        ["זמן ערבוב", "מדידה ובדיקת אחידות", "רבעוני ובכל שינוי"],
+        ["תעודות משלוח", "התאמה בין הזמנה, תעודה ושקילה", "יומי, מדגמי"],
+        ["עקיבות", "מנה ← חומרי גלם ← קוביות", "בכל תלונה ובביקורת"]]
+table(s, 0.9, 1.2, 11.65, rows, [3.4, 4.6, 3.65], size=14, row_h=0.55, header_h=0.5,
+      cell_fill=lambda i, j: TINT if j == 0 else None)
+verify(s, 0.9, 5.1, w=3.6, t="תדירויות — לאימות מול ת\"י 118 ונוהל המפעל")
+message(s, "מאזן לא מכויל הוא סטיית תקן שאף אחד לא רואה", y=5.6, h=0.7, ic="FaWeightHanging")
+
+s = content_slide("ביקורת פנימית של מפעל")
+items = ["תיק אישור לכל תערובת פעילה", "תעודות כיול בתוקף", "רישום לחות יומי", "בדיקות קבלה לחומרי גלם",
+         "תרשים בקרה מעודכן לכל דרגה", "מעקב פעולות מתקנות פתוחות", "אחסון ואשפרת קוביות", "תיק תלונות ולקחים"]
+for i, it in enumerate(items):
+    col_, row_ = i % 2, i // 2
+    x = 6.85 - col_ * 5.95
+    y = 1.25 + row_ * 1.0
+    box(s, x, y, 5.7, 0.82, fill=TINT)
+    box(s, x + 5.15, y + 0.21, 0.4, 0.4, fill=WHITE, line=NAVY, lw=1.5, shape=MSO_SHAPE.RECTANGLE)
+    text(s, x + 0.2, y, 4.8, 0.82, it, size=16, color=NAVY, anchor="m")
+message(s, "ביקורת רבעונית, צוות ממפעל אחר — עיניים חדשות רואות יותר", y=5.4, h=0.75, ic="FaEye")
+
+workshop("סדנה: בקרה סטטיסטית על נתוני המפעל", "בקרה סטטיסטית",
+         ["הדביקו 6 חודשי תוצאות 28 יום של דרגה אחת", "קראו ממוצע, סטיית תקן ומקדם שונות",
+          "זהו מגמות בתרשים ובממוצע הנע", "הגדירו סף CUSUM ובדקו מתי היה מתריע",
+          "המליצו: יעד חדש, תיקון, או פעולת בקרה"],
+         "דוח בקרה של עמוד אחד לדרגה המרכזית במפעל — עם המלצה מנומקת", 135)
+
+# ================================================================ module 7 — special concretes & weather
+divider(6, "בטונים מיוחדים ומזג אוויר קיצוני", ["SCC", "בטון מסיבי", "שאיבה ורצפות", "חום", "קור והובלה"])
+
+s = content_slide("בטון מתפשט עצמית (SCC)")
+pic_fit(s, "slump_flow", 0.9, 1.2, 4.2, 3.6)
+caption(s, 0.9, 4.85, 4.2, "שולחן זרימה: קוטר ההתפשטות (SF)", align="c")
+cols = [("מאפייני תערובת", ["יותר דקים ומשחה", "PCE ולעיתים מוסף מייצב (VMA)", "גודל אגרגט מוגבל"]),
+        ("מה בודקים", ["התפשטות בשולחן זרימה", "יציבות: אין הפרדה בשולי העוגה", "זמן זרימה וצמיגות"]),
+        ("סיכונים", ["רגישות גבוהה לשינוי לחות", "סגרגציה בעודף מים או מוסף", "לחץ גבוה על תבניות"])]
+for i, (hdr, its) in enumerate(cols):
+    y = 1.2 + i * 1.45
+    box(s, 5.4, y, 7.15, 1.3, fill=TINT if i < 2 else AMBER_T)
+    text(s, 5.6, y + 0.08, 6.75, 0.4, hdr, size=16, bold=True, color=NAVY if i < 2 else AMBER)
+    text(s, 5.6, y + 0.5, 6.75, 0.8, " · ".join(its), size=14)
+verify(s, 0.9, 5.3, w=3.6, t="דרגות זרימה — לפי ת\"י 118, לאימות")
+message(s, "ב-SCC שינוי של 5 ליטר מים מורגש מיד — בקרת הלחות היא הכל", x=4.75, w=5.1, y=5.75, h=0.7, ic="FaTint")
+
+s = content_slide("בטון מסיבי: חום ההידרציה")
+cd = CategoryChartData()
+cd.categories = ["0", "1", "2", "3", "4", "5", "6", "7"]
+core = [30, 48, 58, 60, 57, 52, 47, 43]
+surf = [30, 38, 40, 38, 35, 33, 31, 30]
+cd.add_series(rl("ליבה"), core)
+cd.add_series(rl("פני שטח"), surf)
+gf = s.shapes.add_chart(XL_CHART_TYPE.LINE_MARKERS, I(0.9), I(1.15), I(6.6), I(4.4), cd)
+ch = gf.chart
+style_chart(ch)
+ch.has_legend = True
+ch.legend.position = XL_LEGEND_POSITION.BOTTOM
+ch.legend.include_in_layout = False
+sr = ch.plots[0].series
+series_line(sr[0], RED, w=3)
+series_line(sr[1], BLUE, w=3)
+axis_fmt(ch.value_axis, rl("טמפרטורה (°C)"))
+ch.value_axis.minimum_scale, ch.value_axis.maximum_scale = 20, 70
+axis_fmt(ch.category_axis, rl("ימים מהיציקה"), gridlines=False)
+caption(s, 0.9, 5.6, 6.6, "מהלך טיפוסי ביסוד עבה — להמחשה", align="c")
+box(s, 7.8, 1.2, 4.75, 1.3, fill=RED_T)
+text(s, 8.0, 1.25, 4.35, 1.2, [{"t": "הסיכון: הפרש ליבה-פנים", "bold": True, "color": RED},
+                               {"t": "הליבה מתפשטת, הפנים מתקררים — סדיקה תרמית"}], size=14, anchor="m")
+text(s, 7.8, 2.7, 4.75, 0.4, "כלים בידי הטכנולוג", size=16, bold=True, color=NAVY)
+text(s, 7.8, 3.15, 4.75, 2.4, [{"t": "CEM III או תוספים — פחות חום", "bullet": True},
+                               {"t": "פחות צמנט: אגרגט גדול, מוסף יעיל", "bullet": True},
+                               {"t": "טמפרטורת יציקה נמוכה (מים קרים, לילה)", "bullet": True},
+                               {"t": "בידוד פני השטח ומדידה בחיישנים", "bullet": True}], size=14)
+message(s, "הגבול להפרש הטמפרטורות נקבע במפרט — ומתוכנן לפני היציקה", y=5.95, h=0.55, ic="FaThermometerHalf")
+
+s = content_slide("שאיבה, רצפות תעשייתיות וחוזק גבוה")
+three = [("FaPumpSoap", "בטון שאיבה", ["משחה מספקת ודקים", "גרדציה רציפה", "סומך יציב לאורך היציקה", "בלי \"תיקון\" מים במשאבה"]),
+         ("FaLayerGroup", "רצפות תעשייתיות", ["דימום מבוקר — זמן החלקה", "התכווצות נמוכה: פחות מים", "התקשרות אחידה בין משאיות", "תיאום מול מבצע ההחלקה"]),
+         ("FaGem", "חוזק גבוה", ["W/C נמוך מאוד + PCE", "מיקרוסיליקה ואגרגט חזק", "אשפרה מיידית וארוכה", "בקרת טמפרטורה וחום"])]
+for i, (ic, t1, its) in enumerate(three):
+    x = 12.55 - (i + 1) * 3.88 + 0.08
+    box(s, x, 1.2, 3.8, 4.25, fill=TINT)
+    icon(s, ic, x + 1.9, 1.85, 0.85)
+    text(s, x + 0.15, 2.45, 3.5, 0.45, t1, size=19, bold=True, color=NAVY, align="c")
+    text(s, x + 0.25, 3.0, 3.3, 2.4, [{"t": t, "bullet": True} for t in its], size=14, space_after=5)
+message(s, "בבטון מיוחד הלקוח קונה התנהגות — לא רק חוזק. מתאמים ציפיות לפני היציקה", y=5.65, h=0.7,
+        ic="FaHandshake")
+
+s = content_slide("יציקה בחום: ערבה, בקעה ושרב")
+cd = CategoryChartData()
+cd.categories = [rl("בסיס"), rl("מים מקוררים"), rl("מים מקוררים + קרח")]
+cd.add_series(rl("טמפרטורת בטון טרי (°C)"), [34.2, 29.3, 24.0])
+gf = s.shapes.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, I(0.9), I(1.15), I(6.0), I(4.4), cd)
+ch = gf.chart
+style_chart(ch)
+ch.has_legend = False
+ch.has_title = False
+pl = ch.plots[0]
+pl.gap_width = 70
+pl.vary_by_categories = False
+ser = pl.series[0]
+for i, col in enumerate((RED, AMBER, GREEN)):
+    pt = ser.points[i]
+    pt.format.fill.solid()
+    pt.format.fill.fore_color.rgb = rgb(col)
+pl.has_data_labels = True
+pl.data_labels.number_format = '0.0"°C"'
+pl.data_labels.number_format_is_linked = False
+pl.data_labels.position = XL_LABEL_POSITION.OUTSIDE_END
+pl.data_labels.font.size = Pt(14)
+pl.data_labels.font.bold = True
+ch.value_axis.minimum_scale, ch.value_axis.maximum_scale = 0, 40
+axis_fmt(ch.value_axis, rl("°C"))
+axis_fmt(ch.category_axis, gridlines=False)
+caption(s, 0.9, 5.6, 6.0, "אגרגט 32°C, צמנט 60°C; מים 28°C ← 8°C; 40 ק\"ג קרח — גיליון \"טמפרטורת בטון\"", align="c")
+text(s, 7.2, 1.2, 5.35, 0.4, "תכנית קיץ במפעל", size=17, bold=True, color=NAVY)
+text(s, 7.2, 1.65, 5.35, 3.0, [{"t": "מעכב במינון עונתי, לפי טמפרטורה", "bullet": True},
+                               {"t": "צל והרטבה לערמות האגרגט", "bullet": True},
+                               {"t": "מים מקוררים או קרח בימי שרב", "bullet": True},
+                               {"t": "יציקות לילה ותיאום זמני הגעה", "bullet": True},
+                               {"t": "אשפרה מיידית — התאדות מהירה בערבה", "bullet": True}], size=15, space_after=5)
+verify(s, 7.2, 4.45, w=3.9, t="גבול הטמפרטורה — לפי המפרט ות\"י 467")
+message(s, "המים הם הכלי החזק ביותר לקירור: קיבול החום שלהם גבוה פי 4-5", x=7.2, w=5.35, y=4.95, h=0.75,
+        ic="FaSnowflake")
+
+s = content_slide("קור והובלה ארוכה")
+for k, (hdr, ic, its, col, bg) in enumerate((("יציקה בקור", "FaSnowflake",
+                                              ["מאיץ ללא כלורידים בבטון מזוין", "צמנט מהיר (CEM I 52.5R)", "מים מחוממים",
+                                               "בידוד ואשפרה מוגנת", "פירוק תבניות לפי חוזק בפועל"], BLUE, TINT),
+                                             ("הובלה ארוכה", "FaRoute",
+                                              ["מעכב לפי זמן ההובלה הצפוי", "סומך יציאה מתוכנן לאיבוד בדרך",
+                                               "מוסף לתיקון באתר — מאושר מראש ומתועד", "זמן מרבי מהערבוב ליציקה — לפי המפרט",
+                                               "תיאום קצב משאיות מול קצב היציקה"], NAVY, TINT2))):
+    x = 6.85 - k * 5.95
+    box(s, x, 1.2, 5.7, 4.25, fill=bg)
+    icon(s, ic, x + 5.2, 1.7, 0.65, fill=col)
+    text(s, x + 0.25, 1.45, 4.5, 0.45, hdr, size=20, bold=True, color=col)
+    text(s, x + 0.25, 2.2, 5.2, 3.2, [{"t": it, "bullet": True} for it in its], size=15, space_after=6)
+message(s, "בשני המקרים — מתכננים את הבטון לזמן ולמזג האוויר של היציקה, לא של המעבדה", y=5.65, h=0.7,
+        ic="FaClock")
+
+workshop("סדנה: יציקת רפסודה בערבה באוגוסט", "טמפרטורת בטון",
+         ["רפסודה 1.5 מ', 600 מ\"ק, ב-40, הובלה 50 דקות", "בחרו צמנט ותוספים ונמקו (חום, עמידות, עלות)",
+          "חשבו טמפרטורת בטון טרי ובחרו אמצעי קירור", "תכננו לוגיסטיקה: שעות, קצב משאיות, מעכב",
+          "כתבו תכנית אשפרה ובקרה בחיישנים"],
+         "תכנית יציקה מלאה בעמוד אחד: תערובת, קירור, לוגיסטיקה ואשפרה — מוצגת בקבוצות", 90)
+
+# ================================================================ module 8 — complaints
+divider(7, "טיפול בתלונות לקוחות", ["תהליך", "ראיות", "ניתוח שורש", "תלונות נפוצות", "אחריות"])
+
+s = content_slide("תהליך הטיפול בתלונה")
+flow(s, ["קליטה ותיעוד", "שימור ראיות", "תחקור", "ניתוח שורש", "החלטה מול הלקוח", "פעולה מתקנת", "למידה ושיתוף"],
+     1.4, h=1.15, size=13)
+tm = [("24 שעות", "קשר ראשון עם הלקוח ושימור ראיות"), ("7 ימים", "תחקור ראשוני ותוכנית בדיקות"),
+      ("30 יום", "החלטה, חוות דעת וסגירה")]
+for i, (t1, t2) in enumerate(tm):
+    x = 12.55 - (i + 1) * 3.88 + 0.08
+    box(s, x, 2.9, 3.8, 1.6, fill=TINT)
+    text(s, x + 0.1, 3.0, 3.6, 0.6, t1, size=26, bold=True, color=BLUE, align="c")
+    text(s, x + 0.2, 3.65, 3.4, 0.8, t2, size=14, align="c")
+verify(s, 0.9, 4.65, w=3.3, t="זמני תגובה — לקבוע בנוהל החברה")
+message(s, "תלונה שמטופלת מהר ובשקיפות שומרת לקוח — גם כשהאחריות לא שלנו", y=5.5, h=0.75, ic="FaHandshake")
+
+s = content_slide("ראיות וכלי תחקור")
+ev = [("FaFileAlt", "רשומות ייצור", "שקילה, לחות, תעודת משלוח, זמנים"),
+      ("FaCubes", "קוביות מקבילות", "קוביות המפעל מאותו יום ואותה תערובת"),
+      ("FaCrosshairs", "קרוטים", "ת\"י 26 חלק 6 — מיקום, כמות ופענוח מתוכננים"),
+      ("FaSearch", "בדיקות לא הורסות", "ת\"י 26 חלק 7 — מיפוי ואיתור אזורים חלשים"),
+      ("FaEye", "תיעוד מהאתר", "תמונות, מידות, מיקום הסדקים, שעות"),
+      ("FaSun", "נתוני מזג אוויר", "טמפרטורה, רוח ולחות ביום היציקה")]
+for i, (ic, t1, t2) in enumerate(ev):
+    col_, row_ = i % 3, i // 3
+    x = 12.55 - (col_ + 1) * 3.88 + 0.08
+    y = 1.2 + row_ * 2.1
+    box(s, x, y, 3.8, 1.9, fill=TINT)
+    icon(s, ic, x + 3.3, y + 0.5, 0.6)
+    text(s, x + 0.2, y + 0.25, 2.65, 0.45, t1, size=17, bold=True, color=NAVY)
+    text(s, x + 0.2, y + 0.9, 3.4, 0.9, t2, size=14)
+message(s, "ראיה שלא נשמרה ביום הראשון — לא תהיה שם ביום העשירי", y=5.6, h=0.7, ic="FaClock")
+
+s = content_slide("ניתוח שורש: אישיקאווה ו-5 למה")
+fx, fy, fw = 0.9, 1.25, 7.4
+pic(s, "fishbone", fx, fy, w=fw)
+sc_ = fw / 1000
+cats = [("חומרי גלם", 930, 40), ("תערובת", 700, 40), ("ייצור", 470, 40),
+        ("הובלה", 930, 410), ("ביצוע באתר", 700, 410), ("אשפרה ובדיקה", 470, 410)]
+for t1, cx, cy in cats:
+    text(s, fx + cx * sc_ - 0.9, fy + cy * sc_ - (0.35 if cy < 200 else 0.0), 1.8, 0.35, t1, size=13, bold=True,
+         color=NAVY, align="c")
+text(s, fx, fy + 230 * sc_ - 0.3, 1.0, 0.6, "הבעיה", size=13, bold=True, color=WHITE, align="c", anchor="m")
+box(s, 8.6, 1.2, 3.95, 4.25, fill=TINT2)
+text(s, 8.8, 1.3, 3.55, 0.4, "5 למה — דוגמה", size=16, bold=True, color=NAVY)
+whys = ["למה הקוביות נמוכות? — W/C גבוה", "למה W/C גבוה? — מים עודפים", "למה מים עודפים? — לחות חול לא תוקנה",
+        "למה לא תוקנה? — חיישן לא מכויל", "למה לא מכויל? — אין בנוהל ← הגורם"]
+text(s, 8.8, 1.8, 3.55, 3.6, [{"t": w_, "bullet": True} for w_ in whys], size=13, space_after=6)
+message(s, "הגורם השורשי הוא מה שמתקנים — כדי שזה לא יחזור", y=5.65, h=0.7, ic="FaSitemap")
+
+s = content_slide("תלונות נפוצות: מאיפה מתחילים")
+rows = [["תלונה", "בודקים קודם", "גורם אופייני"],
+        ["קוביות האתר נמוכות", "הכנה ואשפרה של הקוביות, קוביות המפעל", "קוביות שנשארו בשמש / ללא אשפרה"],
+        ["סדיקה", "צורת הסדקים, שעת הופעה, מזג אוויר", "סדיקה פלסטית, אשפרה, תפרים"],
+        ["פני שטח: אבקיות, התקלפות", "זמן ושיטת החלקה, דימום", "החלקה על מי דימום, מים באתר"],
+        ["התקשרות איטית", "מינון מעכב, טמפרטורה, צמנט", "עודף מעכב בלילה קר"],
+        ["\"חסר בטון\"", "תפוקה, נפח תבנית בפועל, פחת", "תבנית שנפתחה, פחת, תפוקה נמוכה"],
+        ["גוון לא אחיד", "חומרי גלם, מים ממוחזרים, אשפרה", "שינוי מקור, אשפרה לא אחידה"]]
+table(s, 0.9, 1.2, 11.65, rows, [3.2, 4.4, 4.05], size=14, row_h=0.6, header_h=0.5,
+      cell_fill=lambda i, j: TINT if j == 0 else None)
+message(s, "בכל תלונה — בודקים קודם את מה שנמצא בשליטתנו", y=5.6, h=0.7, ic="FaSearch")
+
+s = content_slide("אחריות: מפעל מול אתר")
+for k, (hdr, its, col, bg, ic) in enumerate((("באחריות המפעל", ["התאמת התערובת להזמנה ולת\"י 118", "שקילה, לחות וערבוב",
+                                                               "זמן ההגעה והסומך ביציאה", "תיעוד ועקיבות"], NAVY, TINT, "FaIndustry"),
+                                             ("באחריות האתר", ["דגימה ואשפרת הקוביות באתר", "מים או חומרים שהוספו",
+                                                              "הידוק, החלקה ואשפרה", "תפרים, תבניות וזמן יציקה"], AMBER, AMBER_T, "FaHardHat"))):
+    x = 6.85 - k * 5.95
+    box(s, x, 1.2, 5.7, 3.4, fill=bg)
+    icon(s, ic, x + 5.2, 1.7, 0.6, fill=col)
+    text(s, x + 0.25, 1.45, 4.5, 0.45, hdr, size=20, bold=True, color=col)
+    text(s, x + 0.25, 2.2, 5.2, 2.35, [{"t": it, "bullet": True} for it in its], size=15, space_after=6)
+box(s, 0.9, 4.8, 11.65, 0.75, fill=TINT2)
+text(s, 1.1, 4.8, 11.25, 0.75, "אחריות מוכיחים בראיות: קוביות מפעל תקינות + קרוטים נמוכים במבנה = לרוב ביצוע או אשפרה",
+     size=15, color=NAVY, bold=True, anchor="m")
+message(s, "גם כשהאחריות של האתר — עוזרים ללקוח לתקן. זה מה שהוא יזכור", y=5.75, h=0.65, ic="FaHandshake")
+
+workshop("סדנה: שלושה תיקי תלונה", "תיק תלונה",
+         ["כל קבוצה מקבלת תיק תלונה אמיתי (מוסתר)", "בונים ציר זמן ומסמנים אילו ראיות קיימות וחסרות",
+          "ממלאים אישיקאווה: נשלל, אפשרי, סביר — עם ראיה", "מגיעים לגורם שורש ולהחלטה מול הלקוח",
+          "מציגים בעשר דקות; הקבוצות האחרות \"תוקפות\""],
+         "תיק תלונה מלא: ציר זמן, ראיות, ניתוח שורש, החלטה ופעולה מתקנת", 120)
+
+# ================================================================ module 9 — technical opinion & communication
+divider(8, "חוות דעת ותקשורת מקצועית", ["מבנה חוות דעת", "שיחה מקצועית", "משחק תפקידים"])
+
+s = content_slide("מבנה חוות דעת טכנית")
+flow(s, ["רקע והזמנה", "עובדות ונתונים", "בדיקות וממצאים", "ניתוח", "מסקנה", "המלצה"], 1.4, h=1.1, size=14)
+rules = [("FaFileAlt", "עובדות לפני עמדות", "כל טענה מפנה לנתון, לבדיקה או לתקן"),
+         ("FaBook", "תקן במספר ובסעיף", "ת\"י 118, ת\"י 26 — לא \"לפי התקן\""),
+         ("FaBalanceScale", "מפרידים ודאי מהשערה", "\"נמצא\" מול \"ייתכן\" — במילים מפורשות"),
+         ("FaPenFancy", "שפה פשוטה", "הלקוח והמהנדס צריכים להבין בקריאה אחת")]
+for i, (ic, t1, t2) in enumerate(rules):
+    col_, row_ = i % 2, i // 2
+    x = 6.85 - col_ * 5.95
+    y = 2.8 + row_ * 1.35
+    box(s, x, y, 5.7, 1.2, fill=TINT)
+    icon(s, ic, x + 5.15, y + 0.6, 0.6)
+    text(s, x + 0.2, y + 0.12, 4.5, 0.4, t1, size=16, bold=True, color=NAVY)
+    text(s, x + 0.2, y + 0.58, 4.5, 0.55, t2, size=14)
+message(s, "חוות דעת טובה עומדת גם מול מהנדס של הצד השני", y=5.65, h=0.7, ic="FaUserCheck")
+
+s = content_slide("שיחה מקצועית מול מפקח, מהנדס ולקוח")
+dos = ["מקשיבים עד הסוף ומתעדים", "מציגים נתונים, לא תחושות", "אומרים \"נבדוק ונחזור עד...\" — וחוזרים",
+       "מציעים פתרון גם כשהאחריות לא שלנו"]
+donts = ["מודים באחריות לפני תחקור", "מאשימים את האתר בשיחה הראשונה", "מבטיחים תוצאה בלי בדיקה",
+         "מתווכחים על תקן בלי הסעיף בידיים"]
+for k, (hdr, items, col, bg, ic) in enumerate((("עושים", dos, GREEN, GREEN_T, "FaCheckCircle"),
+                                                ("נמנעים", donts, RED, RED_T, "FaTimesCircle"))):
+    x = 6.85 - k * 5.95
+    box(s, x, 1.2, 5.7, 4.2, fill=bg)
+    icon(s, ic, x + 5.2, 1.7, 0.6, fill=col)
+    text(s, x + 0.25, 1.45, 4.5, 0.45, hdr, size=20, bold=True, color=col)
+    text(s, x + 0.25, 2.2, 5.2, 3.1, [{"t": it, "bullet": True} for it in items], size=16, space_after=8)
+message(s, "הטכנולוג הוא הפנים המקצועיות של החברה באתר", y=5.65, h=0.7, ic="FaComments")
+
+workshop("סדנה: חוות דעת ומשחק תפקידים", "תיק תלונה",
+         ["כתבו חוות דעת של עמוד אחד על אחד מתיקי מודול 8", "החליפו חוות דעת עם קבוצה אחרת לביקורת עמיתים",
+          "משחק תפקידים: מפקח כועס באתר, יציקה בעוד שעה", "משוב מהמנחה ומהקבוצה: מה עבד ומה לא"],
+         "חוות דעת טכנית אחת לאחר ביקורת עמיתים, ומשוב אישי על התנהלות בשיחה", 60)
+
+# ================================================================ module 10 — capstone
+divider(9, "מבחן מסכם ומשימת גמר", ["מבחן יישומי", "משימת גמר במפעל", "הסמכה"])
+
+s = content_slide("משימת הגמר: שיפור מדיד במפעל")
+opts = [("FaCoins", "אופטימיזציה של תערובת", "חיסכון מחושב למ\"ק ולשנה, עם תערובת ניסיון"),
+        ("FaChartLine", "הקטנת סטיית תקן", "בדרגה מרכזית: לפני, אחרי והדרך"),
+        ("FaBalanceScale", "בקרה שוטפת", "תרשים בקרה ו-CUSUM פעילים במפעל"),
+        ("FaHandshake", "תחקור תלונה", "תלונה פתוחה עד סגירה, כולל חוות דעת")]
+for i, (ic, t1, t2) in enumerate(opts):
+    col_, row_ = i % 2, i // 2
+    x = 6.85 - col_ * 5.95
+    y = 1.2 + row_ * 1.75
+    box(s, x, y, 5.7, 1.55, fill=TINT)
+    icon(s, ic, x + 5.1, y + 0.55, 0.7)
+    text(s, x + 0.25, y + 0.25, 4.3, 0.45, t1, size=18, bold=True, color=NAVY)
+    text(s, x + 0.25, y + 0.8, 4.3, 0.65, t2, size=14)
+text(s, 0.9, 4.85, 11.65, 0.45, "קריטריונים: יעד מספרי · מדידה לפני ואחרי · עמידה בת\"י 118 · הצגה למנהל הטכנולוגיה",
+     size=15, bold=True, color=NAVY)
+message(s, "עד 8 שבועות, עם מנטור מצוות המנחים", y=5.55, h=0.7, ic="FaUserCheck")
+
+s = content_slide("הערכה והסמכה")
+rows = [["רכיב", "מתי", "משקל", "סף"], ["תוצרי הסדנאות", "במהלך התוכנית", "20%", "הגשת כל התוצרים"],
+        ["מבחן מסכם יישומי", "יום 4", "40%", "75"], ["משימת גמר במפעל", "עד 8 שבועות", "40%", "אישור מנהל הטכנולוגיה"]]
+table(s, 0.9, 1.2, 11.65, rows, [3.4, 2.7, 1.8, 3.75], size=16, row_h=0.65, header_h=0.55,
+      align=["r", "c", "c", "c"], cell_fill=lambda i, j: TINT if j == 0 else None)
+box(s, 0.9, 4.05, 11.65, 1.25, fill=NAVY)
+icon(s, "FaGraduationCap", 11.9, 4.67, 0.8, fill=LIME, color="n")
+text(s, 1.1, 4.1, 10.2, 1.15, [{"t": "תעודת \"טכנולוג בטון — רמה מתקדמת\"", "size": 22, "bold": True, "color": LIME},
+                               {"t": "מטעם אקדמיית הטכנולוגיה והאיכות", "size": 15, "color": WHITE}], anchor="m",
+     space_after=2)
+message(s, "ההסמכה מעידה על יכולת שהוכחה במפעל — לא על נוכחות בכיתה", y=5.55, h=0.7, ic="FaCertificate")
+
+s = clone(TPL[7])
+t = find(s, "TextBox 4")
+t.left, t.width = I(3.67), I(6.0)
+retext(t, "תודה", size=32, align="ctr")
+text(s, 3.67, 4.35, 6.0, 0.6, "בהצלחה במשימת הגמר", size=24, color=NAVY, align="c")
+
+finish()

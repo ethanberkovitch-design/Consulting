@@ -648,9 +648,63 @@ function reboundHammer() {
   return svg(W, Hh, b);
 }
 
+// ---------- Normal distribution of strength results: fck, target mean, the margin ----------
+function bellCurve() {
+  const W = 900, Hh = 420, base = 360, mu = 520, sd = 95;
+  const y = (x) => base - 290 * Math.exp(-0.5 * ((x - mu) / sd) ** 2);
+  let pts = [], tail = [];
+  for (let x = 120; x <= 880; x += 4) pts.push(`${x},${y(x).toFixed(1)}`);
+  const fck = mu - 1.64 * sd;
+  for (let x = 120; x <= fck; x += 4) tail.push(`${x},${y(x).toFixed(1)}`);
+  let b = `<defs>${arrowHead("a", H.navy)}</defs>`;
+  b += `<line x1="100" y1="${base}" x2="890" y2="${base}" stroke="#${H.steel}" stroke-width="3"/>`;
+  b += `<polygon points="120,${base} ${pts.join(" ")} 880,${base}" fill="#${H.orangeLight}"/>`;
+  b += `<polygon points="120,${base} ${tail.join(" ")} ${fck.toFixed(1)},${base}" fill="#${H.red}" opacity="0.55"/>`;
+  b += `<polyline points="${pts.join(" ")}" fill="none" stroke="#${H.orange}" stroke-width="5"/>`;
+  b += `<line x1="${fck}" y1="40" x2="${fck}" y2="${base}" stroke="#${H.red}" stroke-width="4" stroke-dasharray="12 8"/>`;
+  b += `<line x1="${mu}" y1="40" x2="${mu}" y2="${base}" stroke="#${H.navy}" stroke-width="4"/>`;
+  b += `<line x1="${fck + 6}" y1="100" x2="${mu - 6}" y2="100" stroke="#${H.navy}" stroke-width="3" marker-start="url(#a)" marker-end="url(#a)"/>`;
+  b += `<text x="${(fck + mu) / 2}" y="88" text-anchor="middle" font-family="DejaVu Sans" font-weight="bold" font-size="28" fill="#${H.navy}">k·σ</text>`;
+  b += `<text x="${fck}" y="400" text-anchor="middle" font-family="DejaVu Sans" font-weight="bold" font-size="26" fill="#${H.red}">fck</text>`;
+  b += `<text x="${mu}" y="400" text-anchor="middle" font-family="DejaVu Sans" font-weight="bold" font-size="26" fill="#${H.navy}">fm</text>`;
+  return svg(W, Hh, b);
+}
+
+// ---------- Fishbone skeleton (labels are set on the slide) ----------
+function fishbone() {
+  const W = 1000, Hh = 460, cy = 230;
+  let b = `<defs>${arrowHead("a", H.navy)}</defs>`;
+  b += `<line x1="960" y1="${cy}" x2="140" y2="${cy}" stroke="#${H.navy}" stroke-width="8" marker-end="url(#a)"/>`;
+  b += `<rect x="10" y="${cy - 55}" width="120" height="110" rx="14" fill="#${H.red}" opacity="0.9"/>`;
+  for (const x of [820, 590, 360]) {
+    b += `<line x1="${x}" y1="${cy}" x2="${x + 110}" y2="60" stroke="#${H.orange}" stroke-width="6"/>`;
+    b += `<line x1="${x}" y1="${cy}" x2="${x + 110}" y2="400" stroke="#${H.orange}" stroke-width="6"/>`;
+    for (const t of [0.35, 0.65]) {
+      const ux = x + 110 * t, uy = cy - 170 * t, dy = cy + 170 * t;
+      b += `<line x1="${ux}" y1="${uy}" x2="${ux + 60}" y2="${uy}" stroke="#${H.blueGray}" stroke-width="3"/>`;
+      b += `<line x1="${ux}" y1="${dy}" x2="${ux + 60}" y2="${dy}" stroke="#${H.blueGray}" stroke-width="3"/>`;
+    }
+  }
+  return svg(W, Hh, b);
+}
+
+// ---------- Slump-flow test, top view: spread of SCC on the base plate ----------
+function slumpFlow() {
+  const W = 560, Hh = 460, R = rng(97);
+  let b = `<defs>${arrowHead("a", H.navy)}</defs>`;
+  b += `<rect x="20" y="20" width="520" height="420" rx="12" fill="#D3D7DC" stroke="#${H.steel}" stroke-width="4"/>`;
+  b += `<circle cx="280" cy="230" r="100" fill="none" stroke="#${H.steel}" stroke-width="3" stroke-dasharray="10 8"/>`;
+  b += `<path d="M280,58 C390,56 452,140 455,232 C458,330 380,402 282,400 C170,404 102,330 104,236 C102,140 168,60 280,58Z" fill="#${H.paste}" stroke="#${H.steel}" stroke-width="4"/>`;
+  b += dots(R, 140, 100, 280, 260, 260, 2, 4.5, H.pasteDark);
+  b += stones(R, scatter(R, 170, 130, 220, 200, 18, 6, 11, 4));
+  b += `<line x1="104" y1="430" x2="455" y2="430" stroke="#${H.navy}" stroke-width="4" marker-start="url(#a)" marker-end="url(#a)"/>`;
+  b += `<text x="280" y="420" text-anchor="middle" font-family="DejaVu Sans" font-weight="bold" font-size="26" fill="#${H.navy}">SF</text>`;
+  return svg(W, Hh, b);
+}
+
 module.exports = {
   H, skyline, aggregateSection, hydrationStages, microstructure, cubeLoad, poreSection,
   chlorideRebar, slumpCone, slumpShape, densityContainer, airMeter, specimen,
   compressionMachine, segregation, bleeding, honeycomb, plasticCracks, scaling, curing, tile,
-  sampling, sandEquivalent, laDrum, waterPlant, rcaParticles, reboundHammer,
+  sampling, sandEquivalent, laDrum, waterPlant, rcaParticles, reboundHammer, bellCurve, fishbone, slumpFlow,
 };
